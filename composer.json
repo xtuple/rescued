@@ -1,0 +1,13 @@
+{
+  "name": "modules/xtuple/rescued",
+  "description": "RESTful Entity Storage Controller Unveiling Entities Dynamically Module",
+  "type": "library",
+  "license": "GPL-2.0",
+  "authors": [
+    {
+      "name": "Ben Thompson",
+      "email": "ben@xtuple.com",
+      "role": "Software Engineer"
+    }
+  ]
+}
