@@ -1,0 +1,35 @@
+name = RESCUED
+description = RESTful Entity Storage Controller Unveiling Entities Dynamically.
+core = 7.x
+package = xDruple
+
+dependencies[] = admin_menu
+dependencies[] = ctools
+dependencies[] = date
+dependencies[] = efq_views
+dependencies[] = entity
+dependencies[] = entity_token
+dependencies[] = entity_operations
+dependencies[] = entityreference
+dependencies[] = entityreference_efq_views
+dependencies[] = xdruple_entityreference
+dependencies[] = xdfields_rest_storage
+dependencies[] = field_group
+dependencies[] = inline_entity_form
+dependencies[] = libraries
+dependencies[] = rules
+dependencies[] = rules_admin
+dependencies[] = token
+dependencies[] = views
+dependencies[] = views_ui
+dependencies[] = wsclient
+dependencies[] = wsclient_ui
+core = 7.x
+
+; Module includes
+files[] = includes/rescued_api.class.inc
+files[] = includes/rescued_controller.class.inc
+files[] = includes/rescued_controller_new.class.inc
+files[] = includes/rescued_oauth2.class.inc
+files[] = includes/rescued_operation_handlers.class.inc
+files[] = includes/rescued_inline_entity_form.class.inc

@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * Performs database updates for the RESCUED WSClient module.
+ */
+
+/**
+ * Implements hook_install().
+ *
+ * Modify the wsclient_service table's url type to allow more chars.
+ */
+function rescued_wsclient_install() {
+  // Create the definition for the new url column.
+  $new_url_field = array(
+    'type' => 'varchar',
+    'length' => '4096',
+    'not null' => TRUE,
+    'description' => 'The url of the web service.',
+  );
+
+  db_change_field('wsclient_service', 'url', 'url', $new_url_field);
+}

@@ -1,0 +1,153 @@
+<?php
+
+/**
+* Implements hook_install().
+*/
+function rescued_install() {
+  $role_names = array(
+    'rescued_admin',
+    'rescued_contact',
+    'rescued_personal',
+    'rescued_limited',
+    'rescued_employee'
+  );
+
+  // Create roles programmatically.
+  foreach($role_names as $name) {
+    $role = new stdClass();
+    $role->name = $name;
+    // $role->weight = 10;
+    user_role_save($role);
+
+    // Get the new role's rid.
+    $this_role = user_role_load_by_name($name);
+    $this_rid = $this_role->rid;
+
+    // Define this role's permissions.
+    // @See: rescued_permission()
+    switch ($name) {
+      case 'rescued_admin':
+        $permissions = array(
+          'administer rescued entities',
+        );
+        break;
+      case 'rescued_contact':
+        $permissions = array(
+          'delete contact rescued entities',
+          'edit contact rescued entities',
+          'view contact rescued entities',
+          'create contact rescued entities',
+        );
+        break;
+      case 'rescued_personal':
+        $permissions = array(
+          'delete personal rescued entities',
+          'edit personal rescued entities',
+          'view personal rescued entities',
+          'create personal rescued entities',
+        );
+        break;
+      case 'rescued_employee':
+        $permissions = array(
+          'delete any rescued entities',
+          'edit any rescued entities',
+          'view any rescued entities',
+          'create any rescued entities',
+        );
+        break;
+      case 'rescued_limited':
+        $permissions = array(
+          'delete limited rescued entities',
+          'edit limited rescued entities',
+          'view limited rescued entities',
+          'create limited rescued entities',
+        );
+        break;
+    }
+
+    // Grant permissions to this role.
+    user_role_grant_permissions($this_rid, $permissions);
+  }
+
+  // Assign the 'administrator' role the 'administer rescued entities' permission.
+
+  // Get the 'administrator' role's rid.
+  $admin_role = user_role_load_by_name('administrator');
+  $admin_rid = $admin_role->rid;
+  $admin_permission = array(
+    'administer rescued entities',
+  );
+  // Grant permission to the 'administrator' role.
+  user_role_grant_permissions($admin_rid, $admin_permission);
+
+  // Assign 'authenticated user' role the 'view public rescued entities' permission.
+  // Note: We do not automatically assign this to the 'anonymous user' role
+  // since a B2B site should force a user to sign in before the see anything.
+  // For a B2C site, the site admin is responsible for granting this role and
+  // effectively making all of their items visable to the public.
+
+  // Get the 'authenticated user' role's rid.
+  $authed_role = user_role_load_by_name('authenticated user');
+  $authed_rid = $authed_role->rid;
+  $authed_permission = array(
+    'view public rescued entities',
+  );
+  // Grant permission to the 'authenticated user' role.
+  user_role_grant_permissions($authed_rid, $authed_permission);
+}
+
+/**
+* Implements hook_requirements().
+*/
+function rescued_requirements($phase) {
+  // TODO: Install doesn't seem to work right.  Drupal isn't fully loaded, so we can't do much.
+  // It shouldn't matter for install, but the libraries do need to be there to run.
+  // https://api.drupal.org/api/drupal/modules!system!system.api.php/function/hook_requirements/7
+  if ($phase == 'install') {
+    $t = get_t();
+    $google_url = l('here', 'http://code.google.com/p/google-api-php-client/downloads/detail?name=google-api-php-client-0.6.2.tar.gz&can=2&q=');
+    $google_message = $t('Make sure to install this version of the Google API PHP Client library code (from !url) in a libraries directory such as "sites/all/libraries"', array('!url' => $google_url));
+
+    $requirements['google-api-php-client']['title'] = 'Google API PHP Client Library';
+    $requirements['google-api-php-client']['value'] = '0.6.2';
+    $requirements['google-api-php-client']['severity'] = REQUIREMENT_WARNING;
+    $requirements['google-api-php-client']['description'] = $google_message;
+
+    return $requirements;
+  }
+
+  // Get required libraries info.
+  $info = rescued_libraries_info();
+
+  // Set Google vars.
+  $google_info = $info['google-api-php-client'];
+  $google_keys = array_keys($google_info['versions']);
+  $google_version = reset($google_keys);
+  $google_url = l('here', $google_info['download url']);
+  $google_message = t('Install version @version of the Google API PHP Client library code (from !url) in a libraries directory such as "sites/all/libraries".', array('@version' => $google_version, '!url' => $google_url));
+  // Detect actaully installed version of Google library.
+  $google_info = libraries_detect('google-api-php-client');
+
+  $requirements = array();
+  // Set Google lib $requirements.
+  $requirements['google-api-php-client'] = array (
+    'title' => 'Google API PHP Client Library',
+    'value' => $google_info['version'],
+  );
+
+  if ($phase == 'update') {
+    if ($google_info === FALSE || empty($google_info['version']) || !version_compare($google_info['version'], $google_version, '=')) {
+      $requirements['google-api-php-client']['description'] = $google_message;
+      $requirements['google-api-php-client']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+
+  if ($phase == 'runtime') {
+    if ($google_info === FALSE || empty($google_info['version']) || !version_compare($google_info['version'], $google_version, '=')) {
+      $requirements['google-api-php-client']['description'] = $google_message;
+      $requirements['google-api-php-client']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+
+  return $requirements;
+}

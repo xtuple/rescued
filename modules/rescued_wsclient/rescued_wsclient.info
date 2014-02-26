@@ -1,0 +1,11 @@
+name = RESCUED WSClient
+description = Adds a RESCUED Web Services Client to the WSClient module.
+core = 7.x
+package = xDruple
+
+dependencies[] = wsclient
+dependencies[] = wsclient_ui
+dependencies[] = rescued
+
+; Module includes
+files[] = includes/rescued_wsclient.class.inc
