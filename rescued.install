@@ -72,13 +72,15 @@ function rescued_install() {
   // Assign the 'administrator' role the 'administer rescued entities' permission.
 
   // Get the 'administrator' role's rid.
-  $admin_role = user_role_load_by_name('administrator');
-  $admin_rid = $admin_role->rid;
-  $admin_permission = array(
-    'administer rescued entities',
-  );
-  // Grant permission to the 'administrator' role.
-  user_role_grant_permissions($admin_rid, $admin_permission);
+  if ($admin_role_name = variable_get('user_admin_role')) {
+    $admin_role = user_role_load_by_name($admin_role_name);
+    $admin_rid = $admin_role->rid;
+    $admin_permission = array(
+      'administer rescued entities',
+    );
+    // Grant permission to the 'administrator' role.
+    user_role_grant_permissions($admin_rid, $admin_permission);
+  }
 
   // Assign 'authenticated user' role the 'view public rescued entities' permission.
   // Note: We do not automatically assign this to the 'anonymous user' role
