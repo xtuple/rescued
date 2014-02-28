@@ -1,39 +1,6 @@
 <?php
 
 /**
-* Implements hook_install().
-*/
-function rescued_install() {
-  // Assign the 'administrator' role the 'administer rescued entities' permission.
-
-  // Get the 'administrator' role's rid.
-  if ($admin_role_name = variable_get('user_admin_role')) {
-    $admin_role = user_role_load_by_name($admin_role_name);
-    $admin_rid = $admin_role->rid;
-    $admin_permission = array(
-      'administer rescued entities',
-    );
-    // Grant permission to the 'administrator' role.
-    user_role_grant_permissions($admin_rid, $admin_permission);
-  }
-
-  // Assign 'authenticated user' role the 'view public rescued entities' permission.
-  // Note: We do not automatically assign this to the 'anonymous user' role
-  // since a B2B site should force a user to sign in before they see anything.
-  // For a B2C site, the site admin is responsible for granting this role and
-  // effectively making all of their items visable to the public.
-
-  // Get the 'authenticated user' role's rid.
-  $authed_role = user_role_load_by_name('authenticated user');
-  $authed_rid = $authed_role->rid;
-  $authed_permission = array(
-    'view public rescued entities',
-  );
-  // Grant permission to the 'authenticated user' role.
-  user_role_grant_permissions($authed_rid, $authed_permission);
-}
-
-/**
 * Implements hook_requirements().
 */
 function rescued_requirements($phase) {
