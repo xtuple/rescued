@@ -892,6 +892,11 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
       'maxResults' => $query->range['length'],
       'pageToken' => $query->range['start'] / $query->range['length']
     );
+  } else {
+// TODO: This is a hack. Add ability to switch select lists to autocomplete fields for admin users.
+    $pager_range = array(
+      'rowLimit' => 200,
+    );
   }
 
   $conditions = array_merge($queryParams, $pager_range);

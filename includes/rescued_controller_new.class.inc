@@ -52,7 +52,7 @@ class RescuedControllerNew extends EntityAPIController {
     // Exclude any entities loaded from cache if they don't match $conditions.
     // This ensures the same behavior whether loading from memory or database.
     // xTuple conditions are under the 'query' key on $conditions['query'].
-    if ($conditions) {
+    if (isset($conditions['query'])) {
       foreach ($entities as $entity) {
         // Restructure conditions so array_diff_assoc() can determine matches.
         $xtuple_conditions = array();
@@ -121,7 +121,8 @@ class RescuedControllerNew extends EntityAPIController {
         $con_key !== 'q' &&
         $con_key !== 'query' &&
         $con_key !== 'maxResults' &&
-        $con_key !== 'pageToken') {
+        $con_key !== 'pageToken' &&
+        $con_key !== 'rowLimit') {
 
         $conditions['query'][$con_key] = array(
           'EQUALS' => $con_value,
