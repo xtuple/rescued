@@ -645,16 +645,16 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
     // then access to this entity through it's relations.
 
     // Figure out what role we're dealing with.
-    if (in_array('rescued_contact', $account->roles)) {
+    if (user_access('view contact rescued entities', $account)) {
       // TODO: Add support for basic contacts that will be accessing the API as a public user.
       // TODO: Need a whitelist for 'rescued_contact'.
       return false;
-    } elseif (in_array('rescued_personal', $account->roles)) {
+    } elseif (user_access('view personal rescued entities', $account)) {
       // TODO: Need a whitelist for 'rescued_personal'.
       return true;
       //return false;
-    } elseif (in_array('rescued_limited', $account->roles)) {
-      // TODO: Need a whitelist for 'rescued_personal'.
+    } elseif (user_access('view limited rescued entities', $account)) {
+      // TODO: Need a whitelist for 'rescued_limited'.
       return true;
       //return false;
     } else {
