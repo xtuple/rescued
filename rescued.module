@@ -297,103 +297,6 @@ function rescued_entity_info() {
 }
 
 /**
- * Implements hook_permission().
- */
-function rescued_permission() {
-  // We set up permisssions to manage RESCUED entities.
-
-  // TODO: Add fine grained role access, admin, employee, sales rep, owner, customer, contact.
-
-  $permissions = array(
-    // Admin permissions.
-    'administer rescued entities' => array(
-      'title' => t('Administer RESCUED Entities'),
-      'description' => t('Full CRUD and RESCUED Entities'),
-    ),
-
-    // Public permissions.
-    'view public rescued entities' => array(
-      'title' => t('View public RESCUED Entities'),
-      'description' => t('View public RESCUED Entities'),
-    ),
-
-    // Any permissions.
-    'create any rescued entities' => array(
-      'title' => t('Create any RESCUED Entities'),
-      'description' => t('Create any RESCUED Entities'),
-    ),
-    'delete any rescued entities' => array(
-      'title' => t('Delete any RESCUED Entities'),
-      'description' => t('Delete any RESCUED Entities'),
-    ),
-    'edit any rescued entities' => array(
-      'title' => t('Edit any RESCUED Entities'),
-      'description' => t('Edit any RESCUED Entities'),
-    ),
-    'view any rescued entities' => array(
-      'title' => t('View any RESCUED Entities'),
-      'description' => t('View any RESCUED Entities'),
-    ),
-
-    // Contact's permissions.
-    'delete contact rescued entities' => array(
-      'title' => t("Delete Contact's RESCUED Entities"),
-      'description' => t('Allows a Contact to Delete their own RESCUED Entities'),
-    ),
-    'edit contact rescued entities' => array(
-      'title' => t("Edit Contact's RESCUED Entities"),
-      'description' => t('Allows a Contact to Edit their own RESCUED Entities'),
-    ),
-    'view contact rescued entities' => array(
-      'title' => t("View Contact's RESCUED Entities"),
-      'description' => t('Allows a Contact to View their own RESCUED Entities'),
-    ),
-    'create contact rescued entities' => array(
-      'title' => t("Create Contact's RESCUED Entities"),
-      'description' => t('Allows a Contact to Create their own RESCUED Entities'),
-    ),
-
-    // Personal permissions.
-    'delete personal rescued entities' => array(
-      'title' => t("Delete Personal RESCUED Entities"),
-      'description' => t('Allows a user to Delete their own personal RESCUED Entities'),
-    ),
-    'edit personal rescued entities' => array(
-      'title' => t("Edit Personal RESCUED Entities"),
-      'description' => t('Allows a user to Edit their own personal RESCUED Entities'),
-    ),
-    'view personal rescued entities' => array(
-      'title' => t("View Personal RESCUED Entities"),
-      'description' => t('Allows a user to View their own personal RESCUED Entities'),
-    ),
-    'create personal rescued entities' => array(
-      'title' => t("Create Personal RESCUED Entities"),
-      'description' => t('Allows a user to Create their own personal RESCUED Entities'),
-    ),
-
-    // Limited permissions.
-    'delete limited rescued entities' => array(
-      'title' => t("Delete Limited RESCUED Entities"),
-      'description' => t('Allows a user to Delete their limited access RESCUED Entities'),
-    ),
-    'edit limited rescued entities' => array(
-      'title' => t("Edit Limited RESCUED Entities"),
-      'description' => t('Allows a user to Edit their limited access RESCUED Entities'),
-    ),
-    'view limited rescued entities' => array(
-      'title' => t("View Limited RESCUED Entities"),
-      'description' => t('Allows a user to View their limited access RESCUED Entities'),
-    ),
-    'create limited rescued entities' => array(
-      'title' => t("Create Limited RESCUED Entities"),
-      'description' => t('Allows a user to Create their limited access RESCUED Entities'),
-    ),
-  );
-
-  return $permissions;
-}
-
-/**
  * Access callback for RESCUED entities.
  */
 function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
@@ -407,7 +310,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
   $is_admin = user_access('administer rescued entities', $account);
 
   if (!$is_admin && $user->uid !== 0 && (!isset($_SESSION['rescued']) || $_SESSION['rescued']['expires'] < time())) {
-    $account = rescued_reset_session_roles($account);
+    $account = rescued_reset_session($account);
   }
 
   $entityInfo = entity_get_info($entity_type);
@@ -486,7 +389,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
 /**
  * Determine this user's xTuple Contact association and what role they belong to.
  */
-function rescued_reset_session_roles($account) {
+function rescued_reset_session($account) {
   $queryParams = array(
     'query' => array(
       'uid' => array(
@@ -516,31 +419,6 @@ function rescued_reset_session_roles($account) {
     // We need to update the user, so we load it.
     $account = user_load($account->uid);
 
-    // @See: rescued_install()
-    $role_names = array(
-      'rescued_contact',
-      'rescued_personal',
-      'rescued_limited',
-      // TODO: Add employee here once it's working below.
-      //'rescued_employee'
-    );
-    $roles = array();
-    foreach ($role_names as $role_name) {
-      $role = user_role_load_by_name($role_name);
-
-      // Build roles array so we can get the rid below.
-      $roles[$role_name] = $role->rid;
-
-      // Unset all RESCUED roles for this user except 'rescued_admin'.
-      if (isset($account->roles[$role->rid])) {
-        // Because we don't want to have to grant this user a rescued_xxx role manually when they come in through
-        // new user reg, we remove all rescued roles from the user and grant them the currect role based on what type
-        // of CRM Account/Contact they are. This way their rescued_xxx role is controled by how they are currently
-        // setup in xTuple.
-        unset($account->roles[$role->rid]);
-      }
-    }
-
     // XdrupleUserContact doesn't have the account parameter because end users fill out the contact for at User Reg.
     // We need to get a Contact resource that have account and accountParent params.
     // TODO: Consider loading the full account resource to check for employee, owner roles.
@@ -550,20 +428,17 @@ function rescued_reset_session_roles($account) {
       // This is a basic user2contact and not yet a customer.
       // TODO: Should get this key 'number' from discovery doc.
       $_SESSION['rescued']['user'] = strtolower('public');
-
-      $account->roles[$roles['rescued_contact']] = 'rescued_contact';
+      $_SESSION['rescued']['user_type'] = 'rescued_contact';
     } else {
       $_SESSION['rescued']['user'] = strtolower($user2account['data']['account']);
 
       // If this is a child CRM account, we want the parent.
       if ($user2account['data']['accountParent']) {
         $cust_number = $user2account['data']['accountParent'];
-
-        // Assume any accounts with parents should be rescued_limited role.
-        $account->roles[$roles['rescued_limited']] = 'rescued_limited';
+        $_SESSION['rescued']['user_type'] = 'rescued_limited';
       } else {
         $cust_number = $user2account['data']['account'];
-        $account->roles[$roles['rescued_personal']] = 'rescued_personal';
+        $_SESSION['rescued']['user_type'] = 'rescued_personal';
       }
 
       // Save the customer data this user is associated with to the $_SESSION.
