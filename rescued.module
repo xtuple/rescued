@@ -586,14 +586,16 @@ function rescued_field_extra_fields() {
 
             $cardinality = 1;
             $weight = 20;
-            rescued_create_child_fields($name, $resource, $key, $value, $cardinality, $weight);
+            $child = $value['$ref'];
+            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight);
           } elseif ((isset($value['items']) && isset($value['items']['$ref']) &&
           strpos($value['items']['$ref'], '/') === false)) {
             // Handle toMany nested relations.
 
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 10;
-            rescued_create_child_fields($name, $resource, $key, $value, $cardinality, $weight);
+            $child = $value['items']['$ref'];
+            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -611,7 +613,8 @@ function rescued_field_extra_fields() {
 
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 30;
-            rescued_create_child_fields($name, $resource, $key, $value, $cardinality, $weight);
+            $child = strtolower(array_shift(explode( '/', $value['items']['$ref'], 2)));
+            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -663,7 +666,7 @@ function rescued_field_extra_fields() {
  * @param integer $weight
  *  Field weight for sort order.
  */
-function rescued_create_child_fields($name, $resource, $property, $values, $cardinality, $weight) {
+function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight) {
   $field_name = 'erp_' . strtolower($resource . $property);
   if (!field_info_field($field_name)) {
     $field = array(
@@ -678,10 +681,10 @@ function rescued_create_child_fields($name, $resource, $property, $values, $card
         'active' => 1,
       ),
       'settings' => array(
-        'target_type' => $name . '_' . strtolower($values['$ref']),
+        'target_type' => $name . '_' . strtolower($child),
         // TODO: Add an EntityReference_SelectionHandler and use that for our fields.
         'handler' => 'base',
-        'resource_property' => $key,
+        'resource_property' => $property,
       ),
     );
 
@@ -695,7 +698,7 @@ function rescued_create_child_fields($name, $resource, $property, $values, $card
       'field_name' => $field_name,
       'entity_type' => $name . '_' . strtolower($resource),
       'bundle' => $name . '_' . strtolower($resource),
-      'label' => $values['title'],
+      'label' => $title,
     );
     $instance['widget']['weight'] = $weight;
     $instance['display']['default']['weight'] = $weight;
