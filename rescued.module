@@ -583,104 +583,17 @@ function rescued_field_extra_fields() {
           // Set weight based on type.
           if (isset($value['$ref']) && strpos($value['$ref'], '/') === false) {
             // Handle toOne nested relations.
-            //$weight = -20;
+
+            $cardinality = 1;
             $weight = 20;
-
-            $field_name = 'erp_' . strtolower($resource . $key);
-            if (!field_info_field($field_name)) {
-              $field = array(
-                'field_name' => $field_name,
-                'type' => 'xdruple_entityreference',
-                'cardinality' => 1,
-                'module' => 'xdruple_entityreference',
-                'storage' => array(
-                  'type' => 'xdfields_rest_storage',
-                  'settings' => array(),
-                  'module' => 'xdfields_rest_storage',
-                  'active' => 1,
-                ),
-                'settings' => array(
-                  'target_type' => $name . '_' . strtolower($value['$ref']),
-                  // TODO: Add an EntityReference_SelectionHandler and use that for our fields.
-                  'handler' => 'base',
-                  'resource_property' => $key,
-                ),
-              );
-
-              field_create_field($field);
-            }
-
-            $entity_type = $name . '_' . strtolower($resource);
-            $instance = field_info_instance($entity_type, $field_name, $entity_type);
-            if (is_null($instance)) {
-              $instance = array(
-                'field_name' => $field_name,
-                'entity_type' => $name . '_' . strtolower($resource),
-                'bundle' => $name . '_' . strtolower($resource),
-                'label' => $value['title'],
-              );
-              $instance['widget']['weight'] = $weight;
-              $instance['display']['default']['weight'] = $weight;
-              field_create_instance($instance);
-            } else {
-              // Field instance already exists.
-            }
-
-//             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
-//               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
-//               'label' => t($value['title']),
-//               'weight' => $weight,
-//             );
-//             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['form'][$key] = array(
-//               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
-//               'label' => t($value['title']),
-//               'weight' => $weight,
-//             );
+            rescued_create_child_fields($name, $resource, $key, $value, $cardinality, $weight);
           } elseif ((isset($value['items']) && isset($value['items']['$ref']) &&
           strpos($value['items']['$ref'], '/') === false)) {
             // Handle toMany nested relations.
-            //$weight = -10;
+
+            $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 10;
-
-            $field_name = 'erp_' . strtolower($resource . $key);
-            if (!field_info_field($field_name)) {
-              $field = array(
-                'field_name' => $field_name,
-                'type' => 'xdruple_entityreference',
-                'cardinality' => FIELD_CARDINALITY_UNLIMITED   ,
-                'module' => 'xdruple_entityreference',
-                'storage' => array(
-                  'type' => 'xdfields_rest_storage',
-                  'settings' => array(),
-                  'module' => 'xdfields_rest_storage',
-                  'active' => 1,
-                ),
-                'settings' => array(
-                  'target_type' => $name . '_' . strtolower($value['items']['$ref']),
-// TODO: Add an EntityReference_SelectionHandler and use that for our fields.
-                  'handler' => 'base',
-                  'resource_property' => $key,
-                ),
-              );
-
-              field_create_field($field);
-            }
-
-            $entity_type = $name . '_' . strtolower($resource);
-            $instance = field_info_instance($entity_type, $field_name, $entity_type);
-            if (is_null($instance)) {
-              $instance = array(
-                'field_name' => $field_name,
-                'entity_type' => $name . '_' . strtolower($resource),
-                'bundle' => $name . '_' . strtolower($resource),
-                'label' => $value['title'],
-              );
-              $instance['widget']['weight'] = $weight;
-              $instance['display']['default']['weight'] = $weight;
-              field_create_instance($instance);
-            } else {
-              // Field instance already exists.
-            }
+            rescued_create_child_fields($name, $resource, $key, $value, $weight);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -695,49 +608,10 @@ function rescued_field_extra_fields() {
           } elseif (isset($value['items']) && isset($value['items']['$ref']) &&
           strpos($value['items']['$ref'], '/') !== false) {
             // Handle toMany key relations.
-            //$weight = -30;
+
+            $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 30;
-
-            $field_name = 'erp_' . strtolower($resource . $key);
-            if (!field_info_field($field_name)) {
-              $field = array(
-                'field_name' => $field_name,
-                'type' => 'xdruple_entityreference',
-                'cardinality' => FIELD_CARDINALITY_UNLIMITED   ,
-                'module' => 'xdruple_entityreference',
-                'storage' => array(
-                  'type' => 'xdfields_rest_storage',
-                  'settings' => array(),
-                  'module' => 'xdfields_rest_storage',
-                  'active' => 1,
-                ),
-                'settings' => array(
-                  // Strip off key relation from relation/id.
-                  'target_type' => $name . '_' . strtolower(array_shift(explode( '/', $value['items']['$ref'], 2))),
-                  // TODO: Add an EntityReference_SelectionHandler and use that for our fields.
-                  'handler' => 'base',
-                  'resource_property' => $key,
-                ),
-              );
-
-              field_create_field($field);
-            }
-
-            $entity_type = $name . '_' . strtolower($resource);
-            $instance = field_info_instance($entity_type, $field_name, $entity_type);
-            if (is_null($instance)) {
-              $instance = array(
-                'field_name' => $field_name,
-                'entity_type' => $name . '_' . strtolower($resource),
-                'bundle' => $name . '_' . strtolower($resource),
-                'label' => $value['title'],
-              );
-              $instance['widget']['weight'] = $weight;
-              $instance['display']['default']['weight'] = $weight;
-              field_create_instance($instance);
-            } else {
-              // Field instance already exists.
-            }
+            rescued_create_child_fields($name, $resource, $key, $value, $cardinality, $weight);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -769,6 +643,64 @@ function rescued_field_extra_fields() {
   }
 
   return $extra;
+}
+
+/**
+ * Creates fields for child relations on rescued entities.
+ *
+ * @param string $name
+ *  Name of rescued client.
+ *
+ * @param string $resource
+ *  Name of rescued client resource.
+ *
+ * @param string $property
+ *  Name of resource property.
+ *
+ * @param array $values
+ *  Resource property value.
+ *
+ * @param integer $weight
+ *  Field weight for sort order.
+ */
+function rescued_create_child_fields($name, $resource, $property, $values, $cardinality, $weight) {
+  $field_name = 'erp_' . strtolower($resource . $key);
+  if (!field_info_field($field_name)) {
+    $field = array(
+      'field_name' => $field_name,
+      'type' => 'xdruple_entityreference',
+      'cardinality' => $cardinality,
+      'module' => 'xdruple_entityreference',
+      'storage' => array(
+        'type' => 'xdfields_rest_storage',
+        'settings' => array(),
+        'module' => 'xdfields_rest_storage',
+        'active' => 1,
+      ),
+      'settings' => array(
+        'target_type' => $name . '_' . strtolower($values['$ref']),
+        // TODO: Add an EntityReference_SelectionHandler and use that for our fields.
+        'handler' => 'base',
+        'resource_property' => $key,
+      ),
+    );
+
+    field_create_field($field);
+  }
+
+  $entity_type = $name . '_' . strtolower($resource);
+  $instance = field_info_instance($entity_type, $field_name, $entity_type);
+  if (is_null($instance)) {
+    $instance = array(
+      'field_name' => $field_name,
+      'entity_type' => $name . '_' . strtolower($resource),
+      'bundle' => $name . '_' . strtolower($resource),
+      'label' => $values['title'],
+    );
+    $instance['widget']['weight'] = $weight;
+    $instance['display']['default']['weight'] = $weight;
+    field_create_instance($instance);
+  }
 }
 
 /**
