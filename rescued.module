@@ -593,7 +593,7 @@ function rescued_field_extra_fields() {
 
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 10;
-            rescued_create_child_fields($name, $resource, $key, $value, $weight);
+            rescued_create_child_fields($name, $resource, $key, $value, $cardinality, $weight);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -664,7 +664,7 @@ function rescued_field_extra_fields() {
  *  Field weight for sort order.
  */
 function rescued_create_child_fields($name, $resource, $property, $values, $cardinality, $weight) {
-  $field_name = 'erp_' . strtolower($resource . $key);
+  $field_name = 'erp_' . strtolower($resource . $property);
   if (!field_info_field($field_name)) {
     $field = array(
       'field_name' => $field_name,
