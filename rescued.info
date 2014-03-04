@@ -24,6 +24,7 @@ dependencies[] = views
 dependencies[] = views_ui
 dependencies[] = wsclient
 dependencies[] = wsclient_ui
+dependencies[] = xdruple
 core = 7.x
 
 ; Module includes
