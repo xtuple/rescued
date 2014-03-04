@@ -59,6 +59,9 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
       $grant_type = $this->service->settings['discovery']['grant_type'];
     }
 
+    // TODO: If we want to put this in sites/default/files instead.
+    //$localConfig['ioFileCache_directory'] = DRUPAL_ROOT . '/' . variable_get('file_public_path', conf_path() . '/files');
+
     // Once the Google library loads, this will be populated with the default settings.
     global $apiConfig;
     // Make sure the Google API PHP Client Library loads. This will overwrite $apiConfig with Google's.
