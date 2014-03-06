@@ -182,6 +182,11 @@ class RescuedControllerNew extends EntityAPIController {
 
       foreach($resources as $resource) {
         if (isset($this->entityInfo['entity class']) && $class = $this->entityInfo['entity class']) {
+          if (isset($resource['etag'])) {
+            // Google uses 'eTag'.
+            $resource['eTag'] = $resource['etag'];
+            unset($resource['etag']);
+          }
           // Instantiate a new object of this class passing the $resource values in to be assigned.
           $entity = new $class($resource, $this->entityType);
 
@@ -198,12 +203,16 @@ class RescuedControllerNew extends EntityAPIController {
         // This function should contain all the code to make a request to the web service and handle any errors.
         if ($resource = rescued_api_resource_load($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $id, $key_name)) {
           if (isset($this->entityInfo['entity class']) && $class = $this->entityInfo['entity class']) {
+            if (isset($resource['etag'])) {
+              // Google uses 'eTag'.
+              $resource['data']['eTag'] = $resource['etag'];
+            }
+
             // Instantiate a new object of this class passing the $resource values in to be assigned.
             $entity = new $class($resource['data'], $this->entityType);
 
             // Set the original_entity so we can do a JSON-Patch diff after changes.
             $entity->originalEntity = $resource['data'];
-            $entity->eTag = $resource['etag'];
           }
 
           // TODO: Heard some rumors that the array key here has to be an integer for fields API to work.
@@ -224,32 +233,24 @@ class RescuedControllerNew extends EntityAPIController {
       // Add entities to the cache.
       if (!empty($queried_entities)) {
         $cacheable = false;
-        foreach ($queried_entities as $etag_entity) {
+        foreach ($queried_entities as $etag_key => $etag_entity) {
           if (!isset($etag_entity->eTag)) {
-            // If any entities are missing an etag, it's not the full entity and we do not want to cache any of these.
-            // xTuple list requests do not inclued etags, so if one is missing, all will be missing.
-            $cacheable = false;
-            break;
-          } else {
-            $cacheable = true;
-            // Assume if one has eTag, all of them should.
-            break;
+            // If an entity is missing an etag, it's not the full entity and we do not want to cache it.
+            unset($queried_entities[$etag_key]);
           }
         }
 
-        if ($cacheable) {
-          $this->cacheSet($queried_entities);
+        $this->cacheSet($queried_entities);
 
-          // Entitycache module support: Add entities to the entity cache if we are
-          // not loading a revision.
-          if (!empty($this->entityInfo['entity cache']) && !empty($queried_entities)) {
-            EntityCacheControllerHelper::entityCacheSet($this, $queried_entities);
-          }
+        // Entitycache module support: Add entities to the entity cache if we are
+        // not loading a revision.
+        if (!empty($this->entityInfo['entity cache']) && !empty($queried_entities)) {
+          EntityCacheControllerHelper::entityCacheSet($this, $queried_entities);
+        }
 
-          // Remember if we have cached all entities now.
-          if (!$conditions && $ids === FALSE) {
-            $this->cacheComplete = TRUE;
-          }
+        // Remember if we have cached all entities now.
+        if (!$conditions && $ids === FALSE) {
+          $this->cacheComplete = TRUE;
         }
       }
     }
