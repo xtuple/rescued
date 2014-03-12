@@ -1499,6 +1499,33 @@ function rescued_discovery_type_mapper($type) {
 }
 
 /**
+ * Define default web service descriptions.
+ *
+ * This hook is invoked when web service descriptions are loaded.
+ *
+ * @return
+ *   An array of web service descriptions with the web service names as keys.
+ *
+ * @see hook_default_wsclient_service_alter()
+ */
+function rescued_default_wsclient_service() {
+  // Get $rescued_clients configureation settings from settings.php.
+  global $rescued_clients;
+
+  foreach ($rescued_clients as $client) {
+    $service = new WSClientServiceDescription($client);
+
+    if ($service->settings['discovery']['debug']) {
+      variable_set('rescued_debug_mode', true);
+    }
+
+    $services[$service->name] = $service;
+  }
+
+  return $services;
+}
+
+/**
  * DELETE a REST resource.
  */
 function rescued_api_resource_delete($discovery_client, $resource, $id, $resource_key) {
@@ -1529,7 +1556,7 @@ function rescued_api_resource_load($discovery_client, $resource, $id, $resource_
 /**
  * GET list of REST resources.
  */
-function rescued_api_resource_list($discovery_client, $resource, $optParams = array()) {
+function rescued_api_resource_list($discovery_client, $resource, $optParams = array(), $data_only = true) {
   $service = wsclient_service_load($discovery_client);
   $endpoint = $service->endpoint();
   $client = $endpoint->client();
@@ -1537,7 +1564,11 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
   // Get a list of resources.
   $result = $client->$resource->resourceList($optParams);
 
-  return isset($result['data']) ? $result['data'] : array();
+  if ($data_only) {
+    return isset($result['data']) ? $result['data'] : array();
+  } else {
+    return isset($result) ? $result : array();
+  }
 }
 
 /**
