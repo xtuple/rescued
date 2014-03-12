@@ -1499,14 +1499,7 @@ function rescued_discovery_type_mapper($type) {
 }
 
 /**
- * Define default web service descriptions.
- *
- * This hook is invoked when web service descriptions are loaded.
- *
- * @return
- *   An array of web service descriptions with the web service names as keys.
- *
- * @see hook_default_wsclient_service_alter()
+ * Implements hook_default_wsclient_service()
  */
 function rescued_default_wsclient_service() {
   // Get $rescued_clients configureation settings from settings.php.
