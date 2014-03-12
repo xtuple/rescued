@@ -178,17 +178,18 @@ class RescuedControllerNew extends EntityAPIController {
 
     // If $ids is empty, assume list loading.
     if ($ids === FALSE || ($conditions && !$passed_ids)) {
-      $resources = rescued_api_resource_list($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $conditions);
+      $resources = rescued_api_resource_list($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $conditions, false);
 
-      foreach($resources as $resource) {
+      foreach($resources['data'] as $resource) {
         if (isset($this->entityInfo['entity class']) && $class = $this->entityInfo['entity class']) {
-          if (isset($resource['etag'])) {
-            // Google uses 'eTag'.
-            $resource['eTag'] = $resource['etag'];
-            unset($resource['etag']);
-          }
           // Instantiate a new object of this class passing the $resource values in to be assigned.
           $entity = new $class($resource, $this->entityType);
+
+          if (isset($resources['etags'], $resources['etags'][$entity->identifier()])) {
+            // Google uses 'eTag'.
+            $entity->eTag = $resources['etags'][$entity->identifier()];
+            $resource['eTag'] = $resources['etags'][$entity->identifier()];
+          }
 
           // Set the original_entity so we can do a JSON-Patch diff after changes.
           $entity->originalEntity = $resource;
