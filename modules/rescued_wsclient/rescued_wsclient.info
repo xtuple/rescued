@@ -5,7 +5,6 @@ package = xDruple
 
 dependencies[] = wsclient
 dependencies[] = wsclient_ui
-dependencies[] = rescued
 
 ; Module includes
 files[] = includes/rescued_wsclient.class.inc

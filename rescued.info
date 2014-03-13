@@ -25,6 +25,7 @@ dependencies[] = views_ui
 dependencies[] = wsclient
 dependencies[] = wsclient_ui
 dependencies[] = xdruple
+dependencies[] = rescued_wsclient
 core = 7.x
 
 ; Module includes

@@ -55,3 +55,13 @@ function rescued_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+* Implements hook_enable().
+*/
+function rescued_enable() {
+  // Need to call this to add the $rescued_clients from settings.php.
+  entity_defaults_rebuild();
+  // Call rescued_field_extra_fields() so all erp fields get created.
+  rescued_field_extra_fields();
+}
