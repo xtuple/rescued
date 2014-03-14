@@ -392,8 +392,8 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
 function rescued_reset_session($account) {
   $queryParams = array(
     'query' => array(
-      'uid' => array(
-        'EQUALS' => $account->uid,
+      'drupalUserUuid' => array(
+        'EQUALS' => $account->uuid,
       ),
       // TODO: Add an admin setting for the site name.
       'xdruple_site' => array(
@@ -1057,12 +1057,20 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
         $entity->$key = $entity_values[$key];
       }
     } elseif (isset($property['$ref']) && strpos($property['$ref'], '/') !== false) {
-      // Handle toOne key relations.
-      if ($entity_values[$key]) {
-        $entity->$key = $entity_values[$key];
+      if (empty($entity_values[$key])) {
+        if ($property['type'] === 'String') {
+            $entity->$key = "";
+        } else {
+          $entity->$key = null;
+        }
       } else {
-        // $entity->$key === 0 indicates an empty select list value.
-        $entity->$key = null;
+        // Handle toOne key relations.
+        if ($entity_values[$key]) {
+          $entity->$key = $entity_values[$key];
+        } else {
+          // $entity->$key === 0 indicates an empty select list value.
+          $entity->$key = null;
+        }
       }
     } elseif (isset($property['items']['$ref']) && strpos($property['items']['$ref'], '/') !== false) {
       // Handle toMany key relations.

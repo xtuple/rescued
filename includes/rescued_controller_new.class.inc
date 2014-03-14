@@ -180,23 +180,25 @@ class RescuedControllerNew extends EntityAPIController {
     if ($ids === FALSE || ($conditions && !$passed_ids)) {
       $resources = rescued_api_resource_list($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $conditions, false);
 
-      foreach($resources['data'] as $resource) {
-        if (isset($this->entityInfo['entity class']) && $class = $this->entityInfo['entity class']) {
-          // Instantiate a new object of this class passing the $resource values in to be assigned.
-          $entity = new $class($resource, $this->entityType);
+      if (isset($resources['data'])) {
+        foreach($resources['data'] as $resource) {
+          if (isset($this->entityInfo['entity class']) && $class = $this->entityInfo['entity class']) {
+            // Instantiate a new object of this class passing the $resource values in to be assigned.
+            $entity = new $class($resource, $this->entityType);
 
-          if (isset($resources['etags'], $resources['etags'][$entity->identifier()])) {
-            // Google uses 'eTag'.
-            $entity->eTag = $resources['etags'][$entity->identifier()];
-            $resource['eTag'] = $resources['etags'][$entity->identifier()];
+            if (isset($resources['etags'], $resources['etags'][$entity->identifier()])) {
+              // Google uses 'eTag'.
+              $entity->eTag = $resources['etags'][$entity->identifier()];
+              $resource['eTag'] = $resources['etags'][$entity->identifier()];
+            }
+
+            // Set the original_entity so we can do a JSON-Patch diff after changes.
+            $entity->originalEntity = $resource;
           }
 
-          // Set the original_entity so we can do a JSON-Patch diff after changes.
-          $entity->originalEntity = $resource;
+          // TODO: Heard some rumors that the array key here has to be an integer for fields API to work.
+          $queried_entities[$entity->$key_name] = $entity;
         }
-
-        // TODO: Heard some rumors that the array key here has to be an integer for fields API to work.
-        $queried_entities[$entity->$key_name] = $entity;
       }
     } elseif ($passed_ids) {
       // This method takes an array of IDs, but our webservice only supports loading one entity at a time.
