@@ -297,6 +297,18 @@ function rescued_entity_info() {
 }
 
 /**
+ * Implements hook_user_login().
+ */
+function rescued_user_login(&$edit, $account) {
+  $is_admin = user_access('administer rescued entities', $account);
+
+  if (!$is_admin && $account->uid !== 0 && (!isset($_SESSION['rescued']) || $_SESSION['rescued']['expires'] < time())) {
+    // Initialize the user's $_SESSION.
+    rescued_reset_session($account);
+  }
+}
+
+/**
  * Access callback for RESCUED entities.
  */
 function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
