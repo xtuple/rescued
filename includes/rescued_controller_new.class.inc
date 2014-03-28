@@ -194,6 +194,7 @@ class RescuedControllerNew extends EntityAPIController {
 
             // Set the original_entity so we can do a JSON-Patch diff after changes.
             $entity->originalEntity = $resource;
+            unset($entity->originalEntity['eTag']);
           }
 
           // TODO: Heard some rumors that the array key here has to be an integer for fields API to work.
@@ -216,6 +217,7 @@ class RescuedControllerNew extends EntityAPIController {
 
             // Set the original_entity so we can do a JSON-Patch diff after changes.
             $entity->originalEntity = $resource['data'];
+            unset($entity->originalEntity['eTag']);
           }
 
           // TODO: Heard some rumors that the array key here has to be an integer for fields API to work.

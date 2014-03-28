@@ -169,7 +169,8 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
         $original_entity[$key] = $entity->$key;
       }
       // Set the original_entity so we can do a JSON-Patch diff after changes.
-      $entity->originalEntity = $original_entity;
+      // TODO: Is this needed anymore?
+      //$entity->originalEntity = $original_entity;
     }
 
     // Build the entity to add the child relations from the submitted form and form_state.
