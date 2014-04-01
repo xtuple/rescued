@@ -569,7 +569,7 @@ function rescued_entity_property_info() {
             'description' => t(isset($value['comment']) ? $value['comment'] : ""),
             'label' => t($value['title']),
             'required' => isset($value['required']) ? $value['required'] : FALSE,
-            'type' => rescued_json_schema_to_data_type($value['type']),
+            'type' => isset($value['type']) ? rescued_json_schema_to_data_type($value['type']) : 'text',
           );
         }
       }
@@ -907,67 +907,69 @@ function rescued_field_group_info() {
           ),
         );
 
-        foreach ($properties['schemas'][$resource]['properties'] as $key => $value) {
-          if (isset($value['items']) && isset($value['items']['$ref'])
-          // TODO: This would remove toMany key relations from htabs:
-          // && strpos($value['items']['$ref'], '/') === false
-          ) {
-            $field_group_tab->data['children'][] = 'group_' . $key;
-            $field_group = new stdClass;
-            $field_group->api_version = 1;
-            $field_group->identifier = 'group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default';
-            $field_group->group_name = 'group_' . $key;
-            $field_group->entity_type = $name . '_' . strtolower($resource);
-            $field_group->bundle = $name . '_' . strtolower($resource);
-            $field_group->mode = 'default';
-            $field_group->parent_name = 'group_tabs';
-            $field_group->data = array(
-              'label' => $value['title'],
-              'weight' => '80',
-              'children' => array(
-                0 => 'xd_' . strtolower($resource . $key),
-              ),
-              'format_type' => 'htab',
-              'format_settings' => array(
-                'formatter' => 'closed',
-                'instance_settings' => array(
-                  'description' => '', // TODO: Do we need this?
-                  'classes' => 'group-' . $key. ' field-group-fieldset ',
-                  //'required_fields' => 1,
+        if (isset($properties['schemas'][$resource]['properties'])) {
+          foreach ($properties['schemas'][$resource]['properties'] as $key => $value) {
+            if (isset($value['items']) && isset($value['items']['$ref'])
+            // TODO: This would remove toMany key relations from htabs:
+            // && strpos($value['items']['$ref'], '/') === false
+            ) {
+              $field_group_tab->data['children'][] = 'group_' . $key;
+              $field_group = new stdClass;
+              $field_group->api_version = 1;
+              $field_group->identifier = 'group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default';
+              $field_group->group_name = 'group_' . $key;
+              $field_group->entity_type = $name . '_' . strtolower($resource);
+              $field_group->bundle = $name . '_' . strtolower($resource);
+              $field_group->mode = 'default';
+              $field_group->parent_name = 'group_tabs';
+              $field_group->data = array(
+                'label' => $value['title'],
+                'weight' => '80',
+                'children' => array(
+                  0 => 'xd_' . strtolower($resource . $key),
                 ),
-              ),
-            );
-
-            $field_groups['group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default'] = $field_group;
-          }
-
-          if (isset($value['$ref']) && strpos($value['$ref'], '/') === false) {
-            $field_group = new stdClass;
-            $field_group->api_version = 1;
-            $field_group->identifier = 'group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default';
-            $field_group->group_name = 'group_' . $key;
-            $field_group->entity_type = $name . '_' . strtolower($resource);
-            $field_group->bundle = $name . '_' . strtolower($resource);
-            $field_group->mode = 'default';
-            $field_group->parent_name = '';
-            $field_group->data = array(
-              'label' => $value['title'],
-              'weight' => '70',
-              'children' => array(
-                0 => 'xd_' . strtolower($resource . $key),
-              ),
-              'format_type' => 'fieldset',
-              'format_settings' => array(
-                'formatter' => 'collapsible',
-                'instance_settings' => array(
-                  'description' => '', // TODO: Do we need this?
-                  'classes' => 'group-' . $key. ' field-group-fieldset ',
-                  'required_fields' => 1,
+                'format_type' => 'htab',
+                'format_settings' => array(
+                  'formatter' => 'closed',
+                  'instance_settings' => array(
+                    'description' => '', // TODO: Do we need this?
+                    'classes' => 'group-' . $key. ' field-group-fieldset ',
+                    //'required_fields' => 1,
+                  ),
                 ),
-              ),
-            );
+              );
 
-            $field_groups['group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default'] = $field_group;
+              $field_groups['group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default'] = $field_group;
+            }
+
+            if (isset($value['$ref']) && strpos($value['$ref'], '/') === false) {
+              $field_group = new stdClass;
+              $field_group->api_version = 1;
+              $field_group->identifier = 'group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default';
+              $field_group->group_name = 'group_' . $key;
+              $field_group->entity_type = $name . '_' . strtolower($resource);
+              $field_group->bundle = $name . '_' . strtolower($resource);
+              $field_group->mode = 'default';
+              $field_group->parent_name = '';
+              $field_group->data = array(
+                'label' => $value['title'],
+                'weight' => '70',
+                'children' => array(
+                  0 => 'xd_' . strtolower($resource . $key),
+                ),
+                'format_type' => 'fieldset',
+                'format_settings' => array(
+                  'formatter' => 'collapsible',
+                  'instance_settings' => array(
+                    'description' => '', // TODO: Do we need this?
+                    'classes' => 'group-' . $key. ' field-group-fieldset ',
+                    'required_fields' => 1,
+                  ),
+                ),
+              );
+
+              $field_groups['group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default'] = $field_group;
+            }
           }
         }
 
@@ -1583,6 +1585,67 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
     return isset($result) ? $result : array();
   }
 }
+
+/**
+ * POST query for a list of REST resources.
+ *
+ * This function can be used to send a large query over a POST body instead of
+ * constructing a really long URL that may fail with an error:
+ * "414 Request URI Too Large".
+ *
+ * @param string $discovery_client The API client name. e.g. 'xtuple'
+ * @param string $resource The API resource name. e.g. 'ClassCode'
+ * @param array $optParams The structured query to perform.
+ * @param boolean $data_only Return just the data. Set to fails to get the
+ *   full result that will include etags.
+ *
+ * @return array The query result response.
+ */
+function rescued_api_resource_post_query($discovery_client, $resource, $optParams = array(), $data_only = true) {
+  $service = wsclient_service_load($discovery_client);
+  $endpoint = $service->endpoint();
+  $client = $endpoint->client();
+
+  // Build restQuery structure for the POST body.
+  $postBody['attributes'] = array(
+    $resource,
+    array(),
+  );
+
+  // Format the query.
+  if (isset($optParams['query'])) {
+    foreach($optParams['query'] as $key => $value) {
+      $postBody['attributes'][1]['query'][] = array($key => $value);
+    }
+    unset($optParams['query']);
+  }
+
+  // Format the orderby.
+  if (isset($optParams['orderby'])) {
+    foreach($optParams['orderby'] as $key => $value) {
+      $postBody['attributes'][1]['orderby'][] = array($key => $value);
+    }
+    unset($optParams['orderby']);
+  }
+
+  // Add any other query info. e.g. rowlimit, pagetoken, maxresults or count.
+  foreach($optParams as $key => $value) {
+    $postBody['attributes'][1][$key] = $value;
+  }
+
+  // Put all of this into the postBody where the Google lib expects it.
+  $params = array('postBody' => $postBody);
+
+  // Get the query results.
+  $result = $client->Model->restQuery($params);
+
+  if ($data_only) {
+    return isset($result['data']) ? $result['data'] : array();
+  } else {
+    return isset($result) ? $result : array();
+  }
+}
+
 
 /**
  * PATCH a REST resource.
