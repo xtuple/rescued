@@ -116,18 +116,16 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
     $entityInfo = $entity->entityInfo();
     $handler_class = $entityInfo['operations ui']['operations'][$entity_form['#op']]['handler'];
 
-    if (isset($form_state['entity_operation_form_elements'])) {
-      if (!(strpos($form_state['build_info']['form_id'], 'entity_operations_operation_form') === 0)) {
-        // Set 'page title' = FALSE so we don't override the page title on
-        // forms that include entity_operations entities in a IEF.
-        $form_state['entity_operation_form_elements'] = array(
-          'page title' => FALSE,
-          'confirmation message' => TRUE,
-          'form elements' => TRUE,
-          'action button' => TRUE,
-          'cancel link' => TRUE,
-        );
-      }
+    if (!(strpos($form_state['build_info']['form_id'], 'entity_operations_operation_form') === 0)) {
+      // Set 'page title' = FALSE so we don't override the page title on
+      // forms that include entity_operations entities in a IEF.
+      $form_state['entity_operation_form_elements'] = array(
+        'page title' => FALSE,
+        'confirmation message' => TRUE,
+        'form elements' => TRUE,
+        'action button' => TRUE,
+        'cancel link' => TRUE,
+      );
     }
 
     $rescued_form = entity_operations_operation_form($entity_form, $form_state, $entity->entityType(), $handler_class, $entity_form['#op'], $entity);
