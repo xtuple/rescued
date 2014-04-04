@@ -565,12 +565,29 @@ function rescued_entity_property_info() {
     foreach ($discovery as $name => $resources) {
       foreach ($resources['schemas'] as $resource => $properties) {
         foreach ($properties['properties'] as $key => $value) {
+          if (isset($value['type'])) {
+            $format = isset($value['format']) ? $value['format'] : null;
+            $type = rescued_json_schema_to_data_type($value['type'], $format);
+          } else {
+            $type = 'text';
+          }
           $info[$name . '_' . strtolower($resource)]['properties'][$key] = array(
             'description' => t(isset($value['comment']) ? $value['comment'] : ""),
             'label' => t($value['title']),
             'required' => isset($value['required']) ? $value['required'] : FALSE,
-            'type' => isset($value['type']) ? rescued_json_schema_to_data_type($value['type']) : 'text',
+            'type' => $type,
           );
+
+          // Our dates come in as Javascipt dates. Need to defaint getter and
+          // setter callbacks that will convert them to timestamps.
+          if ($type === 'date') {
+            $info[$name . '_' . strtolower($resource)]['properties'][$key]['getter callback'] = 'entity_property_verbatim_date_get';
+            // TODO: There is no set function for date.  Add a custom one.
+            // @See: contrib/entity/includes/entity.property.inc, line 410
+            // Currently this doesn't seem to be needed because our forms use 'Y-m-d'.
+            // The getter is needed so views can use a date widget.
+            //$info[$name . '_' . strtolower($resource)]['properties'][$key]['setter callback'] = 'entity_property_verbatim_set';
+          }
         }
       }
     }
@@ -797,7 +814,9 @@ function rescued_entity_query_alter(&$query) {
  */
 function rescued_entity_field_query_builder(EntityFieldQuery $query) {
   $propertyConditions = $query->propertyConditions;
+  $order = $query->order;
   $entityType = $query->entityConditions['entity_type']['value'];
+  $entityInfo = entity_get_info($entityType);
 
   if (isset($propertyConditions)) {
     $queryParams = array();
@@ -817,11 +836,41 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
       } else {
         //$queryParams[$queryParam['column']] = $queryParam['value'];
 
+        // Convert query types to xTuple format.
+        $type = rescued_json_schema_get_property_type($entityInfo['json-schema'][$entityInfo['resource']], $queryParam['column']);
+
+        if ($type === 'boolean') {
+          $queryParam['value'] = empty($queryParam['value']) ? FALSE : TRUE;
+        }
+
         $queryParams['query'][$queryParam['column']] = array(
           isset($queryParam['operator']) ? rescued_get_query_operator($queryParam['operator']): 'EQUALS' => $queryParam['value'],
         );
       }
     }
+  }
+
+  if (count($order) > 0) {
+    $queryParams['orderby'] = array();
+
+    foreach ($order as $orderby) {
+      if ($orderby['direction'] === 'asc') {
+// TODO: I think the structure should be this, but the lib/query in node.js
+// isn't setup for that format.
+//         $queryParams['orderby'][] = array(
+//           'ASC' => $orderby['specifier'],
+//         );
+        $queryParams['orderby'][$orderby['specifier']] = 'ASC';
+      } elseif ($orderby['direction'] === 'desc') {
+// TODO: I think the structure should be this, but the lib/query in node.js
+// isn't setup for that format.
+//         $queryParams['orderby'][] = array(
+//           'DESC' => $orderby['specifier'],
+//         );
+        $queryParams['orderby'][$orderby['specifier']] = 'DESC';
+      }
+    }
+
   }
 
   if ($query->count) {
@@ -1433,7 +1482,7 @@ function rescued_discovery_parse_types(array $types) {
 
     foreach ($properties['properties'] as $key => $value) {
       $wsclient_types[$resource]['property info'][$key] = array(
-        'type' => rescued_json_schema_to_data_type($value['type']),
+        'type' => rescued_json_schema_to_data_type($value['type'], (isset($value['format']) ? $value['format'] : null)),
       );
     }
   }
@@ -1746,8 +1795,7 @@ function rescued_get_recursive_json_schema($resource, $json_schema) {
  *
  * @return string Drupal form field type.
  */
-function rescued_json_schema_to_form_type($type) {
-  // TODO: Should be pass format as well to handle dates??
+function rescued_json_schema_to_form_type($type, $format = null) {
   switch (strtolower($type)) {
     case 'object':
       return 'textfield';
@@ -1765,6 +1813,11 @@ function rescued_json_schema_to_form_type($type) {
       return 'textfield';
       break;
     case 'string':
+      if (isset($format) && $format === 'date') {
+        return 'date_popup';
+      } else {
+        return 'textfield';
+      }
       return 'textfield';
       break;
     default:
@@ -1779,8 +1832,7 @@ function rescued_json_schema_to_form_type($type) {
  *
  * @return string Drupal data type.
  */
-function rescued_json_schema_to_data_type($type) {
-  // TODO: Should be pass format as well to handle dates??
+function rescued_json_schema_to_data_type($type, $format = null) {
   switch (strtolower($type)) {
     case 'object':
       return 'entities';
@@ -1798,7 +1850,11 @@ function rescued_json_schema_to_data_type($type) {
       return 'decimal';
       break;
     case 'string':
-      return 'text';
+      if (isset($format) && $format === 'date') {
+        return 'date';
+      } else {
+        return 'text';
+      }
       break;
   }
 
@@ -1870,7 +1926,7 @@ function rescued_get_query_operator($operator) {
 }
 
 /**
- * The the primary/natural key for a JSON-Schema resource.
+ * Get the primary/natural key for a JSON-Schema resource.
  *
  * @param array $properties JSON-Schema properties for a single resource.
  *
@@ -1881,5 +1937,21 @@ function rescued_json_schema_get_resource_key($properties) {
     if (isset($values['isKey']) && $values['isKey']) {
       return $key;
     }
+  }
+}
+
+/**
+ * Get the property data type from the resource's JSON-Schema.
+ *
+ * @param array $schema The JSON-Schema for a single resource.
+ * @param array $property The property name to get the type for.
+ *
+ * @return string Key name.
+ */
+function rescued_json_schema_get_property_type($schema, $property) {
+  if (isset($schema['properties'][$property]['type'])) {
+    return $schema['properties'][$property]['type'];
+  } else {
+    return false;
   }
 }

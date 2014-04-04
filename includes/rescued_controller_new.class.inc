@@ -120,9 +120,14 @@ class RescuedControllerNew extends EntityAPIController {
       if ($con_key !== 'count' &&
         $con_key !== 'q' &&
         $con_key !== 'query' &&
+        $con_key !== 'orderBy' &&
+        $con_key !== 'orderby' &&
         $con_key !== 'maxResults' &&
+        $con_key !== 'maxresults' &&
         $con_key !== 'pageToken' &&
-        $con_key !== 'rowLimit') {
+        $con_key !== 'pagetoken' &&
+        $con_key !== 'rowLimit' &&
+        $con_key !== 'rowlimit') {
 
         $conditions['query'][$con_key] = array(
           'EQUALS' => $con_value,
@@ -669,6 +674,13 @@ class RescuedControllerNew extends EntityAPIController {
         );
       }
     } else {
+      if (isset($properties['type'])) {
+        $format = isset($properties['format']) ? $properties['format'] : null;
+        $type = rescued_json_schema_to_form_type($properties['type'], $format);
+      } else {
+        $type = 'text';
+      }
+
       // Handle basic property.
       $content[$key] = array(
         '#theme' => 'field',
@@ -680,12 +692,38 @@ class RescuedControllerNew extends EntityAPIController {
         '#view_mode' => 'full',
         '#language' => LANGUAGE_NONE,
         '#field_name' => $key,
-        '#field_type' => rescued_json_schema_to_form_type($properties['type']),
+        '#field_type' => $type,
         '#entity_type' => $this->entityType,
-        '#items' => array(array('value' => (!property_exists($entity, $key) || is_array($entity->{$key})) ? '' : $entity->{$key})),
         '#formatter' => 'text_default',
-        0 => array('#markup' => check_plain((!property_exists($entity, $key) || is_array($entity->{$key})) ? '' : $entity->{$key}))
       );
+
+      // Handles dates.
+      if ($type === 'date_popup') {
+        if (!property_exists($entity, $key) || is_array($entity->{$key})) {
+          $date_value = '';
+        } else {
+          $date = new DateTime($entity->$key);
+          $date_value = isset($entity->$key) ? $date->format('Y-m-d') : "";
+        }
+
+        $content[$key]['#items'] = array(
+          array(
+            'value' => $date_value,
+          )
+        );
+        $content[$key][0] = array(
+          '#markup' => check_plain($date_value),
+        );
+      } else {
+        $content[$key]['#items'] = array(
+          array(
+            'value' => (!property_exists($entity, $key) || is_array($entity->{$key})) ? '' : $entity->{$key}
+          )
+        );
+        $content[$key][0] = array(
+          '#markup' => check_plain((!property_exists($entity, $key) || is_array($entity->{$key})) ? '' : $entity->{$key})
+        );
+      }
     }
 
     return $content;
