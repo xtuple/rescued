@@ -359,13 +359,34 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
             '#markup' => isset($entity->$key) ? $entity->$key : "",
           );
         } else {
+          if (isset($properties['type'])) {
+            $format = isset($properties['format']) ? $properties['format'] : null;
+            $type = rescued_json_schema_to_form_type($properties['type'], $format);
+          } else {
+            $type = 'text';
+          }
           $form[$key] = array(
-            '#type' => rescued_json_schema_to_form_type($properties['type']),
+            '#type' => $type,
             '#required' => $required,
             '#title' => t(isset($properties['title']) ? $properties['title'] : ""),
             '#weight' => -40,
-            '#default_value' => isset($entity->$key) ? $entity->$key : "",
           );
+
+          // Handle dates.
+          if ($type === 'date_popup') {
+            if (isset($entity->$key)) {
+              $date = new DateTime($entity->$key);
+              $form[$key]['#default_value'] = isset($entity->$key) ? $date->format('Y-m-d') : "";
+            } else {
+              $form[$key]['#default_value'] = "";
+            }
+            $form[$key]['#date_label_position'] = 'hidden';
+            $form[$key]['#date_format'] = 'Y-m-d';
+            $form[$key]['#date_year_range'] = '-5:+5';
+            $form[$key]['#size'] = 15;
+          } else {
+            $form[$key]['#default_value'] = isset($entity->$key) ? $entity->$key : "";
+          }
         }
       }
       $delta++;
