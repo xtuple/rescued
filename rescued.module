@@ -854,14 +854,14 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     $queryParams['orderby'] = array();
 
     foreach ($order as $orderby) {
-      if ($orderby['direction'] === 'asc' || $orderby['direction'] === 'ASC') {
+      if (strtolower($orderby['direction']) === 'asc') {
 // TODO: I think the structure should be this, but the lib/query in node.js
 // isn't setup for that format.
 //         $queryParams['orderby'][] = array(
 //           'ASC' => $orderby['specifier'],
 //         );
         $queryParams['orderby'][$orderby['specifier']] = 'ASC';
-      } elseif ($orderby['direction'] === 'desc' || $orderby['direction'] === 'DESC') {
+      } elseif (strtolower($orderby['direction']) === 'desc') {
 // TODO: I think the structure should be this, but the lib/query in node.js
 // isn't setup for that format.
 //         $queryParams['orderby'][] = array(
