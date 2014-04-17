@@ -603,10 +603,16 @@ function rescued_field_extra_fields() {
   $discovery = rescued_get_discovery_client_docs();
 
   $extra = array();
+  $handled_properties = array();
 
   // Build up entity fields array.
   if (isset($discovery)) {
     foreach ($discovery as $name => $resources) {
+      $handled_properties[$name] = array();
+
+      // Allow modules to register as a create_child_fields handler for a $resource[$property].
+      drupal_alter('rescued_handle_create_child_fields', $handled_properties);
+
       foreach ($resources['schemas'] as $resource => $properties) {
         foreach ($properties['properties'] as $key => $value) {
           // Set weight based on type.
@@ -616,7 +622,7 @@ function rescued_field_extra_fields() {
             $cardinality = 1;
             $weight = 20;
             $child = $value['$ref'];
-            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight);
+            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
           } elseif ((isset($value['items']) && isset($value['items']['$ref']) &&
           strpos($value['items']['$ref'], '/') === false)) {
             // Handle toMany nested relations.
@@ -624,7 +630,7 @@ function rescued_field_extra_fields() {
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 10;
             $child = $value['items']['$ref'];
-            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight);
+            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -643,7 +649,7 @@ function rescued_field_extra_fields() {
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 30;
             $child = strtolower(array_shift(explode( '/', $value['items']['$ref'], 2)));
-            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight);
+            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -689,49 +695,32 @@ function rescued_field_extra_fields() {
  * @param string $property
  *  Name of resource property.
  *
- * @param array $values
- *  Resource property value.
+ * @param string $child
+ *  The child resource name.
+ *
+ * @param string $title
+ *  The title of the property.
+ *
+ * @param integer $cardinality
+ *  The cardinality of the property.
  *
  * @param integer $weight
  *  Field weight for sort order.
+ *
+ * @param array $handled_properties
+ *  $resource and $properties registered to be handled by another module.
  */
-function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight) {
-  $field_name = 'erp_' . strtolower($resource . $property);
-  if (!field_info_field($field_name)) {
-    $field = array(
-      'field_name' => $field_name,
-      'type' => 'xdruple_entityreference',
-      'cardinality' => $cardinality,
-      'module' => 'xdruple_entityreference',
-      'storage' => array(
-        'type' => 'xdfields_rest_storage',
-        'settings' => array(),
-        'module' => 'xdfields_rest_storage',
-        'active' => 1,
-      ),
-      'settings' => array(
-        'target_type' => $name . '_' . strtolower($child),
-        // TODO: Add an EntityReference_SelectionHandler and use that for our fields.
-        'handler' => 'base',
-        'resource_property' => $property,
-      ),
-    );
+function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight, $handled_properties) {
+  // Check $resource and $property to see if it's registered to be handled by
+  // another module.
+  if (isset($handled_properties[$name], $handled_properties[$name][$resource]) &&
+    in_array($property, $handled_properties[$name][$resource])) {
 
-    field_create_field($field);
-  }
-
-  $entity_type = $name . '_' . strtolower($resource);
-  $instance = field_info_instance($entity_type, $field_name, $entity_type);
-  if (is_null($instance)) {
-    $instance = array(
-      'field_name' => $field_name,
-      'entity_type' => $name . '_' . strtolower($resource),
-      'bundle' => $name . '_' . strtolower($resource),
-      'label' => $title,
-    );
-    $instance['widget']['weight'] = $weight;
-    $instance['display']['default']['weight'] = $weight;
-    field_create_instance($instance);
+    // Let other modules handle setting up this field.
+    module_invoke_all('rescued_create_child_fields', $name, $resource, $property, $child, $title, $cardinality, $weight);
+  } else {
+    // Handle default field creation for non-registered $resource[$property].
+    xdruple_entityreference_create_default_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight);
   }
 }
 
@@ -854,14 +843,14 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     $queryParams['orderby'] = array();
 
     foreach ($order as $orderby) {
-      if ($orderby['direction'] === 'asc') {
+      if (strtolower($orderby['direction']) === 'asc') {
 // TODO: I think the structure should be this, but the lib/query in node.js
 // isn't setup for that format.
 //         $queryParams['orderby'][] = array(
 //           'ASC' => $orderby['specifier'],
 //         );
         $queryParams['orderby'][$orderby['specifier']] = 'ASC';
-      } elseif ($orderby['direction'] === 'desc') {
+      } elseif (strtolower($orderby['direction']) === 'desc') {
 // TODO: I think the structure should be this, but the lib/query in node.js
 // isn't setup for that format.
 //         $queryParams['orderby'][] = array(
@@ -869,6 +858,10 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 //         );
         $queryParams['orderby'][$orderby['specifier']] = 'DESC';
       }
+    }
+
+    if (count($queryParams['orderby']) === 0) {
+      unset($queryParams['orderby']);
     }
 
   }
@@ -897,14 +890,13 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 
   $conditions = array_merge($queryParams, $pager_range);
 
-  // TODO: I think this should be false and not null, that will trigger a
-  // full list of resources to be queried.
-  //$entities = entity_load($entityType, null, $conditions);
   $entities = entity_load($entityType, false, $conditions);
 
-  return array(
+  $result = array(
     $entityType => $entities,
   );
+
+  return $result;
 }
 
 /**
@@ -1150,13 +1142,13 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
   }
 
   foreach ($child_keys as $instance_name => $instance) {
-    if (isset($form[$instance])) {
+    if (isset($form[$instance], $form[$instance]['#ief_id'])) {
       $field_name = $instance;
       $langcode = $form[$field_name]['#language'];
       $ief_id = $form[$field_name]['#ief_id'];
 
       // Skip if the field is not on the form or there is no IEF data for it.
-      if (empty($form_state['inline_entity_form'][$ief_id]) || !isset($form[$field_name])) {
+      if (empty($form_state['inline_entity_form'][$ief_id])) {
         continue;
       }
 
@@ -1577,6 +1569,9 @@ function rescued_default_wsclient_service() {
   global $rescued_clients;
 
   foreach ($rescued_clients as $client) {
+    // TODO: Add hook alter to let child modules register $rescued_clients_url_resources
+    // to concatenate into the discovery url.
+
     $service = new WSClientServiceDescription($client);
 
     if ($service->settings['discovery']['debug']) {
