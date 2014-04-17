@@ -497,8 +497,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
         $this->entityType,
         get_class($this),
         $operation_path,
-        // Create a new empty entity.
-        entity_create($this->entityType, array()),
+        $loader_position + 1,
       ),
       'access arguments' => array(
         $this->entityType,
@@ -566,6 +565,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
       }
 
       $entity = entity_create($entity_type, $values);
+      $form_state['build_info']['args'][3] = $entity;
 
       return $this->entityForm($form, $form_state, $entity_type, $entity, $operation_path);
     }
@@ -573,6 +573,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     // Case 2: we are on /add, and we don't know which bundle to use. Show a
     // list of links.
     if (empty($entity)) {
+      $entity = entity_create($entity_type, array());
       return $this->bundleSelectionForm($form, $form_state, $entity_type, $entity, $operation_path);
     }
 
@@ -583,7 +584,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     if (isset($entity->$bundle_key)) {
       $bundle_name = $entity->$bundle_key;
     } else {
-      // TODO: Not sure why this would work.
+      // In this case, $entity is the bundle name from the URL, not a full entity.
       $bundle_name = $entity;
     }
     $values[$bundle_key] = $bundle_name;
@@ -595,6 +596,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     )), PASS_THROUGH);
 
     $entity = entity_create($entity_type, $values);
+    $form_state['build_info']['args'][3] = $entity;
 
     return $this->entityForm($form, $form_state, $entity_type, $entity, $operation_path);
   }
