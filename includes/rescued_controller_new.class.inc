@@ -371,7 +371,9 @@ class RescuedControllerNew extends EntityAPIController {
 
         // TODO: Need a better way to identify these properties.
         $foo = true;
-        $new_entity[$key] = $original_entity[$key];
+        if (!$entity->is_new) {
+          $new_entity[$key] = $original_entity[$key];
+        }
       } elseif (isset($value['$ref'], $new_entity[$key]) && strpos($value['$ref'], '/') === false) {
         $relation_resource = $value['$ref'];
         $relation_entityType = strtolower($relation_resource);
@@ -421,15 +423,6 @@ class RescuedControllerNew extends EntityAPIController {
       if ($empty_entity) {
         // Nothing to save.
         return false;
-      }
-
-// TODO: Remove this, testing new user reg.
-      if ($this->entityType === 'xtuple_xdrupleusercontact') {
-        // This is a hack because the field is saved before the user is added.
-        // Need to find a hook for after the user is added to get the field association
-        // and check if the id is the correct uid, if not, update the field
-        // and the xtuple_xdrupleusercontact with the correct uid.
-        //$new_entity['uid'] = db_query('SELECT MAX(uid) FROM {users}')->fetchField() + 1;
       }
 
       // Create a service object that will be the body of the request.
