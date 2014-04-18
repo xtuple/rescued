@@ -1567,10 +1567,22 @@ function rescued_discovery_type_mapper($type) {
 function rescued_default_wsclient_service() {
   // Get $rescued_clients configureation settings from settings.php.
   global $rescued_clients;
+  $rescued_clients_url_resources = array();
 
-  foreach ($rescued_clients as $client) {
-    // TODO: Add hook alter to let child modules register $rescued_clients_url_resources
-    // to concatenate into the discovery url.
+  foreach ($rescued_clients as $name => $client) {
+    $rescued_clients_url_resources[$name] = array();
+
+    // Let other modules add their resources.
+    drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
+    $resources_path = implode('&resources[]=', $rescued_clients_url_resources[$name]);
+
+    if (!empty($resources_path)) {
+      // Concatenate into the discovery url.
+      $client['url'] = $client['url'] . '?resources[]=' . $resources_path;
+
+      // Since $rescued_clients is a global var, concatenate it in there as well.
+      $rescued_clients[$name]['url'] = $rescued_clients[$name]['url'] . '?resources[]=' . $resources_path;
+    }
 
     $service = new WSClientServiceDescription($client);
 
