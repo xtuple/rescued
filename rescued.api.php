@@ -6,6 +6,39 @@
  */
 
 /**
+ * Lets modules register discover client resources that they depend on. Each
+ * resource will be concatenated into the discovery client URL.
+ *
+ * @See: rescued_default_wsclient_service()
+ *
+ * @param array $rescued_clients_url_resources
+ *   Associative array of discovery client resources that are required by a
+ *   module. In the form of: array(
+ *     'client1_name_here' => array(
+ *       'resource1',
+ *       'resource2',
+ *     ),
+ *     'client2_name_here' => array(
+ *       'resource1',
+ *       'resource2',
+ *     ),
+ *   );
+ *
+ * @return
+ *   The modified $rescued_clients_url_resources array with your
+ *   additions/changes.
+ */
+function hook_rescued_register_clients_resources_alter(&$rescued_clients_url_resources) {
+  // TODO: Modify $rescued_clients_url_resources here by changing the array
+  // or adding more resource to it. e.g.
+  if (!in_array('resource1', $rescued_clients_url_resources['client1_name_here'])) {
+    $rescued_clients_url_resources['client1_name_here'][] = 'resource1';
+  }
+
+  return $rescued_clients_url_resources;
+}
+
+/**
  * Lets modules register that an entity property's field creation should be
  * handed off to a module that implements
  * hood_rescued_create_child_fields_alter() instead of being created by the
