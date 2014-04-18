@@ -1562,6 +1562,17 @@ function rescued_discovery_type_mapper($type) {
 }
 
 /**
+ * Implements hook_rescued_register_clients_resources_alter().
+ */
+function escued_rescued_register_clients_resources_alter(&$rescued_clients_url_resources) {
+  if (!in_array('Model', $rescued_clients_url_resources['xtuple'])) {
+    $rescued_clients_url_resources['xtuple'][] = 'Model';
+  }
+
+  return $rescued_clients_url_resources;
+}
+
+/**
  * Implements hook_default_wsclient_service()
  */
 function rescued_default_wsclient_service() {
