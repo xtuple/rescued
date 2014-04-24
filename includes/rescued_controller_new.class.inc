@@ -341,6 +341,9 @@ class RescuedControllerNew extends EntityAPIController {
       $this->invoke('insert', $entity);
     }
 
+    // Reformat entity fields we load from the REST API into xTuple's structure before saving.
+    _xdfields_rest_storage_field_format($this->entityType, $entity);
+
 
     // Build up a clean array of just the RESCUED resource properties from the entity.
     $new_entity = array();
@@ -478,10 +481,18 @@ class RescuedControllerNew extends EntityAPIController {
       unset($entity->is_new_revision);
       unset($entity->original);
 
+      $entities = array($id => $entity);
+
       // Run through attachLoad() to reformat the entity from xTuple's structure to Drupal's.
       // This will return that attached xdfields_rest_storage fields to the proper format.
-      $entities = array($id => $entity);
-      $this->attachLoad($entities);
+// TODO: attachLoad() seems to be dangerous and breaks other modules.
+      //$this->attachLoad($entities);
+
+      // It's dangerous because the fields are already in the xTuple format and
+      // gives you both Drupal and xTuple's formats:
+      // $entity->some_field === array('und' => array(), '0' => array(), '1' => array())
+      // Reloading the entity fully from the API should give a clean ressult.
+      $entity = entity_load_unchanged($this->entityType, $entity->{$this->idKey});
 
       return $return;
     }
