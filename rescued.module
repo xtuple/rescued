@@ -470,6 +470,8 @@ function rescued_reset_session($account) {
 
         // Set $_SESSION['rescued']['customer'] default.
         $_SESSION['rescued']['customer'] = $id;
+        $_SESSION['rescued']['customer_terms'] = $customer['terms'];
+        $_SESSION['rescued']['customer_credit'] = $customer['creditStatus'];
 
         // Figure out if the user can only access one ship to and set it to the $_SESSION['rescued']['ship_to'] default.
         $ship_tos = xdruple_fields_get_ship_to_list($id);
