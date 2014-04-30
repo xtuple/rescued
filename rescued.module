@@ -486,8 +486,7 @@ function rescued_reset_session($account) {
         // Set $_SESSION['rescued']['site'] default to the Customer's preferred site.
         $_SESSION['rescued']['site'] = $customer['preferredSite'];
 
-        // Set the $_SESSION['rescued']['scheduled_date'] default to tomorrow.
-        $_SESSION['rescued']['scheduled_date'] = format_date(REQUEST_TIME, 'custom', 'Y-m-d');
+        xdruple_rescued_scheduled_date('tomorrow');
       }
     }
 
