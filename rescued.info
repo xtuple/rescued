@@ -21,7 +21,6 @@ dependencies[] = token
 dependencies[] = views
 dependencies[] = xdruple
 dependencies[] = rescued_wsclient
-core = 7.x
 
 ; Module includes
 files[] = includes/rescued_api.class.inc
