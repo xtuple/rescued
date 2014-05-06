@@ -845,18 +845,8 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 
     foreach ($order as $orderby) {
       if (strtolower($orderby['direction']) === 'asc') {
-// TODO: I think the structure should be this, but the lib/query in node.js
-// isn't setup for that format.
-//         $queryParams['orderby'][] = array(
-//           'ASC' => $orderby['specifier'],
-//         );
         $queryParams['orderby'][$orderby['specifier']] = 'ASC';
       } elseif (strtolower($orderby['direction']) === 'desc') {
-// TODO: I think the structure should be this, but the lib/query in node.js
-// isn't setup for that format.
-//         $queryParams['orderby'][] = array(
-//           'DESC' => $orderby['specifier'],
-//         );
         $queryParams['orderby'][$orderby['specifier']] = 'DESC';
       }
     }
@@ -864,7 +854,6 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     if (count($queryParams['orderby']) === 0) {
       unset($queryParams['orderby']);
     }
-
   }
 
   if ($query->count) {
@@ -881,11 +870,6 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     $pager_range = array(
       'maxResults' => $query->range['length'],
       'pageToken' => $query->range['start'] / $query->range['length']
-    );
-  } else {
-// TODO: This is a hack. Add ability to switch select lists to autocomplete fields for admin users.
-    $pager_range = array(
-      'rowLimit' => 200,
     );
   }
 
@@ -1640,12 +1624,19 @@ function rescued_api_resource_load($discovery_client, $resource, $id, $resource_
  * GET list of REST resources.
  */
 function rescued_api_resource_list($discovery_client, $resource, $optParams = array(), $data_only = true) {
-  $service = wsclient_service_load($discovery_client);
-  $endpoint = $service->endpoint();
-  $client = $endpoint->client();
+  // If this is a large query and would result in a long URL, query over POST instead.
+  // This will get around the "414 Request URI Too Large" error.
+  // TODO: Is 500 characters too long?
+  if (strlen(json_encode($optParams)) > 500) {
+    $result = rescued_api_resource_post_query($discovery_client, $resource, $optParams, false);
+  } else {
+    $service = wsclient_service_load($discovery_client);
+    $endpoint = $service->endpoint();
+    $client = $endpoint->client();
 
-  // Get a list of resources.
-  $result = $client->$resource->resourceList($optParams);
+    // Get a list of resources.
+    $result = $client->$resource->resourceList($optParams);
+  }
 
   if ($data_only) {
     return isset($result['data']) ? $result['data'] : array();
