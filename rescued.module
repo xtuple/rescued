@@ -862,7 +862,7 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     $entityInfo = entity_get_info($entityType);
     $count = rescued_api_resource_list($entityInfo['discovery-client'], $entityInfo['resource'], $queryParams);
 
-    return $count[0]['count'];
+    return isset($count[0]['count']) ? $count[0]['count'] : 0;
   }
 
   $pager_range = array();
@@ -1668,29 +1668,8 @@ function rescued_api_resource_post_query($discovery_client, $resource, $optParam
   // Build restQuery structure for the POST body.
   $postBody['attributes'] = array(
     $resource,
-    array(),
+    rescued_format_post_query_options($optParams),
   );
-
-  // Format the query.
-  if (isset($optParams['query'])) {
-    foreach($optParams['query'] as $key => $value) {
-      $postBody['attributes'][1]['query'][] = array($key => $value);
-    }
-    unset($optParams['query']);
-  }
-
-  // Format the orderby.
-  if (isset($optParams['orderby'])) {
-    foreach($optParams['orderby'] as $key => $value) {
-      $postBody['attributes'][1]['orderby'][] = array($key => $value);
-    }
-    unset($optParams['orderby']);
-  }
-
-  // Add any other query info. e.g. rowlimit, pagetoken, maxresults or count.
-  foreach($optParams as $key => $value) {
-    $postBody['attributes'][1][$key] = $value;
-  }
 
   // Put all of this into the postBody where the Google lib expects it.
   $params = array('postBody' => $postBody);
@@ -1732,6 +1711,42 @@ function rescued_api_resource_insert($discovery_client, $resource, $postBody, $o
   $result = $client->$resource->insert($postBody, $optParams);
 
   return $result;
+}
+
+/**
+ * Helper function to format a GET style query options for POST query requests.
+
+ * @param array $optParams The structured query to perform.
+ *
+ * @return array The formatted query $options.
+ */
+function rescued_format_post_query_options($optParams = array()) {
+
+  // Build restQuery structure for the POST body.
+  $options = array();
+
+  // Format the query.
+  if (isset($optParams['query'])) {
+    foreach($optParams['query'] as $key => $value) {
+      $options['query'][] = array($key => $value);
+    }
+    unset($optParams['query']);
+  }
+
+  // Format the orderby.
+  if (isset($optParams['orderby'])) {
+    foreach($optParams['orderby'] as $key => $value) {
+      $options['orderby'][] = array($key => $value);
+    }
+    unset($optParams['orderby']);
+  }
+
+  // Add any other query info. e.g. rowlimit, pagetoken, maxresults or count.
+  foreach($optParams as $key => $value) {
+    $options[$key] = $value;
+  }
+
+  return $options;
 }
 
 /**
