@@ -281,7 +281,6 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
         $relation_schema = $child_entityInfo['json-schema'][$relation_resource[0]]['properties'];
 
         // Get select list options for the resource list.
-        //$resources = rescued_api_resource_list($child_entityInfo['discovery-client'], $relation_resource[0]);
         $resources = entity_load($child_entityType, FALSE);
 
         $options = array();
