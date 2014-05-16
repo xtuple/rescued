@@ -183,7 +183,8 @@ class RescuedControllerNew extends EntityAPIController {
 
     // If $ids is empty, assume list loading.
     if ($ids === FALSE || ($conditions && !$passed_ids)) {
-      $resources = rescued_api_resource_list($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $conditions, false);
+      $api_callback = $this->entityInfo['api-list-callback'];
+      $resources = $api_callback($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $conditions, false);
 
       if (isset($resources['data'])) {
         foreach($resources['data'] as $resource) {
@@ -209,8 +210,9 @@ class RescuedControllerNew extends EntityAPIController {
     } elseif ($passed_ids) {
       // This method takes an array of IDs, but our webservice only supports loading one entity at a time.
       foreach ($ids as $id) {
+        $api_callback = $this->entityInfo['api-load-callback'];
         // This function should contain all the code to make a request to the web service and handle any errors.
-        if ($resource = rescued_api_resource_load($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $id, $key_name)) {
+        if ($resource = $api_callback($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $id, $key_name)) {
           if (isset($this->entityInfo['entity class']) && $class = $this->entityInfo['entity class']) {
             if (isset($resource['etag'])) {
               // Google uses 'eTag'.
@@ -288,10 +290,12 @@ class RescuedControllerNew extends EntityAPIController {
 
     $key_name = $this->entityInfo['entity keys']['id'];
 
+    $api_callback = $this->entityInfo['api-delete-callback'];
+
     // This method takes an array of IDs, but our webservice only supports deleting one entity at a time.
     foreach ($ids as $id) {
       // This function should contain all the code to make a request to the web service and handle any errors.
-      rescued_api_resource_delete($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $id, $key_name);
+      $api_callback($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $id, $key_name);
     }
   }
 
@@ -431,7 +435,9 @@ class RescuedControllerNew extends EntityAPIController {
       // Create a service object that will be the body of the request.
       $requestBody = new Rescued_Service($new_entity);
 
-      $return = rescued_api_resource_insert($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $requestBody, $optParams);
+      $api_callback = $this->entityInfo['api-insert-callback'];
+
+      $return = $api_callback($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $requestBody, $optParams);
 
       // TODO: In theory, we could take returned patches and apply them to the
       // entity and set a cache for the new id. Then when the "view" page is
@@ -463,8 +469,10 @@ class RescuedControllerNew extends EntityAPIController {
         $id = $entity->originalEntity[$this->idKey];
         $key_name = $this->entityInfo['entity keys']['id'];
 
+        $api_callback = $this->entityInfo['api-patch-callback'];
+
         // This function should contain all the code to make a request to the web service and handle any errors.
-        $return = rescued_api_resource_patch($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $id, $key_name, $requestBody, $optParams);
+        $return = $api_callback($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $id, $key_name, $requestBody, $optParams);
 
         // TODO: In theory, we could take returned patches and apply them to the
         // entity and update the cache. Then when the "view" page is loaded, it

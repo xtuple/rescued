@@ -135,6 +135,11 @@ function rescued_entity_info() {
                 'discovery-client' => $name,
                 'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
                 'controller class' => 'RescuedControllerNew',
+                'api-delete-callback' => 'rescued_api_resource_delete',
+                'api-insert-callback' => 'rescued_api_resource_insert',
+                'api-list-callback' => 'rescued_api_resource_list',
+                'api-load-callback' => 'rescued_api_resource_load',
+                'api-patch-callback' => 'rescued_api_resource_patch',
   // TODO: For development only.
                 'field cache' => FALSE,
 // TODO: Figure out which entities we actually want to cache.
@@ -860,7 +865,8 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     // Call the REST API and get a count quicker than a full load request.
     $queryParams['count'] = true;
     $entityInfo = entity_get_info($entityType);
-    $count = rescued_api_resource_list($entityInfo['discovery-client'], $entityInfo['resource'], $queryParams);
+    $api_callback = $entityInfo['api-list-callback'];
+    $count = $api_callback($entityInfo['discovery-client'], $entityInfo['resource'], $queryParams);
 
     return isset($count[0]['count']) ? $count[0]['count'] : 0;
   }
