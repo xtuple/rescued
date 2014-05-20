@@ -307,7 +307,7 @@ function rescued_entity_info() {
 function rescued_user_login(&$edit, $account) {
   $is_admin = user_access('administer rescued entities', $account);
 
-  if (!$is_admin && $account->uid !== 0 && (!isset($_SESSION['rescued']) || $_SESSION['rescued']['expires'] < time())) {
+  if (!$is_admin && $account->uid !== 0 && (!isset($_SESSION['rescued'], $_SESSION['rescued']['expires']) || $_SESSION['rescued']['expires'] < time())) {
     // Initialize the user's $_SESSION.
     rescued_reset_session($account);
   }
