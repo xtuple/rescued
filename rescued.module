@@ -828,6 +828,8 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 //           $queryParams[$column] = $queryParam['value'];
 //         }
         $queryParams['q'] = $queryParam['value'];
+      } else if ($queryParam['column'] === 'q') {
+        $queryParams['q'] = $queryParam['value'];
       } else {
         //$queryParams[$queryParam['column']] = $queryParam['value'];
 
