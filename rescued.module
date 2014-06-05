@@ -326,7 +326,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
 
   $is_admin = user_access('administer rescued entities', $account);
 
-  if (!$is_admin && $user->uid !== 0 && (!isset($_SESSION['rescued']) || $_SESSION['rescued']['expires'] < time())) {
+  if (!$is_admin && $user->uid !== 0 && (!isset($_SESSION['rescued'], $_SESSION['rescued']['expires']) || $_SESSION['rescued']['expires'] < time())) {
     $account = rescued_reset_session($account);
   }
 
