@@ -420,7 +420,7 @@ function rescued_reset_session($account) {
   );
 
   // TODO: Get WSClient name.
-  $user2contact = rescued_api_resource_list('xtuple', 'XdrupleUserContact', $queryParams);
+  $user2contact = rescued_api_resource_list('xtuple', 'XdUserContact', $queryParams);
 
   if ($user2contact && count($user2contact) === 1) {
     // TODO: This will break if this incident gets resolved:
@@ -468,7 +468,7 @@ function rescued_reset_session($account) {
       );
 
       // TODO: Get WSClient name.
-      $customer = rescued_api_resource_list('xtuple', 'XdrupleCustomer', $queryParams);
+      $customer = rescued_api_resource_list('xtuple', 'XdCustomer', $queryParams);
       if (!empty($customer) && count($customer) === 1) {
         $id = $customer[0]['number'];
         $customer = $customer[0];

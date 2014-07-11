@@ -473,7 +473,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
   function getOperationStringSubstitutions($entity_type, $entity, $operation_path, $parameters) {
     $substitutions = parent::getOperationStringSubstitutions($entity_type, $entity, $operation_path, $parameters);
 
-    $clean_label = str_replace('XdrupleCommerce', '', $substitutions['%entity-type']);
+    $clean_label = str_replace('Xd', '', $substitutions['%entity-type']);
 
     $substitutions['%entity-type'] = $clean_label;
     $substitutions['@entity-type'] = $clean_label;
@@ -635,6 +635,4 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
 
     return $form;
   }
-
 }
-
