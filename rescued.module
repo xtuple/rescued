@@ -436,7 +436,7 @@ function rescued_reset_session($account) {
     // We need to update the user, so we load it.
     $account = user_load($account->uid);
 
-    // XdrupleUserContact doesn't have the account parameter because end users fill out the contact for at User Reg.
+    // XdUserContact doesn't have the account parameter because end users fill out the contact for at User Reg.
     // We need to get a Contact resource that have account and accountParent params.
     // TODO: Consider loading the full account resource to check for employee, owner roles.
     $user2account = rescued_api_resource_load('xtuple', 'ContactRelation', $user2contact[0]['contact']['number'], 'number');
