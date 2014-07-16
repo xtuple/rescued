@@ -74,8 +74,9 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
     $client = new Google_Client();
 
     if (variable_get('rescued_debug_mode', false)) {
-      // Disabling SSL vert verificaiton for local dev testing on self signed cert.
+      // Disabling SSL cert verificaiton for local dev testing on self signed cert.
       $client::$io->setOptions(array (CURLOPT_SSL_VERIFYPEER => false));
+      $client::$io->setOptions(array (CURLOPT_SSL_VERIFYHOST => false));
     }
 
     // Set your cached access token. Remember to replace $_SESSION with a

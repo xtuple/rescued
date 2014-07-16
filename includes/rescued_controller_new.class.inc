@@ -756,7 +756,7 @@ class RescuedEntityNew extends Entity {
 
     $entityInfo = $this->entityInfo();
 
-    $clean_label = str_replace('XdrupleCommerce', '', $entityInfo['label']);
+    $clean_label = str_replace('Xd', '', $entityInfo['label']);
 
     // Allow modules to modify the structured entity.
     $context = array(

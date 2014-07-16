@@ -16,7 +16,7 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
     $camel_split = preg_split('/(?=[A-Z])/', $info['resource']);
     $label = trim(implode(" ", $camel_split));
 
-    $label = str_replace('Xdruple Commerce ', '', $label);
+    $label = str_replace('Xd ', '', $label);
 
     $labels = array(
       'singular' => t($label),

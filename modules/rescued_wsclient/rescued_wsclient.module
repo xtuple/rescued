@@ -282,7 +282,6 @@ function rescued_wsclient_service_form_validate($form, $form_state) {
     try {
       // TODO: Poll the discovery doc to make sure it's valid?
       // How do we validate this form?
-      $foo = 'bar';
     }
     catch (DiscoveryServiceException $e) {
       form_set_error('url', t('Error parsing the Discovery Document: %message', array('%message' => $e->getMessage())));
