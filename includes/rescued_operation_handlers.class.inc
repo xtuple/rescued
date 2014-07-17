@@ -563,8 +563,11 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
         }
       }
 
-      $entity = entity_create($entity_type, $values);
-      $form_state['build_info']['args'][3] = $entity;
+      // Only set this for parent add new forms, not inline entity form children.
+      if (empty($form)) {
+        $entity = entity_create($entity_type, $values);
+        $form_state['build_info']['args'][3] = $entity;
+      }
 
       return $this->entityForm($form, $form_state, $entity_type, $entity, $operation_path);
     }
@@ -594,8 +597,11 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
       '%bundle-type' => $entity_info['bundles'][$bundle_name]['label'],
     )), PASS_THROUGH);
 
-    $entity = entity_create($entity_type, $values);
-    $form_state['build_info']['args'][3] = $entity;
+    // Only set this for parent add new forms, not inline entity form children.
+    if (empty($form)) {
+      $entity = entity_create($entity_type, $values);
+      $form_state['build_info']['args'][3] = $entity;
+    }
 
     return $this->entityForm($form, $form_state, $entity_type, $entity, $operation_path);
   }
