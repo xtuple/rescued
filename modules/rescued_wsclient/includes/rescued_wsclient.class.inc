@@ -100,10 +100,11 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
       false
     );
 
-    // Set OAuth 2.0 JWT Delegated user.
-    if (isset($_SESSION['rescued'], $_SESSION['rescued']['user'])) {
-      $role_user = $_SESSION['rescued']['user'];
+    /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+    $session = extensions_get_session();
 
+    // Set OAuth 2.0 JWT Delegated user.
+    if ($role_user = $session->getRescued('user')) {
       if (isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $role_user) {
         unset($_SESSION['access_token']);
         unset($_SESSION['oauth_user']);
