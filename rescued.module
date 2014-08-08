@@ -306,8 +306,10 @@ function rescued_entity_info() {
  */
 function rescued_user_login(&$edit, $account) {
   $is_admin = user_access('administer rescued entities', $account);
+  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+  $session = extensions_get_session();
 
-  if (!$is_admin && $account->uid !== 0 && (!isset($_SESSION['rescued'], $_SESSION['rescued']['expires']) || $_SESSION['rescued']['expires'] < time())) {
+  if (!$is_admin && $account->uid !== 0 && $session->getRescued('expires', 0) < time()) {
     // Initialize the user's $_SESSION.
     rescued_reset_session($account);
   }
@@ -318,6 +320,8 @@ function rescued_user_login(&$edit, $account) {
  */
 function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
   global $user;
+  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+  $session = extensions_get_session();
 
   // TODO: Add caching to this function.
   if (!isset($account)) {
@@ -325,8 +329,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
   }
 
   $is_admin = user_access('administer rescued entities', $account);
-
-  if (!$is_admin && $user->uid !== 0 && (!isset($_SESSION['rescued'], $_SESSION['rescued']['expires']) || $_SESSION['rescued']['expires'] < time())) {
+  if (!$is_admin && $user->uid !== 0 && ($session->getRescued('expires', 0) < time())) {
     $account = rescued_reset_session($account);
   }
 
@@ -427,11 +430,13 @@ function rescued_reset_session($account) {
     // www.xtuple.org/xtincident/view/features/17846
     // We will have to handle multiple accounts on one contact.
 
-    $_SESSION['rescued'] = $user2contact[0];
-    $_SESSION['rescued']['expires'] = time() + 3600; // One hour from now, this will be reloaded.
+    /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+    $session = extensions_get_session();
+    $session->set('rescued', $user2contact[0]);
+    $session->setRescued('expires', time() + 3600); // One hour from now, this will be reloaded.
 
     // Remove 'account' from the $_SESSION, we'll set roles below from the account.
-    unset($_SESSION['rescued']['account']);
+    $session->removeRescued('account');
 
     // We need to update the user, so we load it.
     $account = user_load($account->uid);
@@ -444,18 +449,18 @@ function rescued_reset_session($account) {
     if (!isset($user2account)) {
       // This is a basic user2contact and not yet a customer.
       // TODO: Should get this key 'number' from discovery doc.
-      $_SESSION['rescued']['user'] = strtolower('public');
-      $_SESSION['rescued']['user_type'] = 'rescued_contact';
+      $session->setRescued('user', strtolower('public'));
+      $session->setRescued('user_type', 'rescued_contact');
     } else {
-      $_SESSION['rescued']['user'] = strtolower($user2account['data']['account']);
+      $session->setRescued('user', strtolower($user2account['data']['account']));
 
       // If this is a child CRM account, we want the parent.
       if ($user2account['data']['accountParent']) {
         $cust_number = $user2account['data']['accountParent'];
-        $_SESSION['rescued']['user_type'] = 'rescued_limited';
+        $session->setRescued('user_type', 'rescued_limited');
       } else {
         $cust_number = $user2account['data']['account'];
-        $_SESSION['rescued']['user_type'] = 'rescued_personal';
+        $session->setRescued('user_type', 'rescued_personal');
       }
 
       // Save the customer data this user is associated with to the $_SESSION.
@@ -474,22 +479,22 @@ function rescued_reset_session($account) {
         $customer = $customer[0];
 
         // Set $_SESSION['rescued']['customer'] default.
-        $_SESSION['rescued']['customer'] = $id;
-        $_SESSION['rescued']['customer_terms'] = $customer['terms'];
-        $_SESSION['rescued']['customer_credit'] = $customer['creditStatus'];
+        $session->setRescued('customer', $id);
+        $session->setRescued('customer_terms', $customer['terms']);
+        $session->setRescued('customer_credit', $customer['creditStatus']);
 
         // Figure out if the user can only access one ship to and set it to the $_SESSION['rescued']['ship_to'] default.
         $ship_tos = xdruple_fields_get_ship_to_list($id);
         if (!empty($ship_tos) && count($ship_tos) === 1) {
-          $_SESSION['rescued']['ship_to'] = array_shift(array_keys($ship_tos));
+          $session->setRescued('ship_to', array_shift(array_keys($ship_tos)));
         } else {
-          // Or set $_SESSION['rescued']['ship_to'] default to the Customer's defualt Ship To.
-          $_SESSION['rescued']['ship_to'] = xdruple_fields_get_ship_to_default($id);
+          // Or set $_SESSION['rescued']['ship_to'] default to the Customer's default Ship To.
+          $session->setRescued('ship_to', xdruple_fields_get_ship_to_default($id));
         }
-        $_SESSION['rescued']['custom_ship_to'] = false;
+        $session->setRescued('custom_ship_to', false);
 
         // Set $_SESSION['rescued']['site'] default to the Customer's preferred site.
-        $_SESSION['rescued']['site'] = $customer['preferredSite'];
+        $session->setRescued('site', $customer['preferredSite']);
 
         xdruple_rescued_scheduled_date('tomorrow');
       }
@@ -527,13 +532,16 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
     'State' => true,
   );
 
+  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+  $session = extensions_get_session();
+
   if ($op === 'view' && isset($white_list[$entityInfo['resource']])) {
     return true;
   } elseif ($op !== 'view' && isset($white_list[$entityInfo['resource']])) {
     // Only admins and employees should be able to create/update/delete
     // $white_list entities.
     return false;
-  } elseif (isset($_SESSION['rescued']) && isset($_SESSION['rescued']['user'])) {
+  } elseif ($session->getRescued('user')) {
     // For non-white_list entities, we check if the user's rescued role gives
     // then access to this entity through it's relations.
 
