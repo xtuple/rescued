@@ -410,14 +410,16 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
  * Determine this user's xTuple Contact association and what role they belong to.
  */
 function rescued_reset_session($account) {
+  global $rescued_clients;
+  $app_name = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
+
   $queryParams = array(
     'query' => array(
       'drupalUserUuid' => array(
         'EQUALS' => $account->uuid,
       ),
-      // TODO: Add an admin setting for the site name.
       'xdruple_site' => array(
-        'EQUALS' => 'b2c',
+        'EQUALS' => $app_name,
       ),
     ),
   );
