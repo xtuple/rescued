@@ -1585,12 +1585,14 @@ function rescued_rescued_register_clients_resources_alter(&$rescued_clients_url_
 }
 
 /**
- * Implements hook_default_wsclient_service()
+ * We force the rescued client to be loaded from our config file and ignore
+ * what is in the database.
  */
-function rescued_default_wsclient_service() {
+function rescued_get_wsclient_service_from_config() {
   // Get $rescued_clients configureation settings from settings.php.
   global $rescued_clients;
   $rescued_clients_url_resources = array();
+  $services = array();
 
   foreach ($rescued_clients as $name => $client) {
     $rescued_clients_url_resources[$name] = array();
@@ -1617,6 +1619,43 @@ function rescued_default_wsclient_service() {
   }
 
   return $services;
+}
+
+/**
+ * Implements hook_default_wsclient_service()
+ */
+function rescued_default_wsclient_service() {
+  // Get $rescued_clients configureation settings from settings.php and config.yaml.
+  $services = rescued_get_wsclient_service_from_config();
+
+  return $services;
+}
+
+/**
+ * Implements hook_wsclient_service_load()
+ *
+ * Act on web service descriptions being loaded from the database.
+ *
+ * This hook is invoked during web service description loading, which is
+ * handled by entity_load(), via the EntityCRUDController.
+ *
+ * @param $services
+ *   An array of web service descriptions being loaded, keyed by id.
+ */
+function rescued_wsclient_service_load($services) {
+  // Get $rescued_clients configureation settings from settings.php and config.yaml.
+  $config_services = rescued_get_wsclient_service_from_config();
+
+  foreach ($config_services as $service => $config) {
+    if (!empty($services[$service])) {
+      // Merge the config settings into the $services client object.
+      foreach ($config as $key => $value) {
+        $services[$service]->$key = $value;
+      }
+    } else {
+      $services[$service] = $config;
+    }
+  }
 }
 
 /**
