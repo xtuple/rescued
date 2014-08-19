@@ -12,9 +12,10 @@
 function rescued_wsclient_install() {
   // Create the definition for the new url column.
   $new_url_field = array(
-    'type' => 'varchar',
-    'length' => '4096',
+    'type' => 'text',
     'not null' => TRUE,
+    'serialize' => FALSE,
+    'size' => 'big',
     'description' => 'The url of the web service.',
   );
 
