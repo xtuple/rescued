@@ -37,15 +37,17 @@ class Rescued_ApiService extends Google_Service {
     $apiConfig['basePath'] = rtrim($discovery['rootUrl'], "/"); // Remove last slash from rootUrl.
     $this->servicePath = $discovery['servicePath'];
 
-    // Add each service resource and it's methods.
-    foreach ($discovery['resources'] as $key => $value) {
-      // TODO: Make the class we use here configurable from WSClient settings
-      // so you could use something like Google's Calendar class in their library.
-      // The Rescued_ServiceResource class is currently specific to xTuple since
-      // it uses isKey in our custom JSON-Schema.
-      // Consider looking for resource method parameters where 'location' === 'path'
-      // to make that more generic.
-      $this->$key = new Rescued_ServiceResource($this, $this->serviceName, $key, $discovery['resources'][$key]);
+    if (!empty($discovery['resources'])) {
+      // Add each service resource and it's methods.
+      foreach ($discovery['resources'] as $key => $value) {
+        // TODO: Make the class we use here configurable from WSClient settings
+        // so you could use something like Google's Calendar class in their library.
+        // The Rescued_ServiceResource class is currently specific to xTuple since
+        // it uses isKey in our custom JSON-Schema.
+        // Consider looking for resource method parameters where 'location' === 'path'
+        // to make that more generic.
+        $this->$key = new Rescued_ServiceResource($this, $this->serviceName, $key, $discovery['resources'][$key]);
+      }
     }
   }
 

@@ -302,6 +302,41 @@ function rescued_entity_info() {
 }
 
 /**
+ * Check if the resources exist yet. This function can be called to ensure the
+ * entities you need are loaded before preforming any action. It is useful to
+ * prevent errors during install and cache refreshing.
+ *
+ * @param array $resources
+ *   An array of resource names.
+ * @return boolean
+ *   True if all resources in the array exist.
+ */
+function rescued_resources_exist($resources, $discovery_client = 'xtuple') {
+  $serviceInfo = entity_get_info('wsclient_service');
+  if (empty($serviceInfo)) {
+    return FALSE;
+  }
+
+  $service = wsclient_service_load($discovery_client);
+  $endpoint = $service->endpoint();
+  $client = $endpoint->client();
+  foreach ($resources as $resource) {
+    $entityName = 'xtuple_' . strtolower($resource);
+
+    $entityInfo = entity_get_info($entityName);
+    if (empty($entityInfo)) {
+      return FALSE;
+    }
+
+    if (!is_object($client->$resource)) {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+}
+
+/**
  * Implements hook_user_login().
  */
 function rescued_user_login(&$edit, $account) {
@@ -410,6 +445,18 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
  * Determine this user's xTuple Contact association and what role they belong to.
  */
 function rescued_reset_session($account) {
+  // Check if the rescued resources exist yet. This function can be called
+  // before all entities are setup. Just return account if it's not ready.
+  $resources = array(
+    'XdUserContact',
+    'ContactRelation',
+    'XdCustomer',
+    'XdShipto',
+  );
+  if (!rescued_resources_exist($resources)) {
+    return $account;
+  }
+
   global $rescued_clients;
   $app_name = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
 
