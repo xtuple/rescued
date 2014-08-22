@@ -108,7 +108,7 @@ function hook_rescued_create_child_fields($name, $resource, $property, $child, $
     }
 
     $entity_type = $name . '_' . strtolower($resource);
-    $instance = field_read_instance($entity_type, $field_name, $entity_type);
+    $instance = field_read_instance($entity_type, $field_name, $entity_type, array('include_inactive' => TRUE, 'include_deleted' => TRUE));
     if (empty($instance)) {
       $instance = array(
         'field_name' => $field_name,
