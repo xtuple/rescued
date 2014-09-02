@@ -379,6 +379,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
           return true;
         } elseif (isset($entityInfo) && (
           user_access('create contact rescued entities', $account)
+          || user_access('create employee rescued entities', $account)
           || user_access('create personal rescued entities', $account)
           || user_access('create limited rescued entities', $account)
         )) {
@@ -396,6 +397,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
           return true;
         } elseif (isset($entityInfo) && (
           user_access('delete contact rescued entities', $account)
+          || user_access('delete employee rescued entities', $account)
           || user_access('delete personal rescued entities', $account)
           || user_access('delete limited rescued entities', $account)
         )) {
@@ -413,6 +415,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
           return true;
         } elseif (isset($entityInfo) && (
           user_access('edit contact rescued entities', $account)
+          || user_access('edit employee rescued entities', $account)
           || user_access('edit personal rescued entities', $account)
           || user_access('edit limited rescued entities', $account)
         )) {
@@ -430,6 +433,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
         } elseif (isset($entityInfo) && (
           user_access('view public rescued entities', $account)
           || user_access('view contact rescued entities', $account)
+          || user_access('view employee rescued entities', $account)
           || user_access('view personal rescued entities', $account)
           || user_access('view limited rescued entities', $account)
         )) {
@@ -449,6 +453,7 @@ function rescued_reset_session($account) {
   // before all entities are setup. Just return account if it's not ready.
   $resources = array(
     'XdUserContact',
+    'Account',
     'ContactRelation',
     'XdCustomer',
     'XdShipto',
@@ -505,15 +510,28 @@ function rescued_reset_session($account) {
     } else {
       $session->setRescued('user', strtolower($user2account['data']['account']));
 
-      // If this is a child CRM account, we want the parent.
-      if ($user2account['data']['accountParent']) {
+      // Get this CRM Account and figure out what type of user it is.
+      $crmAccount = rescued_api_resource_load('xtuple', 'Account', $user2account['data']['account'], 'number');
+
+      // CRM Accounts with a parent Account are limited users unless they are
+      // a Customer, Rep or Employee.
+      if ($user2account['data']['accountParent'] &&
+        empty($crmAccount['data']['customer']) &&
+        empty($crmAccount['data']['employee']) &&
+        empty($crmAccount['data']['salesRep'])) {
+
         $cust_number = $user2account['data']['accountParent'];
         $session->setRescued('user_type', 'rescued_limited');
+      } elseif (isset($crmAccount['data']['employee'])) {
+        // An Employee has more access. This could also be a Customer or Sales Rep.
+        $cust_number = $user2account['data']['account'];
+        $session->setRescued('user_type', 'rescued_employee');
       } else {
         $cust_number = $user2account['data']['account'];
         $session->setRescued('user_type', 'rescued_personal');
       }
 
+      // There is a chance that a CRM Account is not a Customer, so we do a list query.
       // Save the customer data this user is associated with to the $_SESSION.
       $queryParams = array(
         'query' => array(
@@ -522,8 +540,6 @@ function rescued_reset_session($account) {
           ),
         ),
       );
-
-      // TODO: Get WSClient name.
       $customer = rescued_api_resource_list('xtuple', 'XdCustomer', $queryParams);
       if (!empty($customer) && count($customer) === 1) {
         $id = $customer[0]['number'];
@@ -601,6 +617,9 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
       // TODO: Add support for basic contacts that will be accessing the API as a public user.
       // TODO: Need a whitelist for 'rescued_contact'.
       return false;
+    } elseif (user_access('view employee rescued entities', $account)) {
+      // TODO: Need a whitelist for 'rescued_employee'.
+      return true;
     } elseif (user_access('view personal rescued entities', $account)) {
       // TODO: Need a whitelist for 'rescued_personal'.
       return true;
@@ -1622,6 +1641,9 @@ function rescued_rescued_register_clients_resources_alter(&$rescued_clients_url_
   }
   if (!in_array('XdUserContact', $rescued_clients_url_resources['xtuple'])) {
     $rescued_clients_url_resources['xtuple'][] = 'XdUserContact';
+  }
+  if (!in_array('Account', $rescued_clients_url_resources['xtuple'])) {
+    $rescued_clients_url_resources['xtuple'][] = 'Account';
   }
   if (!in_array('ContactRelation', $rescued_clients_url_resources['xtuple'])) {
     $rescued_clients_url_resources['xtuple'][] = 'ContactRelation';
