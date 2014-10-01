@@ -59,19 +59,25 @@ class Rescued_ApiService extends Google_Service {
    * @return array API Discovery Document.
    */
   public function getDiscovery($url) {
-    // Get REST API Discovery Document.
-    $io = new Google_CurlIO();
+    // Use drupal_static because this gets calls a lot repeatedly.
+    $discovery = &drupal_static(__FUNCTION__);
 
-    if ($this->debug) {
-      // Disabling SSL cert verificaiton for local dev testing on self signed cert.
-      $io->setOptions(array (CURLOPT_SSL_VERIFYPEER => false));
+    if (!isset($discovery)) {
+      // Get REST API Discovery Document.
+      $io = new Google_CurlIO();
+
+      if ($this->debug) {
+        // Disabling SSL cert verificaiton for local dev testing on self signed cert.
+        $io->setOptions(array (CURLOPT_SSL_VERIFYPEER => false));
+      }
+
+      $req = new Google_HttpRequest($url, "GET");
+      $res = $io->getCachedRequest($req) ? $io->getCachedRequest($req) : $io->makeRequest($req);
+      $discovery = json_decode($res->getResponseBody(), true);
+
+      // TODO: Error check for valid discovery.
     }
 
-    $req = new Google_HttpRequest($url, "GET");
-    $res = $io->getCachedRequest($req) ? $io->getCachedRequest($req) : $io->makeRequest($req);
-    $discovery = json_decode($res->getResponseBody(), true);
-
-    // TODO: Error check for valid discovery.
     return $discovery;
   }
 }

@@ -235,7 +235,7 @@ class Rescued_OAuth2 extends Google_OAuth2 {
       if ($this->assertionCredentials) {
         $this->refreshTokenWithAssertion();
       } else {
-        if (! array_key_exists('refresh_token', $this->token)) {
+        if (!isset($this->token['refresh_token'])) {
             throw new Google_AuthException("The OAuth 2.0 access token has expired, "
                 . "and a refresh token is not available. Refresh tokens are not "
                 . "returned for responses that were auto-approved.");
