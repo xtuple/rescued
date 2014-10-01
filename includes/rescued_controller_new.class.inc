@@ -57,7 +57,7 @@ class RescuedControllerNew extends EntityAPIController {
         // Restructure conditions so array_diff_assoc() can determine matches.
         $xtuple_conditions = array();
         foreach ($conditions['query'] as $key => $condition) {
-          if (array_key_exists('EQUALS', $condition)) {
+          if (isset($condition['EQUALS'])) {
             $xtuple_conditions[$key] = $condition['EQUALS'];
           } else {
             // TODO: Add support for other type of conditions?
@@ -373,7 +373,8 @@ class RescuedControllerNew extends EntityAPIController {
       if (!isset($entity->$key)) {
         continue;
       }
-      if (is_array($entity->{$key}) && array_key_exists(LANGUAGE_NONE, $entity->{$key})) {
+      if (is_array($entity->{$key}) &&
+          (isset($entity->{$key}[LANGUAGE_NONE]) || array_key_exists(LANGUAGE_NONE, $entity->{$key}))) {
         // This property is loaded through fields API. Skip it.
 
         // TODO: Need a better way to identify these properties.

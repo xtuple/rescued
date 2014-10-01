@@ -317,9 +317,7 @@ function rescued_resources_exist($resources, $discovery_client = 'xtuple') {
     return FALSE;
   }
 
-  $service = wsclient_service_load($discovery_client);
-  $endpoint = $service->endpoint();
-  $client = $endpoint->client();
+  $client = rescued_api_get_client($discovery_client);
   foreach ($resources as $resource) {
     $entityName = 'xtuple_' . strtolower($resource);
 
@@ -375,16 +373,16 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['add'])) {
         return false;
       } else {
-        if ($is_admin || user_access('create any rescued entities', $account)) {
-          return true;
-        } elseif (isset($entityInfo) && (
-          user_access('create contact rescued entities', $account)
-          || user_access('create employee rescued entities', $account)
-          || user_access('create personal rescued entities', $account)
+        if (!$is_admin && isset($entityInfo) && (
+          user_access('create personal rescued entities', $account)
           || user_access('create limited rescued entities', $account)
+          || user_access('create contact rescued entities', $account)
+          || user_access('create employee rescued entities', $account)
         )) {
           // TODO: What should these users be allowed to create?
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+        } elseif ($is_admin || user_access('create any rescued entities', $account)) {
+          return true;
         } else {
           return false;
         }
@@ -393,15 +391,15 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['delete'])) {
         return false;
       } else {
-        if ($is_admin || user_access('delete any rescued entities', $account)) {
-          return true;
-        } elseif (isset($entityInfo) && (
-          user_access('delete contact rescued entities', $account)
-          || user_access('delete employee rescued entities', $account)
-          || user_access('delete personal rescued entities', $account)
+        if (!$is_admin && isset($entityInfo) && (
+          user_access('delete personal rescued entities', $account)
           || user_access('delete limited rescued entities', $account)
+          || user_access('delete contact rescued entities', $account)
+          || user_access('delete employee rescued entities', $account)
         )) {
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+        } elseif ($is_admin || user_access('delete any rescued entities', $account)) {
+          return true;
         } else {
           return false;
         }
@@ -411,15 +409,15 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['edit'])) {
         return false;
       } else {
-        if ($is_admin || user_access('edit any rescued entities', $account)) {
-          return true;
-        } elseif (isset($entityInfo) && (
-          user_access('edit contact rescued entities', $account)
-          || user_access('edit employee rescued entities', $account)
-          || user_access('edit personal rescued entities', $account)
+        if (!$is_admin && isset($entityInfo) && (
+          user_access('edit personal rescued entities', $account)
           || user_access('edit limited rescued entities', $account)
+          || user_access('edit contact rescued entities', $account)
+          || user_access('edit employee rescued entities', $account)
         )) {
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+        } elseif ($is_admin || user_access('edit any rescued entities', $account)) {
+          return true;
         } else {
           return false;
         }
@@ -428,16 +426,16 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['view'])) {
         return false;
       } else {
-        if ($is_admin || user_access('view any rescued entities', $account)) {
-          return true;
-        } elseif (isset($entityInfo) && (
+        if (!$is_admin && isset($entityInfo) && (
           user_access('view public rescued entities', $account)
-          || user_access('view contact rescued entities', $account)
-          || user_access('view employee rescued entities', $account)
           || user_access('view personal rescued entities', $account)
           || user_access('view limited rescued entities', $account)
+          || user_access('view contact rescued entities', $account)
+          || user_access('view employee rescued entities', $account)
         )) {
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+        } elseif ($is_admin || user_access('view any rescued entities', $account)) {
+          return true;
         } else {
           return false;
         }
@@ -449,6 +447,14 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
  * Determine this user's xTuple Contact association and what role they belong to.
  */
 function rescued_reset_session($account) {
+  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+  $session = extensions_get_session();
+
+  // Unset OAuth session values so they get rebuilt below.
+  unset($_SESSION['access_token']);
+  unset($_SESSION['oauth_user']);
+  $session->removeRescued('user');
+
   // Check if the rescued resources exist yet. This function can be called
   // before all entities are setup. Just return account if it's not ready.
   $resources = array(
@@ -483,9 +489,6 @@ function rescued_reset_session($account) {
     // TODO: This will break if this incident gets resolved:
     // www.xtuple.org/xtincident/view/features/17846
     // We will have to handle multiple accounts on one contact.
-
-    /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-    $session = extensions_get_session();
     $session->set('rescued', $user2contact[0]);
     $session->setRescued('expires', time() + 3600); // One hour from now, this will be reloaded.
 
@@ -617,14 +620,7 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
     // then access to this entity through it's relations.
 
     // Figure out what role we're dealing with.
-    if (user_access('view contact rescued entities', $account)) {
-      // TODO: Add support for basic contacts that will be accessing the API as a public user.
-      // TODO: Need a whitelist for 'rescued_contact'.
-      return false;
-    } elseif (user_access('view employee rescued entities', $account)) {
-      // TODO: Need a whitelist for 'rescued_employee'.
-      return true;
-    } elseif (user_access('view personal rescued entities', $account)) {
+    if (user_access('view personal rescued entities', $account)) {
       // TODO: Need a whitelist for 'rescued_personal'.
       return true;
       //return false;
@@ -632,6 +628,13 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
       // TODO: Need a whitelist for 'rescued_limited'.
       return true;
       //return false;
+    } elseif (user_access('view contact rescued entities', $account)) {
+      // TODO: Add support for basic contacts that will be accessing the API as a public user.
+      // TODO: Need a whitelist for 'rescued_contact'.
+      return false;
+    } elseif (user_access('view employee rescued entities', $account)) {
+      // TODO: Need a whitelist for 'rescued_employee'.
+      return true;
     } else {
       return false;
     }
@@ -1734,12 +1737,76 @@ function rescued_wsclient_service_load($services) {
 }
 
 /**
+ * Initialize a WSClient and static cache the Client for all future requests.
+ *
+ * @param string $discovery_client
+ *   The name of the discovery service client. e.g. 'xtuple'
+ *
+ * @return object
+ *   The WSClient
+ */
+function rescued_api_get_client($discovery_client) {
+  // Use drupal_static because this gets calls a lot repeatedly.
+  $rescued = &drupal_static(__FUNCTION__);
+
+  if (!isset($rescued[$discovery_client]['client'])) {
+    $service = wsclient_service_load($discovery_client);
+    $endpoint = $service->endpoint();
+    $client = $endpoint->client();
+    $rescued[$discovery_client]['client'] = $client;
+    $rescued[$discovery_client]['prn'] = $service->settings['discovery']['prn'];
+  } else {
+    $client = $rescued[$discovery_client]['client'];
+  }
+
+  // Reset $oauth-prn because drupal_static's client may be stale.
+  $auth = $client->client->getAuth();
+  $oauth = $auth->assertionCredentials;
+
+  if (isset($rescued[$discovery_client]['prn'])) {
+    $prn = $rescued[$discovery_client]['prn'];
+  }
+
+  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+  $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
+  $reset = FALSE;
+
+  // Set OAuth 2.0 JWT Delegated user.
+  if ($role_user = $session->getRescued('user')) {
+    if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $role_user) ||
+        $oauth->prn !== $role_user){
+
+      $oauth->prn = $role_user;
+      $oauth_user = $role_user;
+      $reset = TRUE;
+    }
+  } elseif (isset($prn)) {
+    if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $prn) ||
+        $oauth->prn !== $prn) {
+
+      $oauth->prn = $prn;
+      $oauth_user = $prn;
+      $reset = TRUE;
+    }
+  }
+
+  // Reset AssertionCredentials so cached client has correct prn username and access token.
+  if ($reset) {
+    unset($_SESSION['access_token']);
+    unset($_SESSION['oauth_user']);
+    $auth->token = null;
+    $_SESSION['oauth_user'] = $oauth_user;
+    $client->client->setAssertionCredentials($oauth);
+  }
+
+  return $client;
+}
+
+/**
  * DELETE a REST resource.
  */
 function rescued_api_resource_delete($discovery_client, $resource, $id, $resource_key) {
-  $service = wsclient_service_load($discovery_client);
-  $endpoint = $service->endpoint();
-  $client = $endpoint->client();
+  $client = rescued_api_get_client($discovery_client);
 
   // Delete the resource.
   $result = $client->$resource->delete($id, $resource_key);
@@ -1751,9 +1818,7 @@ function rescued_api_resource_delete($discovery_client, $resource, $id, $resourc
  * GET a REST resource.
  */
 function rescued_api_resource_load($discovery_client, $resource, $id, $resource_key) {
-  $service = wsclient_service_load($discovery_client);
-  $endpoint = $service->endpoint();
-  $client = $endpoint->client();
+  $client = rescued_api_get_client($discovery_client);
 
   // Get the resource.
   $result = $client->$resource->get($id, $resource_key);
@@ -1771,9 +1836,7 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
   if (strlen(json_encode($optParams)) > 500) {
     $result = rescued_api_resource_post_query($discovery_client, $resource, $optParams, false);
   } else {
-    $service = wsclient_service_load($discovery_client);
-    $endpoint = $service->endpoint();
-    $client = $endpoint->client();
+    $client = rescued_api_get_client($discovery_client);
 
     // Get a list of resources.
     $result = $client->$resource->resourceList($optParams);
@@ -1802,9 +1865,7 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
  * @return array The query result response.
  */
 function rescued_api_resource_post_query($discovery_client, $resource, $optParams = array(), $data_only = true) {
-  $service = wsclient_service_load($discovery_client);
-  $endpoint = $service->endpoint();
-  $client = $endpoint->client();
+  $client = rescued_api_get_client($discovery_client);
 
   // Build restQuery structure for the POST body.
   $postBody['attributes'] = array(
@@ -1830,9 +1891,7 @@ function rescued_api_resource_post_query($discovery_client, $resource, $optParam
  * PATCH a REST resource.
  */
 function rescued_api_resource_patch($discovery_client, $resource, $id, $resource_key, $postBody, $optParams) {
-  $service = wsclient_service_load($discovery_client);
-  $endpoint = $service->endpoint();
-  $client = $endpoint->client();
+  $client = rescued_api_get_client($discovery_client);
 
   // PATCH the resource.
   $result = $client->$resource->patch($id, $resource_key, $postBody, $optParams);
@@ -1844,9 +1903,7 @@ function rescued_api_resource_patch($discovery_client, $resource, $id, $resource
  * POST a REST resource.
  */
 function rescued_api_resource_insert($discovery_client, $resource, $postBody, $optParams) {
-  $service = wsclient_service_load($discovery_client);
-  $endpoint = $service->endpoint();
-  $client = $endpoint->client();
+  $client = rescued_api_get_client($discovery_client);
 
   // POST the resource.
   $result = $client->$resource->insert($postBody, $optParams);
