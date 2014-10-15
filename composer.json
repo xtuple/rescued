@@ -1,7 +1,7 @@
 {
   "name": "modules/xtuple/rescued",
   "description": "RESTful Entity Storage Controller Unveiling Entities Dynamically Module",
-  "type": "library",
+  "type": "drupal-extension",
   "license": "GPL-2.0",
   "authors": [
     {
