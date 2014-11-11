@@ -1667,7 +1667,7 @@ function rescued_rescued_register_clients_resources_alter(&$rescued_clients_url_
  * what is in the database.
  */
 function rescued_get_wsclient_service_from_config() {
-  // Get $rescued_clients configureation settings from settings.php.
+  // Get $rescued_clients configuration settings from settings.php.
   global $rescued_clients;
   $rescued_clients_url_resources = array();
   $services = array();
