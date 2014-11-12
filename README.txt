@@ -1,7 +1,4 @@
-
-RESTful Entity Storage Controller Unveiling Entities Dynamically Module (rescued)
----------------------------------------------------------------------------------
-by Ben Thompson (bendiy), ben@xtuple.com
+## RESTful Entity Storage Controller Unveiling Entities Dynamically Module (rescued)
 
 The RESCUED module adds support for using an APIs Discovery Service to
 dynamically expose remote REST resources as entities in Drupal using the
@@ -13,8 +10,7 @@ uses the Entity Operations module to provide CRUD controllers and exposes
 Add, View, Edit and Delete pages that allow you to interact with the remote
 entities.
 
-Installation
-------------
+## Installation
 
  * RESCUED module has the follwing dependances. Download and install then from:
    - Administration menu https://drupal.org/project/admin_menu
@@ -44,4 +40,10 @@ Installation
  * All of your remote entities can then be accessed here:
    admin/structure/{wscleint-name-here}
 
+## TODO
+
 Learn more at http://www.xtuple.org.
+
+## Credits
+
+  - [bendiy](http://github.com/bendiy)
