@@ -2178,3 +2178,15 @@ function rescued_json_schema_get_property_type($schema, $property) {
     return false;
   }
 }
+
+/**
+ * Implements hook_features_exclude()
+ */
+function rescued_features_exclude() {
+  return array(
+    'variable' => array(
+      'rescued_debug_mode',
+      'rescued_docs_loaded',
+    ),
+  );
+}
