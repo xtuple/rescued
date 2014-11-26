@@ -12,17 +12,17 @@
  * @See: rescued_default_wsclient_service()
  *
  * @param array $rescued_clients_url_resources
- *   Associative array of discovery client resources that are required by a
- *   module. In the form of: array(
- *     'client1_name_here' => array(
+ *       Associative array of discovery client resources that are required by a
+ *       module. In the form of: array(
+ *       'client1_name_here' => array(
  *       'resource1',
  *       'resource2',
- *     ),
- *     'client2_name_here' => array(
+ *       ),
+ *       'client2_name_here' => array(
  *       'resource1',
  *       'resource2',
- *     ),
- *   );
+ *       ),
+ *       );
  *
  * @return
  *   The modified $rescued_clients_url_resources array with your
@@ -108,7 +108,10 @@ function hook_rescued_create_child_fields($name, $resource, $property, $child, $
     }
 
     $entity_type = $name . '_' . strtolower($resource);
-    $instance = field_read_instance($entity_type, $field_name, $entity_type, array('include_inactive' => TRUE, 'include_deleted' => TRUE));
+    $instance = field_read_instance($entity_type, $field_name, $entity_type, array(
+        'include_inactive' => TRUE,
+        'include_deleted' => TRUE
+      ));
     if (empty($instance)) {
       $instance = array(
         'field_name' => $field_name,

@@ -31,7 +31,7 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
   );
 
   // Discovery Service Settings fieldset.
-  $fieldset['discovery'] = array (
+  $fieldset['discovery'] = array(
     '#title' => 'Discovery Service Additional Settings',
     '#type' => 'fieldset',
     '#prefix' => '<div id="discovery">',
@@ -49,16 +49,19 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
       '#type' => 'textfield',
       '#title' => t('Application Name'),
       '#description' => t("The Application Name is included in the User-Agent HTTP header for request to this REST API. It is only seen when logging REST API requests."),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['application_name']) ? $service->settings['discovery']['application_name'] : variable_get('site_name', 'Drupal'),
     );
     $fieldset['discovery']['auth_class'] = array(
       '#type' => 'select',
       '#title' => t('Google API PHP Client Oauth 2.0 Class'),
       '#description' => t("Select the OAuth 2.0 class to use when connecting to this server. The library uses 'Google_OAuth2' by default to connect to Google's API. If you are connecting to a different API, choose RESCUED class instead."),
-      '#options' => array('Google_OAuth2' => 'Google OAuth 2.0 Default Client Class', 'Rescued_OAuth2' => 'RESCUED OAuth 2.0 Client Class'),
-      '#required' => true,
-      '#default_value' => isset($service->settings['discovery']['auth_class']) ? $service->settings['discovery']['auth_class'] : null,
+      '#options' => array(
+        'Google_OAuth2' => 'Google OAuth 2.0 Default Client Class',
+        'Rescued_OAuth2' => 'RESCUED OAuth 2.0 Client Class'
+      ),
+      '#required' => TRUE,
+      '#default_value' => isset($service->settings['discovery']['auth_class']) ? $service->settings['discovery']['auth_class'] : NULL,
       '#ajax' => array(
         'callback' => 'rescued_wsclient_form_oauth2_server_serttings_callback',
         'wrapper' => 'oauth2_server_settings',
@@ -67,12 +70,12 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
     );
 
     // OAuth 2.0 Server Settings fieldset.
-    $fieldset['discovery']['oauth2_server_settings'] = array (
+    $fieldset['discovery']['oauth2_server_settings'] = array(
       '#title' => 'OAuth 2.0 Server Settings',
       '#type' => 'fieldset',
       '#prefix' => '<div id="oauth2_server_settings">',
       '#suffix' => '</div>',
-      '#collapsible' => true,
+      '#collapsible' => TRUE,
       '#states' => array(
         'visible' => array( // Hide this unless Rescued_OAuth2 is selected.
           ':input[name="auth_class"]' => array('value' => 'Rescued_OAuth2'),
@@ -85,8 +88,8 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
       '#title' => t('OAuth 2.0 Scenario Type'),
       '#description' => t("Select the type of OAuth 2.0 client scenario to use when connecting to the server. <br />See: <a href='!url'>Types of OAuth 2.0 Scenarios</a> <br />@TODO: 'Web Server' is not currently supported. It is here as a placeholder for now.", array('!url' => 'https://developers.google.com/accounts/docs/OAuth2#scenarios')),
       '#options' => array('service_account' => 'Service Account', 'web_server' => 'Web Server'),
-      '#required' => true,
-      '#default_value' => isset($service->settings['discovery']['oauth2_scenario']) ? $service->settings['discovery']['oauth2_scenario'] : null,
+      '#required' => TRUE,
+      '#default_value' => isset($service->settings['discovery']['oauth2_scenario']) ? $service->settings['discovery']['oauth2_scenario'] : NULL,
       '#ajax' => array(
         'callback' => 'rescued_wsclient_form_oauth2_scenario_callback',
         'wrapper' => 'oauth2_settings',
@@ -95,12 +98,12 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
     );
 
     // OAuth 2.0 Scenario Type Settings fieldset.
-    $fieldset['discovery']['oauth2_settings'] = array (
+    $fieldset['discovery']['oauth2_settings'] = array(
       '#title' => 'OAuth 2.0 Scenario Type Settings',
       '#type' => 'fieldset',
       '#prefix' => '<div id="oauth2_settings">',
       '#suffix' => '</div>',
-      '#collapsible' => true,
+      '#collapsible' => TRUE,
       '#states' => array(
         'invisible' => array( // Hide this if nothing's selected.
           ':input[name="oauth2_scenario"]' => array('value' => ''),
@@ -112,7 +115,7 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
       '#type' => 'checkbox',
       '#title' => t('Discovery Service Debug Mode'),
       '#description' => t("Disabled cURL's SSL certificate verification check. This is useful for local development testing when using a self signed SSL certificate. This setting should be off for production use. <br />See: <a href='!url'>CURLOPT_SSL_VERIFYPEER</a>", array('!url' => 'http://php.net/manual/en/function.curl-setopt.php')),
-      '#default_value' => isset($service->settings['discovery']['debug']) ? $service->settings['discovery']['debug'] : false,
+      '#default_value' => isset($service->settings['discovery']['debug']) ? $service->settings['discovery']['debug'] : FALSE,
     );
   }
 
@@ -120,26 +123,27 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
   if ((isset($service->settings['discovery']['auth_class'])
       && $service->settings['discovery']['auth_class'] === 'Rescued_OAuth2')
     || (isset($form_state['values']['auth_class'])
-      && $form_state['values']['auth_class'] === 'Rescued_OAuth2')) {
+      && $form_state['values']['auth_class'] === 'Rescued_OAuth2')
+  ) {
     $fieldset['discovery']['oauth2_server_settings']['oauth2_revoke_uri'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 Server Token Revocation URI'),
       '#description' => t("Enter the Token Revocation URI provided by the OAuth 2.0 server when you register as a client."),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['oauth2_revoke_uri']) ? $service->settings['discovery']['oauth2_revoke_uri'] : '',
     );
     $fieldset['discovery']['oauth2_server_settings']['oauth2_token_uri'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 Server Endpoint Token URI'),
       '#description' => t("Enter the Token Endpoint URI provided by the OAuth 2.0 server when you register as a client. <br />Example: https://accounts.google.com/o/oauth2/token"),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['oauth2_token_uri']) ? $service->settings['discovery']['oauth2_token_uri'] : '',
     );
     $fieldset['discovery']['oauth2_server_settings']['oauth2_auth_url'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 Server Authentication URL'),
       '#description' => t("Enter the Server Authentication URL provided by the OAuth 2.0 server when you register as a client."),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['oauth2_auth_url']) ? $service->settings['discovery']['oauth2_auth_url'] : '',
     );
     $fieldset['discovery']['oauth2_server_settings']['oauth2_federated_signon_certs_url'] = array(
@@ -156,26 +160,27 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
   if ((isset($service->settings['discovery']['oauth2_scenario'])
       && $service->settings['discovery']['oauth2_scenario'] === 'service_account')
     || (isset($form_state['values']['oauth2_scenario'])
-      && $form_state['values']['oauth2_scenario'] === 'service_account')) {
+      && $form_state['values']['oauth2_scenario'] === 'service_account')
+  ) {
     $fieldset['discovery']['oauth2_settings']['keyfile'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 PKCS #12 Key File Path'),
       '#description' => t("Specify the full file system path to your key file. This file is provided by the OAuth 2.0 server when you register as a 'Service Account' client. The file should be uploaded to your Drupal web server in a secure location and it's path entered here. <br />Example: /var/www/private/my-key-file.p12"),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['keyfile']) ? $service->settings['discovery']['keyfile'] : '',
     );
     $fieldset['discovery']['oauth2_settings']['keyfile_pass'] = array(
       '#type' => 'password',
       '#title' => t('OAuth 2.0 PKCS #12 Key File Password'),
       '#description' => t("Enter the password for your PKCS #12 file provided by the OAuth 2.0 server when you register as a 'Service Account' client."),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['keyfile_pass']) ? $service->settings['discovery']['keyfile_pass'] : '',
     );
     $fieldset['discovery']['oauth2_settings']['iss'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 Client ID'),
       '#description' => t("Enter the Client ID provided by the OAuth 2.0 server when you register as a 'Service Account' client."),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['iss']) ? $service->settings['discovery']['iss'] : '',
     );
     // TODO: Handle multiple scopes.
@@ -183,21 +188,21 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 Scopes'),
       '#description' => t("Enter the Scopes provided by the OAuth 2.0 server when you register as a 'Service Account' client."),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['scope']) ? $service->settings['discovery']['scope'] : '',
     );
     $fieldset['discovery']['oauth2_settings']['prn'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 JWT Default Delegated Username'),
       '#description' => t("Enter the Default Delegated Username to use when connecting to the OAuth 2.0 server. This username will be used in situations where we are not connecting to the OAuth 2.0 server as a specific Drupal user."),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['prn']) ? $service->settings['discovery']['prn'] : '',
     );
     $fieldset['discovery']['oauth2_settings']['grant_type'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 JWT Assertion Grant Type'),
       '#description' => t("Enter the Assertion Grant Type the OAuth 2.0 server is expecting for a JSON Web Token exchange. Default: assertion <br />See: <a href='!url'>Making the Access Token Request</a>", array('!url' => 'https://developers.google.com/accounts/docs/OAuth2ServiceAccount#makingrequest')),
-      '#required' => true,
+      '#required' => TRUE,
       '#default_value' => isset($service->settings['discovery']['grant_type']) ? $service->settings['discovery']['grant_type'] : 'assertion',
     );
   }
@@ -206,7 +211,8 @@ function rescued_wsclient_form_wsclient_service_form_alter(&$form, &$form_state)
   if ((isset($service->settings['discovery']['oauth2_scenario'])
       && $service->settings['discovery']['oauth2_scenario'] === 'web_server')
     || (isset($form_state['values']['oauth2_scenario'])
-      && $form_state['values']['oauth2_scenario'] === 'web_server')) {
+      && $form_state['values']['oauth2_scenario'] === 'web_server')
+  ) {
     $fieldset['discovery']['oauth2_settings']['client_id'] = array(
       '#type' => 'textfield',
       '#title' => t('OAuth 2.0 Client ID'),
@@ -282,8 +288,7 @@ function rescued_wsclient_service_form_validate($form, $form_state) {
     try {
       // TODO: Poll the discovery doc to make sure it's valid?
       // How do we validate this form?
-    }
-    catch (DiscoveryServiceException $e) {
+    } catch (DiscoveryServiceException $e) {
       form_set_error('url', t('Error parsing the Discovery Document: %message', array('%message' => $e->getMessage())));
     }
   }
@@ -296,7 +301,7 @@ function rescued_wsclient_service_form_submit($form, &$form_state) {
   if (isset($form_state['values']['type']) &&
     $form_state['values']['type'] == 'discovery' &&
     ($form_state['op'] == 'add' || $form_state['op'] == 'edit')
-    ) {
+  ) {
 
     $service = $form_state['wsclient_service'];
 

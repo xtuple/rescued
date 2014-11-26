@@ -82,9 +82,9 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
 
     $delta = isset($get_delta) ? $get_delta : 0;
     foreach ($entityInfo['json-schema'][$entityInfo['resource']]['properties'] as $key => $properties) {
-      if ((isset($properties['$ref']) && strpos($properties['$ref'], '/') === false) ||
+      if ((isset($properties['$ref']) && strpos($properties['$ref'], '/') === FALSE) ||
         ((isset($properties['items']) && isset($properties['items']['$ref']) &&
-        strpos($properties['items']['$ref'], '/') === false ))
+          strpos($properties['items']['$ref'], '/') === FALSE))
       ) {
 //         // Handle toOne and toMany nested relations.
 //         if (isset($properties['$ref'])) {
@@ -271,7 +271,8 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
 //         }
 
 //         $form[$key] = $elements;
-      } elseif (isset($properties['$ref']) && strpos($properties['$ref'], '/') !== false) {
+      }
+      elseif (isset($properties['$ref']) && strpos($properties['$ref'], '/') !== FALSE) {
         // Handle toOne key relations.
         $relation_resource = explode("/", $properties['$ref']);
         $relation_key = $relation_resource[1];
@@ -298,8 +299,10 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
           '#default_value' => isset($entity->$key) ? $entity->$key : "",
           '#empty_value' => '',
         );
-      } elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
-      strpos($properties['items']['$ref'], '/') !== false) {
+      }
+      elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
+        strpos($properties['items']['$ref'], '/') !== FALSE
+      ) {
         // Handle toMany key relations.
         $relation_resource = explode("/", $properties['items']['$ref']);
         $relation_key = $relation_resource[1];
@@ -308,7 +311,7 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
           '#type' => 'container',
           '#attributes' => array(),
           '#weight' => -30,
-          '#tree' => true,
+          '#tree' => TRUE,
           '#language' => LANGUAGE_NONE,
           LANGUAGE_NONE => array(
             '#entity' => $entity,
@@ -324,19 +327,20 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
             '#delta' => 0,
             '#type' => 'textfield',
             '#maxlength' => 2048, // This might need to be longer.
-            '#default_value' => isset($entity->$key) ? (is_array($entity->$key) ?  implode(", ", $entity->$key) : $entity->$key) : "",
+            '#default_value' => isset($entity->$key) ? (is_array($entity->$key) ? implode(", ", $entity->$key) : $entity->$key) : "",
             '#autocomplete_path' => $entityInfo['discovery-client'] . '/autocomplete/' . $entityInfo['discovery-client'] . '/' . $relation_resource[0] . '/' . $relation_key,
             '#size' => 60,
             //'#element_validate' => array('some_search_callback'), // TODO: Add validation function.
             '#after_build' => array('field_form_element_after_build'),
           ),
-          '#access' => true,
+          '#access' => TRUE,
         );
-      } else {
+      }
+      else {
         // Handle basic property.
 
         // Get 'required' from the JSON-Schema.
-        $required = false;
+        $required = FALSE;
         if (isset($properties['required'])) {
           // A boolean type can't be required = true or leaving it uncheck would fail validation.
           if ($properties['type'] !== 'boolean') {
@@ -347,7 +351,7 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
         // Make the key property read only.
         if (isset($properties['isKey'])) {
           if (isset($entity->is_new) && $entity->is_new) {
-            $required = false;
+            $required = FALSE;
           }
           $form[$key] = array(
             '#type' => 'item',
@@ -357,11 +361,13 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
             '#default_value' => isset($entity->$key) ? $entity->$key : "",
             '#markup' => isset($entity->$key) ? $entity->$key : "",
           );
-        } else {
+        }
+        else {
           if (isset($properties['type'])) {
-            $format = isset($properties['format']) ? $properties['format'] : null;
+            $format = isset($properties['format']) ? $properties['format'] : NULL;
             $type = rescued_json_schema_to_form_type($properties['type'], $format);
-          } else {
+          }
+          else {
             $type = 'text';
           }
           $form[$key] = array(
@@ -376,14 +382,16 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
             if (isset($entity->$key)) {
               $date = new DateTime($entity->$key);
               $form[$key]['#default_value'] = isset($entity->$key) ? $date->format('Y-m-d') : "";
-            } else {
+            }
+            else {
               $form[$key]['#default_value'] = "";
             }
             $form[$key]['#date_label_position'] = 'hidden';
             $form[$key]['#date_format'] = 'Y-m-d';
             $form[$key]['#date_year_range'] = '-5:+5';
             $form[$key]['#size'] = 15;
-          } else {
+          }
+          else {
             $form[$key]['#default_value'] = isset($entity->$key) ? $entity->$key : "";
           }
         }
@@ -517,6 +525,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
 
     // Add in what the parent class has.
     $item += parent::menu_item($operation_path, $operation_definition, $loader_position);
+
     return $item;
   }
 
@@ -549,7 +558,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     // only one bundle. Just show the add form.
     if (!isset($entity_info['bundles']) || count($entity_info['bundles']) == 1) {
       // We won't have an entity here, so create one for our parent class's form.
-     $values = array();
+      $values = array();
 
       // Set the bundle key, if we need it.
       if (count($entity_info['bundles']) == 1) {
@@ -576,6 +585,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     // list of links.
     if (empty($entity)) {
       $entity = entity_create($entity_type, array());
+
       return $this->bundleSelectionForm($form, $form_state, $entity_type, $entity, $operation_path);
     }
 
@@ -585,7 +595,8 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     $bundle_key = $entity_info['entity keys']['bundle'];
     if (isset($entity->$bundle_key)) {
       $bundle_name = $entity->$bundle_key;
-    } else {
+    }
+    else {
       // In this case, $entity is the bundle name from the URL, not a full entity.
       $bundle_name = $entity;
     }
