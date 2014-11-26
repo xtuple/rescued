@@ -4,7 +4,6 @@
  * @file
  * Defines the Inline Entity Form controller for RESCUED entities.
  */
-
 class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormController {
 
   /**
@@ -22,6 +21,7 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
       'singular' => t($label),
       'plural' => t($label),
     );
+
     return $labels;
   }
 
@@ -30,6 +30,7 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
    *
    * We can't use the parent class method because the RESCUED entity metadata
    * wrapper doesn't have a property that matches the entity bundle key.
+   *
    * @todo: Remove this method once http://drupal.org/node/1662558 is fixed.
    */
   public function tableFields($bundles) {
@@ -64,7 +65,7 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
       foreach (field_info_widget_types() as $widget_name => $widget) {
         if (isset($widget['field types'])) {
           foreach ($widget['field types'] as $type) {
-            if ($type === $field['type'] && strpos($widget['module'],'inline_entity_form') === false) {
+            if ($type === $field['type'] && strpos($widget['module'], 'inline_entity_form') === FALSE) {
               $existing_options[$widget_name] = $widget['label'];
             }
           }
@@ -174,7 +175,7 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
     // Build the entity to add the child relations from the submitted form and form_state.
     rescued_form_submit_build_entity($this->entityType, $entity, $entity_form, $form_state);
 
-    $ief_id = isset($entity_form['#ief_id']) ? $entity_form['#ief_id'] : null;
+    $ief_id = isset($entity_form['#ief_id']) ? $entity_form['#ief_id'] : NULL;
     if (isset($ief_id)) {
       $instance = $form_state['inline_entity_form'][$ief_id]['instance'];
       $ief_type = $instance['widget']['type'];
@@ -183,9 +184,11 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
       // recursively for us on single widgets.
       if ($entityInfo['fieldable']) {
         if (isset($form_state['triggering_element']['#ief_processing']) &&
-          !$form_state['triggering_element']['#ief_processing']) {
+          !$form_state['triggering_element']['#ief_processing']
+        ) {
           // This is a different element that is requesting to skip IEF processing. Like an addressfield ajax update.
-        } else {
+        }
+        else {
           // Only call field_attach_submit() on inline_entity_form multiple widget, not single.
           if ($ief_type === 'inline_entity_form') {
             field_attach_submit($this->entityType, $entity, $entity_form, $form_state);
@@ -226,17 +229,17 @@ class RescuedRelationInlineEntityFormController extends EntityInlineEntityFormCo
 // and using the xdruple_entityreference field type for this. This may no longer be needed.
     // Nested entities get saved with their parent.
     //if (!isset($entityInfo['is_nested_only']) && count($path_parts) > 1) {
-      // Save the entity.
-      // TODO: Do we need to save here at all???
-      // Maybe not on xTuple entities that use IEF for relations. But we do for checkout fields.
-      // Or recurse through the $form_state['inline-entity-form'] and update the children.
+    // Save the entity.
+    // TODO: Do we need to save here at all???
+    // Maybe not on xTuple entities that use IEF for relations. But we do for checkout fields.
+    // Or recurse through the $form_state['inline-entity-form'] and update the children.
 
-      // Need to do this until xTuple entity relations create with own field instances.
-      //$entity->save();
+    // Need to do this until xTuple entity relations create with own field instances.
+    //$entity->save();
 
-      // This is a hack to get the right etag. Until rescued_controller updates the entity after a PATCH,
-      // this will not be a valid etag without loading it agian.
-      //$entity = entity_load_single($this->entityType, $entity->identifier());
+    // This is a hack to get the right etag. Until rescued_controller updates the entity after a PATCH,
+    // this will not be a valid etag without loading it agian.
+    //$entity = entity_load_single($this->entityType, $entity->identifier());
     //}
 
     //$entity = $entity_form['#entity'];

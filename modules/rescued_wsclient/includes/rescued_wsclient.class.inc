@@ -1,9 +1,9 @@
 <?php
 
 /**
-* @file
-* Web service client Discovery Service support.
-*/
+ * @file
+ * Web service client Discovery Service support.
+ */
 
 /**
  * A remote endpoint type for invoking Discovery services.
@@ -73,10 +73,10 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
 
     $client = new Google_Client();
 
-    if (variable_get('rescued_debug_mode', false)) {
+    if (variable_get('rescued_debug_mode', FALSE)) {
       // Disabling SSL cert verificaiton for local dev testing on self signed cert.
-      $client::$io->setOptions(array (CURLOPT_SSL_VERIFYPEER => false));
-      $client::$io->setOptions(array (CURLOPT_SSL_VERIFYHOST => false));
+      $client::$io->setOptions(array(CURLOPT_SSL_VERIFYPEER => FALSE));
+      $client::$io->setOptions(array(CURLOPT_SSL_VERIFYHOST => FALSE));
     }
 
     // Set your cached access token. Remember to replace $_SESSION with a
@@ -97,7 +97,7 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
       $key,
       $keyfile_pass,
       $grant_type,
-      false
+      FALSE
     );
 
     /** @var Xtuple\Xdruple\Session\RescuedSession $session */
@@ -112,7 +112,8 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
 
       $oauth->prn = $role_user;
       $_SESSION['oauth_user'] = $role_user;
-    } elseif (isset($prn)) {
+    }
+    elseif (isset($prn)) {
       if (isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $prn) {
         unset($_SESSION['access_token']);
         unset($_SESSION['oauth_user']);
@@ -136,11 +137,11 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
       }
       try {
         $this->client = $service;
-      }
-      catch (DiscoveryServiceException $e) {
+      } catch (DiscoveryServiceException $e) {
         throw new WSClientException('Error initializing RESCUED client for service %name', array('%name' => $this->service->name));
       }
     }
+
     return $this->client;
   }
 
@@ -153,7 +154,7 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
   public function initializeMetadata($reset = TRUE) {
     $service = $this->service;
     if ($this->service->settings['discovery']['debug']) {
-      variable_set('rescued_debug_mode', true);
+      variable_set('rescued_debug_mode', TRUE);
     }
     $client = $this->client();
 
@@ -177,17 +178,21 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
    *
    * @param string $operation
    *   The name of the operation to execute.
-   * @param array $arguments
+   * @param array  $arguments
    *   Arguments to pass to the service with this operation.
    */
   public function call($operation, $arguments) {
     $client = $this->client();
     try {
       $response = $client->__soapCall($operation, $arguments);
+
       return $response;
-    }
-    catch (DiscoveryServiceException $e) {
-      throw new WSClientException('Error invoking the API Discovery Service %name, operation %operation: %error', array('%name' => $this->service->label, '%operation' => $operation, '%error' => $e->getMessage()));
+    } catch (DiscoveryServiceException $e) {
+      throw new WSClientException('Error invoking the API Discovery Service %name, operation %operation: %error', array(
+          '%name' => $this->service->label,
+          '%operation' => $operation,
+          '%error' => $e->getMessage()
+        ));
     }
   }
 }
@@ -212,6 +217,7 @@ class DiscoveryServiceException extends Exception {
     if (is_object($response)) {
       $response = clone $response;
     }
+
     return $response;
   }
 }

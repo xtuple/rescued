@@ -14,7 +14,7 @@
  */
 class Rescued_ApiService extends Google_Service {
   // Debug mode to disabling SSL cert verificaiton for local dev testing on self signed cert.
-  protected $debug = false;
+  protected $debug = FALSE;
 
   /**
    * Constructs the internal representation of REST resource services.
@@ -24,7 +24,7 @@ class Rescued_ApiService extends Google_Service {
   public function __construct(Google_Client $client, $config) {
     $this->version = 'v1alpha1';
     $this->serviceName = 'Drupal RESCUED Module';
-    $this->debug = variable_get('rescued_debug_mode', false);
+    $this->debug = variable_get('rescued_debug_mode', FALSE);
 
     $client->addService($this->serviceName, $this->version);
 
@@ -68,12 +68,12 @@ class Rescued_ApiService extends Google_Service {
 
       if ($this->debug) {
         // Disabling SSL cert verificaiton for local dev testing on self signed cert.
-        $io->setOptions(array (CURLOPT_SSL_VERIFYPEER => false));
+        $io->setOptions(array(CURLOPT_SSL_VERIFYPEER => FALSE));
       }
 
       $req = new Google_HttpRequest($url, "GET");
       $res = $io->getCachedRequest($req) ? $io->getCachedRequest($req) : $io->makeRequest($req);
-      $discovery = json_decode($res->getResponseBody(), true);
+      $discovery = json_decode($res->getResponseBody(), TRUE);
 
       // TODO: Error check for valid discovery.
     }
@@ -87,24 +87,31 @@ class Rescued_Service extends Google_Model {
   public $items;
   public $kind;
   public $etag;
+
   public function getItems() {
     return $this->items;
   }
+
   public function setKind($kind) {
     $this->kind = $kind;
   }
+
   public function getKind() {
     return $this->kind;
   }
+
   public function setEtag($etag) {
     $this->etag = $etag;
   }
+
   public function getEtag() {
     return $this->etag;
   }
+
   public function setId($id) {
     $this->id = $id;
   }
+
   public function getId() {
     return $this->id;
   }
@@ -124,12 +131,13 @@ class Rescued_ServiceResource extends Google_ServiceResource {
   /**
    * Mimic how the Google_ServiceResource cleans up the $postBody. This allows
    * our JSON-Patches to work below in the patch() function.
+   *
    * @see Google_ServiceResource::stripNull()
    */
   protected function stripNull(&$o) {
     $o = (array) $o;
     foreach ($o as $k => $v) {
-      if ($v === null || strstr($k, "\0*\0__")) {
+      if ($v === NULL || strstr($k, "\0*\0__")) {
         unset($o[$k]);
       }
       elseif (is_object($v) || is_array($v)) {
@@ -140,6 +148,7 @@ class Rescued_ServiceResource extends Google_ServiceResource {
 
   /**
    * Overridden so we can set and get the $service here.
+   *
    * @see Google_ServiceResource#__construct()
    */
   public function __construct($service, $serviceName, $resourceName, $resource) {
@@ -149,8 +158,10 @@ class Rescued_ServiceResource extends Google_ServiceResource {
 
   /**
    * Overridden so we can set and get the access token in one place.
+   *
    * @param $name
    * @param $arguments
+   *
    * @return Google_HttpRequest|array
    * @throws Google_Exception
    */
@@ -173,8 +184,8 @@ class Rescued_ServiceResource extends Google_ServiceResource {
   /**
    * Adds a resource.
    *
-   * @param Rescued_Service $postBody Resource object.
-   * @param array $optParams Optional parameters.
+   * @param Rescued_Service $postBody  Resource object.
+   * @param array           $optParams Optional parameters.
    *
    * @return Rescued_Service Resource object.
    */
@@ -184,7 +195,8 @@ class Rescued_ServiceResource extends Google_ServiceResource {
     $data = $this->__call('insert', array($params));
     if ($this->useObjects()) {
       return new Rescued_Service($data);
-    } else {
+    }
+    else {
       return $data;
     }
   }
@@ -192,9 +204,9 @@ class Rescued_ServiceResource extends Google_ServiceResource {
   /**
    * Returns a resource.
    *
-   * @param string $id Resource key identifier.
+   * @param string $id           Resource key identifier.
    * @param string $resource_key Resource key name.
-   * @param array $optParams Optional parameters.
+   * @param array  $optParams    Optional parameters.
    *
    * @return Rescued_Service Resource object
    */
@@ -204,7 +216,8 @@ class Rescued_ServiceResource extends Google_ServiceResource {
     $data = $this->__call('get', array($params));
     if ($this->useObjects()) {
       return new Rescued_Service($data);
-    } else {
+    }
+    else {
       return $data;
     }
   }
@@ -222,7 +235,8 @@ class Rescued_ServiceResource extends Google_ServiceResource {
     $data = $this->__call('list', array($params));
     if ($this->useObjects()) {
       return new Rescued_Service($data);
-    } else {
+    }
+    else {
       return $data;
     }
   }
@@ -230,9 +244,9 @@ class Rescued_ServiceResource extends Google_ServiceResource {
   /**
    * Updates a resource. This method supports JSON-Patch semantics.
    *
-   * @param string $id Resource key identifier.
-   * @param Rescued_Service $postBody Resource object JSON-Patch.
-   * @param array $optParams Optional parameters.
+   * @param string          $id        Resource key identifier.
+   * @param Rescued_Service $postBody  Resource object JSON-Patch.
+   * @param array           $optParams Optional parameters.
    *
    * @return Rescued_Service Resource object
    */
@@ -250,7 +264,8 @@ class Rescued_ServiceResource extends Google_ServiceResource {
     $data = $this->__call('patch', array($params));
     if ($this->useObjects()) {
       return new Rescued_Service($data);
-    } else {
+    }
+    else {
       return $data;
     }
   }
@@ -258,13 +273,14 @@ class Rescued_ServiceResource extends Google_ServiceResource {
   /**
    * Deletes a resource.
    *
-   * @param string $id Resource key identifier.
-   * @param array $optParams Optional parameters.
+   * @param string $id        Resource key identifier.
+   * @param array  $optParams Optional parameters.
    */
   public function delete($id, $resource_key, $optParams = array()) {
     $params = array($resource_key => $id);
     $params = array_merge($params, $optParams);
     $data = $this->__call('delete', array($params));
+
     return $data;
   }
 }

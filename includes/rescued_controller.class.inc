@@ -37,21 +37,26 @@ class RescuedController extends EntityAPIController {
 
       if (!isset($schema[$key]['$ref']) && !isset($schema[$key]['items'])) {
         // Handle toMany key relations
-        if ($property['type'] === 'string' && (isset($property['format']) ? $property['format'] !== 'date' : true)) {
+        if ($property['type'] === 'string' && (isset($property['format']) ? $property['format'] !== 'date' : TRUE)) {
           $values[$key] = "";
-        } elseif ($property['type'] === 'boolean') {
-          $values[$key] = false;
-        } else {
-          $values[$key] = null;
         }
-      } elseif (isset($property['$ref']) && strpos($property['$ref'], '/') !== false) {
+        elseif ($property['type'] === 'boolean') {
+          $values[$key] = FALSE;
+        }
+        else {
+          $values[$key] = NULL;
+        }
+      }
+      elseif (isset($property['$ref']) && strpos($property['$ref'], '/') !== FALSE) {
         // Handle toOne key relations.
-        $values[$key] = null;
-      } elseif (isset($property['items']['$ref']) && strpos($property['items']['$ref'], '/') !== false) {
+        $values[$key] = NULL;
+      }
+      elseif (isset($property['items']['$ref']) && strpos($property['items']['$ref'], '/') !== FALSE) {
         // Handle toMany key relations.{
         $values[$key] = array();
-      } else {
-        $values[$key] = null;
+      }
+      else {
+        $values[$key] = NULL;
       }
     }
 
@@ -93,7 +98,7 @@ class RescuedController extends EntityAPIController {
     if ($ids === FALSE || ($conditions && !$passed_ids)) {
       $resources = rescued_api_resource_list($this->entityInfo['discovery-client'], $this->entityInfo['resource'], $conditions);
 
-      foreach($resources as $resource) {
+      foreach ($resources as $resource) {
         if (isset($this->entityInfo['entity class']) && $class = $this->entityInfo['entity class']) {
           // Instantiate a new object of this class passing the $resource values in to be assigned.
           $entity = new $class($resource, $this->entityType);
@@ -105,7 +110,8 @@ class RescuedController extends EntityAPIController {
         // TODO: Heard some rumors that the array key here has to be an integer for fields API to work.
         $queried_entities[$entity->$key_name] = $entity;
       }
-    } elseif ($passed_ids) {
+    }
+    elseif ($passed_ids) {
       // This method takes an array of IDs, but our webservice only supports loading one entity at a time.
       foreach ($ids as $id) {
         // This function should contain all the code to make a request to the web service and handle any errors.
@@ -181,7 +187,7 @@ class RescuedController extends EntityAPIController {
     $schema = $entityInfo['json-schema'][$resource]['properties'];
 
     // Load the stored entity, if any.
-    if (!empty($entity->{$this->idKey}) && !isset($entity->original) && (!isset($entity->is_new) || $entity->is_new === false)) {
+    if (!empty($entity->{$this->idKey}) && !isset($entity->original) && (!isset($entity->is_new) || $entity->is_new === FALSE)) {
       // In order to properly work in case of name changes, load the original
       // entity using the id key if it is available.
 
@@ -206,7 +212,8 @@ class RescuedController extends EntityAPIController {
       $original_entity = $entity->originalEntity;
       $this->resetCache(array($entity->{$this->idKey}));
       $this->invoke('update', $entity);
-    } else {
+    }
+    else {
       $this->invoke('insert', $entity);
     }
 
@@ -231,9 +238,10 @@ class RescuedController extends EntityAPIController {
         // This property is loaded through fields API. Skip it.
 
         // TODO: Need a better way to identify these properties.
-        $foo = true;
+        $foo = TRUE;
         $new_entity[$key] = $original_entity[$key];
-      } elseif (isset($value['$ref'], $new_entity[$key]) && strpos($value['$ref'], '/') === false) {
+      }
+      elseif (isset($value['$ref'], $new_entity[$key]) && strpos($value['$ref'], '/') === FALSE) {
         $relation_resource = $value['$ref'];
         $relation_entityType = strtolower($relation_resource);
         $child_entityType = $entityInfo['discovery-client'] . '_' . $relation_entityType;
@@ -244,21 +252,24 @@ class RescuedController extends EntityAPIController {
         if (!isset($child_entityInfo['is_nested_only'])) {
           if (isset($new_entity[$key][$relation_key])) {
             $new_key_value = $new_entity[$key][$relation_key];
-          } else {
-            $new_key_value = null;
+          }
+          else {
+            $new_key_value = NULL;
           }
 
           $new_entity[$key] = $new_key_value;
           if (!$entity->is_new) {
             if (isset($original_entity[$key][$relation_key])) {
               $org_key_value = $original_entity[$key][$relation_key];
-            } else {
-              $org_key_value = null;
+            }
+            else {
+              $org_key_value = NULL;
             }
             $original_entity[$key] = $org_key_value;
           }
         }
-      } elseif (isset($value['items']['$ref'], $new_entity[$key]) && strpos($value['items']['$ref'], '/') === false) {
+      }
+      elseif (isset($value['items']['$ref'], $new_entity[$key]) && strpos($value['items']['$ref'], '/') === FALSE) {
         $relation_resource = $value['items']['$ref'];
         $relation_entityType = strtolower($relation_resource);
         $child_entityType = $entityInfo['discovery-client'] . '_' . $relation_entityType;
@@ -348,8 +359,9 @@ class RescuedController extends EntityAPIController {
       // This property is loaded through fields API. Skip it.
 
       // TODO: Need a better way to identify these properties.
-      $foo = true;
-    } elseif (isset($properties['$ref']) && strpos($properties['$ref'], '/') === false) {
+      $foo = TRUE;
+    }
+    elseif (isset($properties['$ref']) && strpos($properties['$ref'], '/') === FALSE) {
       // Handle toOne relations.
       $content[$key] = array(
         '#theme' => 'field',
@@ -370,7 +382,7 @@ class RescuedController extends EntityAPIController {
       );
 
       // We don't need to build this if it's null.
-      if(!property_exists($entity, $key) || is_null($entity->{$key})) {
+      if (!property_exists($entity, $key) || is_null($entity->{$key})) {
         return $content;
       }
 
@@ -381,7 +393,7 @@ class RescuedController extends EntityAPIController {
       $child_entityInfo = entity_get_info($child_entityType);
       $relation_schema = $child_entityInfo['json-schema'][$relation_resource]['properties'];
       $class = $child_entityInfo['entity class'];
-      $child_data = json_decode(json_encode($entity->{$key}), true);
+      $child_data = json_decode(json_encode($entity->{$key}), TRUE);
 
       if (!is_array($child_data) && is_string($child_data)) {
         $child_data = array($child_entityInfo['entity keys']['id'] => $child_data);
@@ -400,8 +412,10 @@ class RescuedController extends EntityAPIController {
       $content[$key][] = array();
 
       $content[$key][0][$child_entityType][$child_entity->{$child_entityInfo['entity keys']['id']}] = $child_content;
-    } elseif ((isset($properties['items']) && isset($properties['items']['$ref']) &&
-        strpos($properties['items']['$ref'], '/') === false )) {
+    }
+    elseif ((isset($properties['items']) && isset($properties['items']['$ref']) &&
+      strpos($properties['items']['$ref'], '/') === FALSE)
+    ) {
       // Handle toMany relations.
       $content[$key] = array(
         '#theme' => 'field',
@@ -422,7 +436,7 @@ class RescuedController extends EntityAPIController {
       );
 
       // We don't need to build this if it's null.
-      if(!property_exists($entity, $key) || is_null($entity->{$key})) {
+      if (!property_exists($entity, $key) || is_null($entity->{$key})) {
         return $content;
       }
 
@@ -435,7 +449,7 @@ class RescuedController extends EntityAPIController {
 
       foreach ($entity->{$key} as $list_key => $list_item) {
         $class = $child_entityInfo['entity class'];
-        $child_data = json_decode(json_encode($list_item), true);
+        $child_data = json_decode(json_encode($list_item), TRUE);
 
         if (!is_array($child_data) && is_string($child_data)) {
           $child_data = array($child_entityInfo['entity keys']['id'] => $child_data);
@@ -448,8 +462,10 @@ class RescuedController extends EntityAPIController {
         $content[$key][$list_key] = $child_content;
       }
 
-    } elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
-      strpos($properties['items']['$ref'], '/') !== false ) {
+    }
+    elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
+      strpos($properties['items']['$ref'], '/') !== FALSE
+    ) {
       // Handle toMany key relations.
       $relation_resource = explode("/", $properties['items']['$ref']);
       $relation_key = $relation_resource[1];
@@ -498,12 +514,13 @@ class RescuedController extends EntityAPIController {
           ),
         );
       }
-    } else {
+    }
+    else {
       // Handle basic property.
       $content[$key] = array(
         '#theme' => 'field',
         '#weight' => 0,
-        '#title' =>t($properties['title']),
+        '#title' => t($properties['title']),
         '#label_display' => 'above',
         '#access' => TRUE,
         '#bundle' => $this->entityType, // Need this so Display Suite module doesn't complain.

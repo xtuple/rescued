@@ -59,7 +59,8 @@ function rescued_libraries_info() {
 
   $libraries['json-patch-php'] = array(
     'name' => 'JSON-Patch PHP Library',
-    'vendor url' => 'https://github.com/bendiy/json-patch-php/tree/rfc', // TODO: Change location if PR is merged: https://github.com/mikemccabe/json-patch-php/pull/3
+    'vendor url' => 'https://github.com/bendiy/json-patch-php/tree/rfc',
+    // TODO: Change location if PR is merged: https://github.com/mikemccabe/json-patch-php/pull/3
     'download url' => 'https://github.com/bendiy/json-patch-php/archive/rfc.zip',
     'version arguments' => array(
       'file' => 'JsonPatch.inc',
@@ -109,13 +110,14 @@ function rescued_entity_info() {
   if ($cache = cache_get('rescued_entity_info')) {
     // Returned the cached data if we've already built it.
     $return = $cache->data;
-  } else {
-    $loaded = variable_get('rescued_docs_loaded', false);
+  }
+  else {
+    $loaded = variable_get('rescued_docs_loaded', FALSE);
     // Skip creating RESCUED entities when this is a recursive call from
     // rescued_get_discovery_client_docs() or we will get a PHP Fatal error:
     // - Maximum function nesting level of '100' reached, aborting!
     if (!$loaded) {
-      variable_set('rescued_docs_loaded', true);
+      variable_set('rescued_docs_loaded', TRUE);
       $discovery = rescued_get_discovery_client_docs();
 
       $return = array();
@@ -140,7 +142,7 @@ function rescued_entity_info() {
                 'api-list-callback' => 'rescued_api_resource_list',
                 'api-load-callback' => 'rescued_api_resource_load',
                 'api-patch-callback' => 'rescued_api_resource_patch',
-  // TODO: For development only.
+                // TODO: For development only.
                 'field cache' => FALSE,
 // TODO: Figure out which entities we actually want to cache.
 // Do that with a hook_entity_into_alter() and not here.
@@ -151,8 +153,7 @@ function rescued_entity_info() {
                   'label' => $resource_key,
                 ),
                 'label callback' => 'entity_class_label',
-                'bundle keys' => array(
-                ),
+                'bundle keys' => array(),
                 'base table' => NULL, // We don’t have a base table, since entities are remote.
                 'bundles' => array(
                   $name . '_' . strtolower($resource) => array(
@@ -230,7 +231,8 @@ function rescued_entity_info() {
                       ),
                     ),
                   );
-                } else {
+                }
+                else {
                   // This is a read only resource, so we give it an InlineEntityFormController.
                   $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
                     'controller' => 'RescuedRelationInlineEntityFormController',
@@ -252,10 +254,11 @@ function rescued_entity_info() {
                     ),
                   );
                 }
-              } else {
+              }
+              else {
                 // The 'is_nested_only' resources are not exposed by the REST API
                 // and must be accessed by through their parent.
-                $return[$name . '_' . strtolower($resource)]['is_nested_only'] = true;
+                $return[$name . '_' . strtolower($resource)]['is_nested_only'] = TRUE;
 
                 // This is not a resource, so we give it an InlineEntityFormController.
                 $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
@@ -293,7 +296,8 @@ function rescued_entity_info() {
 
         cache_set('rescued_entity_info', $return);
       }
-    } else {
+    }
+    else {
       $return = array();
     }
   }
@@ -308,6 +312,7 @@ function rescued_entity_info() {
  *
  * @param array $resources
  *   An array of resource names.
+ *
  * @return boolean
  *   True if all resources in the array exist.
  */
@@ -371,73 +376,89 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
   switch ($op) {
     case 'create':
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['add'])) {
-        return false;
-      } else {
+        return FALSE;
+      }
+      else {
         if (!$is_admin && isset($entityInfo) && (
-          user_access('create personal rescued entities', $account)
-          || user_access('create limited rescued entities', $account)
-          || user_access('create contact rescued entities', $account)
-          || user_access('create employee rescued entities', $account)
-        )) {
+            user_access('create personal rescued entities', $account)
+            || user_access('create limited rescued entities', $account)
+            || user_access('create contact rescued entities', $account)
+            || user_access('create employee rescued entities', $account)
+          )
+        ) {
           // TODO: What should these users be allowed to create?
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        } elseif ($is_admin || user_access('create any rescued entities', $account)) {
-          return true;
-        } else {
-          return false;
+        }
+        elseif ($is_admin || user_access('create any rescued entities', $account)) {
+          return TRUE;
+        }
+        else {
+          return FALSE;
         }
       }
     case 'delete':
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['delete'])) {
-        return false;
-      } else {
+        return FALSE;
+      }
+      else {
         if (!$is_admin && isset($entityInfo) && (
-          user_access('delete personal rescued entities', $account)
-          || user_access('delete limited rescued entities', $account)
-          || user_access('delete contact rescued entities', $account)
-          || user_access('delete employee rescued entities', $account)
-        )) {
+            user_access('delete personal rescued entities', $account)
+            || user_access('delete limited rescued entities', $account)
+            || user_access('delete contact rescued entities', $account)
+            || user_access('delete employee rescued entities', $account)
+          )
+        ) {
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        } elseif ($is_admin || user_access('delete any rescued entities', $account)) {
-          return true;
-        } else {
-          return false;
+        }
+        elseif ($is_admin || user_access('delete any rescued entities', $account)) {
+          return TRUE;
+        }
+        else {
+          return FALSE;
         }
       }
     case 'edit':
     case 'update':
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['edit'])) {
-        return false;
-      } else {
+        return FALSE;
+      }
+      else {
         if (!$is_admin && isset($entityInfo) && (
-          user_access('edit personal rescued entities', $account)
-          || user_access('edit limited rescued entities', $account)
-          || user_access('edit contact rescued entities', $account)
-          || user_access('edit employee rescued entities', $account)
-        )) {
+            user_access('edit personal rescued entities', $account)
+            || user_access('edit limited rescued entities', $account)
+            || user_access('edit contact rescued entities', $account)
+            || user_access('edit employee rescued entities', $account)
+          )
+        ) {
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        } elseif ($is_admin || user_access('edit any rescued entities', $account)) {
-          return true;
-        } else {
-          return false;
+        }
+        elseif ($is_admin || user_access('edit any rescued entities', $account)) {
+          return TRUE;
+        }
+        else {
+          return FALSE;
         }
       }
     case 'view':
       if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['view'])) {
-        return false;
-      } else {
+        return FALSE;
+      }
+      else {
         if (!$is_admin && isset($entityInfo) && (
-          user_access('view public rescued entities', $account)
-          || user_access('view personal rescued entities', $account)
-          || user_access('view limited rescued entities', $account)
-          || user_access('view contact rescued entities', $account)
-          || user_access('view employee rescued entities', $account)
-        )) {
+            user_access('view public rescued entities', $account)
+            || user_access('view personal rescued entities', $account)
+            || user_access('view limited rescued entities', $account)
+            || user_access('view contact rescued entities', $account)
+            || user_access('view employee rescued entities', $account)
+          )
+        ) {
           return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        } elseif ($is_admin || user_access('view any rescued entities', $account)) {
-          return true;
-        } else {
-          return false;
+        }
+        elseif ($is_admin || user_access('view any rescued entities', $account)) {
+          return TRUE;
+        }
+        else {
+          return FALSE;
         }
       }
   }
@@ -510,7 +531,8 @@ function rescued_reset_session($account) {
       // TODO: We need a role to support a basic public user that does not have an xTuple user yet.
       //$session->setRescued('user', strtolower('public'));
       $session->setRescued('user_type', 'rescued_contact');
-    } else {
+    }
+    else {
       $session->setRescued('user', strtolower($user2account['data']['account']));
 
       // Get this CRM Account and figure out what type of user it is.
@@ -521,15 +543,18 @@ function rescued_reset_session($account) {
       if ($user2account['data']['accountParent'] &&
         empty($crmAccount['data']['customer']) &&
         empty($crmAccount['data']['employee']) &&
-        empty($crmAccount['data']['salesRep'])) {
+        empty($crmAccount['data']['salesRep'])
+      ) {
 
         $cust_number = $user2account['data']['accountParent'];
         $session->setRescued('user_type', 'rescued_limited');
-      } elseif (isset($crmAccount['data']['employee'])) {
+      }
+      elseif (isset($crmAccount['data']['employee'])) {
         // An Employee has more access. This could also be a Customer or Sales Rep.
         $cust_number = $user2account['data']['account'];
         $session->setRescued('user_type', 'rescued_employee');
-      } else {
+      }
+      else {
         $cust_number = $user2account['data']['account'];
         $session->setRescued('user_type', 'rescued_personal');
       }
@@ -557,17 +582,19 @@ function rescued_reset_session($account) {
         $ship_tos = xdruple_fields_get_ship_to_list($id);
         if (!empty($ship_tos) && count($ship_tos) === 1) {
           $session->setRescued('ship_to', array_shift(array_keys($ship_tos)));
-        } else {
+        }
+        else {
           // Or set $_SESSION['rescued']['ship_to'] default to the Customer's default Ship To.
           $session->setRescued('ship_to', xdruple_fields_get_ship_to_default($id));
         }
-        $session->setRescued('custom_ship_to', false);
+        $session->setRescued('custom_ship_to', FALSE);
 
         // Set $_SESSION['rescued']['site'] default to the Customer's preferred site.
         if (!empty($customer['preferredSite'])) {
           $session->setRescued('site', $customer['preferredSite']);
-        } else {
-          $session->setRescued('site', variable_get('xdruple_commerce_default_warehouse', null));
+        }
+        else {
+          $session->setRescued('site', variable_get('xdruple_commerce_default_warehouse', NULL));
         }
 
         xdruple_rescued_scheduled_date('tomorrow');
@@ -603,43 +630,50 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
   // TODO: Expose this through an admin setting.
   $white_list = array(
     // TODO: Create white list.
-    'State' => true,
+    'State' => TRUE,
   );
 
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   $session = extensions_get_session();
 
   if ($op === 'view' && isset($white_list[$entityInfo['resource']])) {
-    return true;
-  } elseif ($op !== 'view' && isset($white_list[$entityInfo['resource']])) {
+    return TRUE;
+  }
+  elseif ($op !== 'view' && isset($white_list[$entityInfo['resource']])) {
     // Only admins and employees should be able to create/update/delete
     // $white_list entities.
-    return false;
-  } elseif ($session->getRescued('user')) {
+    return FALSE;
+  }
+  elseif ($session->getRescued('user')) {
     // For non-white_list entities, we check if the user's rescued role gives
     // then access to this entity through it's relations.
 
     // Figure out what role we're dealing with.
     if (user_access('view personal rescued entities', $account)) {
       // TODO: Need a whitelist for 'rescued_personal'.
-      return true;
+      return TRUE;
       //return false;
-    } elseif (user_access('view limited rescued entities', $account)) {
+    }
+    elseif (user_access('view limited rescued entities', $account)) {
       // TODO: Need a whitelist for 'rescued_limited'.
-      return true;
+      return TRUE;
       //return false;
-    } elseif (user_access('view contact rescued entities', $account)) {
+    }
+    elseif (user_access('view contact rescued entities', $account)) {
       // TODO: Add support for basic contacts that will be accessing the API as a public user.
       // TODO: Need a whitelist for 'rescued_contact'.
-      return false;
-    } elseif (user_access('view employee rescued entities', $account)) {
-      // TODO: Need a whitelist for 'rescued_employee'.
-      return true;
-    } else {
-      return false;
+      return FALSE;
     }
-  } else {
-    return false;
+    elseif (user_access('view employee rescued entities', $account)) {
+      // TODO: Need a whitelist for 'rescued_employee'.
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+  else {
+    return FALSE;
   }
 }
 
@@ -657,9 +691,10 @@ function rescued_entity_property_info() {
       foreach ($resources['schemas'] as $resource => $properties) {
         foreach ($properties['properties'] as $key => $value) {
           if (isset($value['type'])) {
-            $format = isset($value['format']) ? $value['format'] : null;
+            $format = isset($value['format']) ? $value['format'] : NULL;
             $type = rescued_json_schema_to_data_type($value['type'], $format);
-          } else {
+          }
+          else {
             $type = 'text';
           }
           $info[$name . '_' . strtolower($resource)]['properties'][$key] = array(
@@ -707,15 +742,17 @@ function rescued_field_extra_fields() {
       foreach ($resources['schemas'] as $resource => $properties) {
         foreach ($properties['properties'] as $key => $value) {
           // Set weight based on type.
-          if (isset($value['$ref']) && strpos($value['$ref'], '/') === false) {
+          if (isset($value['$ref']) && strpos($value['$ref'], '/') === FALSE) {
             // Handle toOne nested relations.
 
             $cardinality = 1;
             $weight = 20;
             $child = $value['$ref'];
             rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
-          } elseif ((isset($value['items']) && isset($value['items']['$ref']) &&
-          strpos($value['items']['$ref'], '/') === false)) {
+          }
+          elseif ((isset($value['items']) && isset($value['items']['$ref']) &&
+            strpos($value['items']['$ref'], '/') === FALSE)
+          ) {
             // Handle toMany nested relations.
 
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
@@ -733,13 +770,15 @@ function rescued_field_extra_fields() {
               'label' => t($value['title']),
               'weight' => $weight,
             );
-          } elseif (isset($value['items']) && isset($value['items']['$ref']) &&
-          strpos($value['items']['$ref'], '/') !== false) {
+          }
+          elseif (isset($value['items']) && isset($value['items']['$ref']) &&
+            strpos($value['items']['$ref'], '/') !== FALSE
+          ) {
             // Handle toMany key relations.
 
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 30;
-            $child = strtolower(array_shift(explode( '/', $value['items']['$ref'], 2)));
+            $child = strtolower(array_shift(explode('/', $value['items']['$ref'], 2)));
             rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
@@ -752,7 +791,8 @@ function rescued_field_extra_fields() {
               'label' => t($value['title']),
               'weight' => $weight,
             );
-          } else {
+          }
+          else {
             $weight = -40;
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
@@ -777,19 +817,19 @@ function rescued_field_extra_fields() {
 /**
  * Creates fields for child relations on rescued entities.
  *
- * @param string $name
+ * @param string  $name
  *  Name of rescued client.
  *
- * @param string $resource
+ * @param string  $resource
  *  Name of rescued client resource.
  *
- * @param string $property
+ * @param string  $property
  *  Name of resource property.
  *
- * @param string $child
+ * @param string  $child
  *  The child resource name.
  *
- * @param string $title
+ * @param string  $title
  *  The title of the property.
  *
  * @param integer $cardinality
@@ -798,18 +838,20 @@ function rescued_field_extra_fields() {
  * @param integer $weight
  *  Field weight for sort order.
  *
- * @param array $handled_properties
+ * @param array   $handled_properties
  *  $resource and $properties registered to be handled by another module.
  */
 function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight, $handled_properties) {
   // Check $resource and $property to see if it's registered to be handled by
   // another module.
   if (isset($handled_properties[$name], $handled_properties[$name][$resource]) &&
-    in_array($property, $handled_properties[$name][$resource])) {
+    in_array($property, $handled_properties[$name][$resource])
+  ) {
 
     // Let other modules handle setting up this field.
     module_invoke_all('rescued_create_child_fields', $name, $resource, $property, $child, $title, $cardinality, $weight);
-  } else {
+  }
+  else {
     // Handle default field creation for non-registered $resource[$property].
     xdruple_entityreference_create_default_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight);
   }
@@ -878,8 +920,9 @@ function rescued_entity_query_alter(&$query) {
   // Alter only RESCUED module entities.
   if (isset($conditions['entity_type']) &&
     (($entityInfo = entity_get_info($conditions['entity_type']['value'])) &&
-    isset($entityInfo['module']) &&
-    strpos($entityInfo['module'], 'rescued') !== FALSE)) {
+      isset($entityInfo['module']) &&
+      strpos($entityInfo['module'], 'rescued') !== FALSE)
+  ) {
 
     $query->executeCallback = 'rescued_entity_field_query_builder';
   }
@@ -913,21 +956,25 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 //           $queryParams[$column] = $queryParam['value'];
 //         }
         $queryParams['q'] = $queryParam['value'];
-      } else if ($queryParam['column'] === 'q') {
-        $queryParams['q'] = $queryParam['value'];
-      } else {
-        //$queryParams[$queryParam['column']] = $queryParam['value'];
-
-        // Convert query types to xTuple format.
-        $type = rescued_json_schema_get_property_type($entityInfo['json-schema'][$entityInfo['resource']], $queryParam['column']);
-
-        if ($type === 'boolean') {
-          $queryParam['value'] = empty($queryParam['value']) ? FALSE : TRUE;
+      }
+      else {
+        if ($queryParam['column'] === 'q') {
+          $queryParams['q'] = $queryParam['value'];
         }
+        else {
+          //$queryParams[$queryParam['column']] = $queryParam['value'];
 
-        $queryParams['query'][$queryParam['column']] = array(
-          isset($queryParam['operator']) ? rescued_get_query_operator($queryParam['operator']): 'EQUALS' => $queryParam['value'],
-        );
+          // Convert query types to xTuple format.
+          $type = rescued_json_schema_get_property_type($entityInfo['json-schema'][$entityInfo['resource']], $queryParam['column']);
+
+          if ($type === 'boolean') {
+            $queryParam['value'] = empty($queryParam['value']) ? FALSE : TRUE;
+          }
+
+          $queryParams['query'][$queryParam['column']] = array(
+            isset($queryParam['operator']) ? rescued_get_query_operator($queryParam['operator']) : 'EQUALS' => $queryParam['value'],
+          );
+        }
       }
     }
   }
@@ -938,7 +985,8 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     foreach ($order as $orderby) {
       if (strtolower($orderby['direction']) === 'asc') {
         $queryParams['orderby'][$orderby['specifier']] = 'ASC';
-      } elseif (strtolower($orderby['direction']) === 'desc') {
+      }
+      elseif (strtolower($orderby['direction']) === 'desc') {
         $queryParams['orderby'][$orderby['specifier']] = 'DESC';
       }
     }
@@ -950,7 +998,7 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 
   if ($query->count) {
     // Call the REST API and get a count quicker than a full load request.
-    $queryParams['count'] = true;
+    $queryParams['count'] = TRUE;
     $entityInfo = entity_get_info($entityType);
     $api_callback = $entityInfo['api-list-callback'];
     $count = $api_callback($entityInfo['discovery-client'], $entityInfo['resource'], $queryParams);
@@ -968,7 +1016,7 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 
   $conditions = array_merge($queryParams, $pager_range);
 
-  $entities = entity_load($entityType, false, $conditions);
+  $entities = entity_load($entityType, FALSE, $conditions);
 
   $result = array(
     $entityType => $entities,
@@ -1029,8 +1077,8 @@ function rescued_field_group_info() {
         if (isset($properties['schemas'][$resource]['properties'])) {
           foreach ($properties['schemas'][$resource]['properties'] as $key => $value) {
             if (isset($value['items']) && isset($value['items']['$ref'])
-            // TODO: This would remove toMany key relations from htabs:
-            // && strpos($value['items']['$ref'], '/') === false
+              // TODO: This would remove toMany key relations from htabs:
+              // && strpos($value['items']['$ref'], '/') === false
             ) {
               $field_group_tab->data['children'][] = 'group_' . $key;
               $field_group = new stdClass;
@@ -1052,7 +1100,7 @@ function rescued_field_group_info() {
                   'formatter' => 'closed',
                   'instance_settings' => array(
                     'description' => '', // TODO: Do we need this?
-                    'classes' => 'group-' . $key. ' field-group-fieldset ',
+                    'classes' => 'group-' . $key . ' field-group-fieldset ',
                     //'required_fields' => 1,
                   ),
                 ),
@@ -1061,7 +1109,7 @@ function rescued_field_group_info() {
               $field_groups['group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default'] = $field_group;
             }
 
-            if (isset($value['$ref']) && strpos($value['$ref'], '/') === false) {
+            if (isset($value['$ref']) && strpos($value['$ref'], '/') === FALSE) {
               $field_group = new stdClass;
               $field_group->api_version = 1;
               $field_group->identifier = 'group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default';
@@ -1081,7 +1129,7 @@ function rescued_field_group_info() {
                   'formatter' => 'collapsible',
                   'instance_settings' => array(
                     'description' => '', // TODO: Do we need this?
-                    'classes' => 'group-' . $key. ' field-group-fieldset ',
+                    'classes' => 'group-' . $key . ' field-group-fieldset ',
                     'required_fields' => 1,
                   ),
                 ),
@@ -1132,11 +1180,13 @@ function rescued_type_get_name($type = NULL) {
         // Return FALSE if it does not exist.
         return FALSE;
       }
-    } else {
+    }
+    else {
       // Return all types.
       return $rescued_types;
     }
-  } else {
+  }
+  else {
     return FALSE;
   }
 }
@@ -1158,62 +1208,78 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
       // Handle basic properties.
       if (empty($entity_values[$key])) {
         if (isset($property['isKey']) && $property['isKey'] &&
-          (!isset($property['required']) || isset($entity->$key))) {
+          (!isset($property['required']) || isset($entity->$key))
+        ) {
           // This is a resource key field, but it's not required. That means
           // it will be auto assigned like a UUID. Set to null. Let API handle it.
 
           // Forms have the Key as read only, so it doesn't get set on $entity_values[$key].
           // Check if it's already set on the entity before we set it to null.
-          $entity->$key = isset($entity->$key) ?  $entity->$key : null;
-        } elseif ($property['type'] === 'string' && (isset($property['format']) ? ($property['format'] !== 'date' && $property['format'] !== 'date-time') : true)) {
-            $entity->$key = "";
-        } else {
+          $entity->$key = isset($entity->$key) ? $entity->$key : NULL;
+        }
+        elseif ($property['type'] === 'string' && (isset($property['format']) ? ($property['format'] !== 'date' && $property['format'] !== 'date-time') : TRUE)) {
+          $entity->$key = "";
+        }
+        else {
           if ($property['type'] === 'boolean') {
-            $entity->$key = false;
-          } else {
-            $entity->$key = null;
+            $entity->$key = FALSE;
+          }
+          else {
+            $entity->$key = NULL;
           }
         }
-      } elseif ($property['type'] === 'boolean') {
+      }
+      elseif ($property['type'] === 'boolean') {
         if ($entity_values[$key]) {
-          $entity->$key = true;
-        } else {
-          $entity->$key = false;
+          $entity->$key = TRUE;
         }
-      } elseif ($property['type'] === 'number') {
+        else {
+          $entity->$key = FALSE;
+        }
+      }
+      elseif ($property['type'] === 'number') {
         // Cast to float.
-        $entity->$key = (float)$entity_values[$key];
-      } elseif ($property['type'] === 'integer') {
+        $entity->$key = (float) $entity_values[$key];
+      }
+      elseif ($property['type'] === 'integer') {
         // Cast to integer.
-        $entity->$key = (int)$entity_values[$key];
-      } else {
+        $entity->$key = (int) $entity_values[$key];
+      }
+      else {
         $entity->$key = $entity_values[$key];
       }
-    } elseif (isset($property['$ref']) && strpos($property['$ref'], '/') !== false) {
+    }
+    elseif (isset($property['$ref']) && strpos($property['$ref'], '/') !== FALSE) {
       if (empty($entity_values[$key])) {
         if ($property['type'] === 'String') {
-            $entity->$key = "";
-        } else {
-          $entity->$key = null;
+          $entity->$key = "";
         }
-      } else {
+        else {
+          $entity->$key = NULL;
+        }
+      }
+      else {
         // Handle toOne key relations.
         if ($entity_values[$key]) {
           $entity->$key = $entity_values[$key];
-        } else {
+        }
+        else {
           // $entity->$key === 0 indicates an empty select list value.
-          $entity->$key = null;
+          $entity->$key = NULL;
         }
       }
-    } elseif (isset($property['items']['$ref']) && strpos($property['items']['$ref'], '/') !== false) {
+    }
+    elseif (isset($property['items']['$ref']) && strpos($property['items']['$ref'], '/') !== FALSE) {
       // Handle toMany key relations.
       $langcode = $form[$key]['#language'];
       if (empty($entity_values[$key][$langcode])) {
         $entity->$key = array();
-      } else {
+      }
+      else {
         $entity->$key = explode(', ', $entity_values[$key][$langcode]);
       }
-    } else {
+    }
+    else {
       // Build array of child key for Inline Entity Form handling below
       $child_keys[$key] = $key;
     }
@@ -1236,7 +1302,8 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
       if (isset($schema[$field_name]['items'])) {
         // Default toMany to an empty array.
         $entity->{$field_name} = array();
-      } else {
+      }
+      else {
         // Default toOne to null.
         $entity->{$field_name} = array();
       }
@@ -1249,7 +1316,8 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
           foreach ($child_fields as $field_key) {
             $entity->{$field_name}[$field_key] = $item['entity']->$field_key;
           }
-        } elseif (isset($schema[$field_name]['items'])) {
+        }
+        elseif (isset($schema[$field_name]['items'])) {
           // Handle toMany key relations
           $child_data = array();
           foreach ($child_fields as $field_key) {
@@ -1325,11 +1393,12 @@ function _rescued_inline_entity_form_autocomplete_validate($element, &$form_stat
  * For example, suppose the user has entered the string 'red fish, blue' in the
  * field, and there are two taxonomy terms, 'blue fish' and 'blue moon'. The
  * JSON output would have the following structure:
+ *
  * @code
- *   {
- *     "red fish, blue fish": "blue fish",
- *     "red fish, blue moon": "blue moon",
- *   };
+ *      {
+ *      "red fish, blue fish": "blue fish",
+ *      "red fish, blue moon": "blue moon",
+ *      };
  * @endcode
  *
  * @param $field_name
@@ -1404,7 +1473,8 @@ function rescued_get_discovery_clients() {
     $results = $query->execute();
     if (isset($results['wsclient_service'])) {
       $discovery_clients = entity_load('wsclient_service', array_keys(($results['wsclient_service'])));
-    } else {
+    }
+    else {
       return array();
     }
 
@@ -1450,7 +1520,7 @@ function rescued_get_discovery_client_ids() {
   $ids = &drupal_static(__FUNCTION__);
 
   if (!isset($ids)) {
-   $ids = db_select('wsclient_service', 'ws')
+    $ids = db_select('wsclient_service', 'ws')
       ->condition('ws.type', 'discovery', '=')
       ->fields('ws', array('id'))
       ->execute()
@@ -1490,7 +1560,7 @@ function rescued_flush_caches() {
   // changes when the cache is flushed.
 
   // Set to false to force rescued_entity_info() to rebuild the entities.
-  variable_set('rescued_docs_loaded', false);
+  variable_set('rescued_docs_loaded', FALSE);
 
   // Clear the rescued_entity_info cache.
   cache_clear_all('rescued_entity_info', 'cache');
@@ -1513,6 +1583,7 @@ function rescued_flush_caches() {
  *
  * @param array $form
  *   The array containing the WSClient $form.
+ *
  * @return
  *   A data type array with $form_state keys that are part of the Discover Service settings.
  */
@@ -1520,7 +1591,7 @@ function rescued_get_discovery_form_fields($form) {
   $keys = array();
   foreach ($form as $key => $item) {
     // Skip form API setting keys.
-    if (strpos($key,'#') !== false) {
+    if (strpos($key, '#') !== FALSE) {
       continue;
     }
     // Recurse into any fieldsets and get the keys there.
@@ -1540,6 +1611,7 @@ function rescued_get_discovery_form_fields($form) {
  *
  * @param array $types
  *   The array containing the struct strings.
+ *
  * @return
  *   A data type array with property information.
  */
@@ -1552,7 +1624,7 @@ function rescued_discovery_parse_types(array $types) {
 
     foreach ($properties['properties'] as $key => $value) {
       $wsclient_types[$resource]['property info'][$key] = array(
-        'type' => rescued_json_schema_to_data_type($value['type'], (isset($value['format']) ? $value['format'] : null)),
+        'type' => rescued_json_schema_to_data_type($value['type'], (isset($value['format']) ? $value['format'] : NULL)),
       );
     }
   }
@@ -1566,13 +1638,14 @@ function rescued_discovery_parse_types(array $types) {
  *
  * @param array $operations
  *   The array containing the operation signature strings.
+ *
  * @return
  *   An operations array with parameter information.
  */
 function rescued_discovery_parse_operations(array $operations) {
   $wsclient_operations = array();
   foreach ($operations as $resource => $properties) {
-    foreach($properties['methods'] as $method => $attr) {
+    foreach ($properties['methods'] as $method => $attr) {
       $wsclient_operations[$resource . '_' . $method] = array(
         'label' => $resource . ' - ' . $method,
         // TODO: Not sure about this part. Need to do some tests with Rules module.
@@ -1632,6 +1705,7 @@ function rescued_discovery_type_mapper($type) {
     if (in_array($primitive, $primitive_types)) {
       return 'list<' . $primitive . '>';
     }
+
     return 'list<' . $type . '>';
   }
 
@@ -1690,7 +1764,7 @@ function rescued_get_wsclient_service_from_config() {
     $service = new WSClientServiceDescription($client);
 
     if ($service->settings['discovery']['debug']) {
-      variable_set('rescued_debug_mode', true);
+      variable_set('rescued_debug_mode', TRUE);
     }
 
     $services[$service->name] = $service;
@@ -1730,7 +1804,8 @@ function rescued_wsclient_service_load($services) {
       foreach ($config as $key => $value) {
         $services[$service]->$key = $value;
       }
-    } else {
+    }
+    else {
       $services[$service] = $config;
     }
   }
@@ -1755,7 +1830,8 @@ function rescued_api_get_client($discovery_client) {
     $client = $endpoint->client();
     $rescued[$discovery_client]['client'] = $client;
     $rescued[$discovery_client]['prn'] = $service->settings['discovery']['prn'];
-  } else {
+  }
+  else {
     $client = $rescued[$discovery_client]['client'];
   }
 
@@ -1774,15 +1850,18 @@ function rescued_api_get_client($discovery_client) {
   // Set OAuth 2.0 JWT Delegated user.
   if ($role_user = $session->getRescued('user')) {
     if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $role_user) ||
-        $oauth->prn !== $role_user){
+      $oauth->prn !== $role_user
+    ) {
 
       $oauth->prn = $role_user;
       $oauth_user = $role_user;
       $reset = TRUE;
     }
-  } elseif (isset($prn)) {
+  }
+  elseif (isset($prn)) {
     if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $prn) ||
-        $oauth->prn !== $prn) {
+      $oauth->prn !== $prn
+    ) {
 
       $oauth->prn = $prn;
       $oauth_user = $prn;
@@ -1794,7 +1873,7 @@ function rescued_api_get_client($discovery_client) {
   if ($reset) {
     unset($_SESSION['access_token']);
     unset($_SESSION['oauth_user']);
-    $auth->token = null;
+    $auth->token = NULL;
     $_SESSION['oauth_user'] = $oauth_user;
     $client->client->setAssertionCredentials($oauth);
   }
@@ -1829,13 +1908,14 @@ function rescued_api_resource_load($discovery_client, $resource, $id, $resource_
 /**
  * GET list of REST resources.
  */
-function rescued_api_resource_list($discovery_client, $resource, $optParams = array(), $data_only = true) {
+function rescued_api_resource_list($discovery_client, $resource, $optParams = array(), $data_only = TRUE) {
   // If this is a large query and would result in a long URL, query over POST instead.
   // This will get around the "414 Request URI Too Large" error.
   // TODO: Is 500 characters too long?
   if (strlen(json_encode($optParams)) > 500) {
-    $result = rescued_api_resource_post_query($discovery_client, $resource, $optParams, false);
-  } else {
+    $result = rescued_api_resource_post_query($discovery_client, $resource, $optParams, FALSE);
+  }
+  else {
     $client = rescued_api_get_client($discovery_client);
 
     // Get a list of resources.
@@ -1844,7 +1924,8 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
 
   if ($data_only) {
     return isset($result['data']) ? $result['data'] : array();
-  } else {
+  }
+  else {
     return isset($result) ? $result : array();
   }
 }
@@ -1856,15 +1937,15 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
  * constructing a really long URL that may fail with an error:
  * "414 Request URI Too Large".
  *
- * @param string $discovery_client The API client name. e.g. 'xtuple'
- * @param string $resource The API resource name. e.g. 'ClassCode'
- * @param array $optParams The structured query to perform.
- * @param boolean $data_only Return just the data. Set to fails to get the
- *   full result that will include etags.
+ * @param string  $discovery_client The API client name. e.g. 'xtuple'
+ * @param string  $resource         The API resource name. e.g. 'ClassCode'
+ * @param array   $optParams        The structured query to perform.
+ * @param boolean $data_only        Return just the data. Set to fails to get the
+ *                                  full result that will include etags.
  *
  * @return array The query result response.
  */
-function rescued_api_resource_post_query($discovery_client, $resource, $optParams = array(), $data_only = true) {
+function rescued_api_resource_post_query($discovery_client, $resource, $optParams = array(), $data_only = TRUE) {
   $client = rescued_api_get_client($discovery_client);
 
   // Build restQuery structure for the POST body.
@@ -1881,7 +1962,8 @@ function rescued_api_resource_post_query($discovery_client, $resource, $optParam
 
   if ($data_only) {
     return isset($result['data']) ? $result['data'] : array();
-  } else {
+  }
+  else {
     return isset($result) ? $result : array();
   }
 }
@@ -1913,7 +1995,7 @@ function rescued_api_resource_insert($discovery_client, $resource, $postBody, $o
 
 /**
  * Helper function to format a GET style query options for POST query requests.
-
+ *
  * @param array $optParams The structured query to perform.
  *
  * @return array The formatted query $options.
@@ -1925,7 +2007,7 @@ function rescued_format_post_query_options($optParams = array()) {
 
   // Format the query.
   if (isset($optParams['query'])) {
-    foreach($optParams['query'] as $key => $value) {
+    foreach ($optParams['query'] as $key => $value) {
       $options['query'][] = array($key => $value);
     }
     unset($optParams['query']);
@@ -1933,14 +2015,14 @@ function rescued_format_post_query_options($optParams = array()) {
 
   // Format the orderby.
   if (isset($optParams['orderby'])) {
-    foreach($optParams['orderby'] as $key => $value) {
+    foreach ($optParams['orderby'] as $key => $value) {
       $options['orderby'][] = array($key => $value);
     }
     unset($optParams['orderby']);
   }
 
   // Add any other query info. e.g. rowlimit, pagetoken, maxresults or count.
-  foreach($optParams as $key => $value) {
+  foreach ($optParams as $key => $value) {
     $options[$key] = $value;
   }
 
@@ -1951,12 +2033,12 @@ function rescued_format_post_query_options($optParams = array()) {
  * Build a JSON-Schema array for a single entity.
  *
  * @param string $resource
- * @param array $json_schema
+ * @param array  $json_schema
  * @param string $discovery_client The client name.
  *
  * @return array JSON-Schema
  */
-function rescued_get_single_json_schema($resource, $json_schema = null, $discovery_client = null) {
+function rescued_get_single_json_schema($resource, $json_schema = NULL, $discovery_client = NULL) {
   // Find the resource in the JSON-Schema.
   $schema = array();
 
@@ -1976,7 +2058,7 @@ function rescued_get_single_json_schema($resource, $json_schema = null, $discove
  * Build a JSON-Schema array for an entity including all $ref's recursively.
  *
  * @param string $resource
- * @param array $json_schema
+ * @param array  $json_schema
  *
  * @return array JSON-Schema
  */
@@ -1989,19 +2071,24 @@ function rescued_get_recursive_json_schema($resource, $json_schema) {
 
   // If a property is a $ref, recurse into it and add it's properties as well.
   foreach ($schema[$resource]['properties'] as $property => $values) {
-    if (isset($values['$ref']) && strpos($properties['$ref'], '/') === false) {
+    if (isset($values['$ref']) && strpos($properties['$ref'], '/') === FALSE) {
       // Handle toOne relations.
       $schema = $schema + rescued_get_recursive_json_schema($values['$ref'], $json_schema);
-    } elseif (isset($values['$ref']) && strpos($properties['$ref'], '/') !== false) {
+    }
+    elseif (isset($values['$ref']) && strpos($properties['$ref'], '/') !== FALSE) {
       // Handle toOne key relations.
       $ref_parent = explode("/", $values['$ref']);
       $schema = $schema + rescued_get_recursive_json_schema($ref_parent[0], $json_schema);
-    } elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
-    strpos($properties['items']['$ref'], '/') === false ) {
+    }
+    elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
+      strpos($properties['items']['$ref'], '/') === FALSE
+    ) {
       // Handle toMany isNested relations.
       $schema = $schema + rescued_get_recursive_json_schema($values['items']['$ref'], $json_schema);
-    } elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
-    strpos($properties['items']['$ref'], '/') !== false ) {
+    }
+    elseif (isset($properties['items']) && isset($properties['items']['$ref']) &&
+      strpos($properties['items']['$ref'], '/') !== FALSE
+    ) {
       // Handle toMany key relations.
       $ref_parent = explode("/", $values['items']['$ref']);
       $schema = $schema + rescued_get_recursive_json_schema($ref_parent[0], $json_schema);
@@ -2018,7 +2105,7 @@ function rescued_get_recursive_json_schema($resource, $json_schema) {
  *
  * @return string Drupal form field type.
  */
-function rescued_json_schema_to_form_type($type, $format = null) {
+function rescued_json_schema_to_form_type($type, $format = NULL) {
   switch (strtolower($type)) {
     case 'object':
       return 'textfield';
@@ -2038,9 +2125,11 @@ function rescued_json_schema_to_form_type($type, $format = null) {
     case 'string':
       if (isset($format) && $format === 'date') {
         return 'date_popup';
-      } else {
+      }
+      else {
         return 'textfield';
       }
+
       return 'textfield';
       break;
     default:
@@ -2055,7 +2144,7 @@ function rescued_json_schema_to_form_type($type, $format = null) {
  *
  * @return string Drupal data type.
  */
-function rescued_json_schema_to_data_type($type, $format = null) {
+function rescued_json_schema_to_data_type($type, $format = NULL) {
   switch (strtolower($type)) {
     case 'object':
       return 'entities';
@@ -2075,7 +2164,8 @@ function rescued_json_schema_to_data_type($type, $format = null) {
     case 'string':
       if (isset($format) && $format === 'date') {
         return 'date';
-      } else {
+      }
+      else {
         return 'text';
       }
       break;
@@ -2089,13 +2179,13 @@ function rescued_json_schema_to_data_type($type, $format = null) {
  * Convert Drupals query operator string to xTuples.
  *
  * @param string
- *   Possible values:
- *   - '=', '<>', '>', '>=', '<', '<=', 'STARTS_WITH', 'CONTAINS': These
+ *     Possible values:
+ *     - '=', '<>', '>', '>=', '<', '<=', 'STARTS_WITH', 'CONTAINS': These
  *     operators expect $value to be a literal of the same type as the
  *     column.
- *   - 'IN', 'NOT IN': These operators expect $value to be an array of
+ *     - 'IN', 'NOT IN': These operators expect $value to be an array of
  *     literals of the same type as the column.
- *   - 'BETWEEN': This operator expects $value to be an array of two literals
+ *     - 'BETWEEN': This operator expects $value to be an array of two literals
  *     of the same type as the column.
  *
  * @return string
@@ -2127,17 +2217,17 @@ function rescued_get_query_operator($operator) {
     case 'STARTS_WITH':
       return 'BEGINS_WITH';
       break;
-   // TODO: xTuple doesn't support this yet.
+    // TODO: xTuple doesn't support this yet.
     case 'IN':
       //return 'ANY';
       return 'EQUALS';
       break;
-   // TODO: xTuple doesn't support this yet.
+    // TODO: xTuple doesn't support this yet.
     case 'NOT IN':
       //return 'NOT ANY';
       return 'EQUALS';
       break;
-   // TODO: xTuple doesn't support this yet.
+    // TODO: xTuple doesn't support this yet.
     case 'BETWEEN':
       //return 'BETWEEN';
       return 'EQUALS';
@@ -2166,7 +2256,7 @@ function rescued_json_schema_get_resource_key($properties) {
 /**
  * Get the property data type from the resource's JSON-Schema.
  *
- * @param array $schema The JSON-Schema for a single resource.
+ * @param array $schema   The JSON-Schema for a single resource.
  * @param array $property The property name to get the type for.
  *
  * @return string Key name.
@@ -2174,8 +2264,9 @@ function rescued_json_schema_get_resource_key($properties) {
 function rescued_json_schema_get_property_type($schema, $property) {
   if (isset($schema['properties'][$property]['type'])) {
     return $schema['properties'][$property]['type'];
-  } else {
-    return false;
+  }
+  else {
+    return FALSE;
   }
 }
 
