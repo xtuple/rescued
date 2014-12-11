@@ -169,23 +169,25 @@ class RescuedControllerNew extends EntityAPIController {
     }
 
     // Support the entitycache module if activated.
-    if (!empty($this->entityInfo['entity cache']) && $ids && !$conditions) {
-      $cached_entities = EntityCacheControllerHelper::entityCacheGet($this, $ids, $conditions);
+    if (module_exists('entitycache')) {
+      if (!empty($this->entityInfo['entity cache']) && $ids && !$conditions) {
+        $cached_entities = EntityCacheControllerHelper::entityCacheGet($this, $ids, $conditions);
 
-      // Make sure this is a fully loaded entity.
-      foreach ($cached_entities as $entitycached_id => $entitycached_entity) {
-        if (!isset($entitycached_entity->eTag)) {
-          unset($cached_entities[$entitycached_id]);
+        // Make sure this is a fully loaded entity.
+        foreach ($cached_entities as $entitycached_id => $entitycached_entity) {
+          if (!isset($entitycached_entity->eTag)) {
+            unset($cached_entities[$entitycached_id]);
+          }
         }
-      }
 
-      // If any entities were loaded, remove them from the ids still to load.
-      $ids = array_diff($ids, array_keys($cached_entities));
-      $entities += $cached_entities;
+        // If any entities were loaded, remove them from the ids still to load.
+        $ids = array_diff($ids, array_keys($cached_entities));
+        $entities += $cached_entities;
 
-      // Add loaded entities to the static cache.
-      if ($this->cache && !empty($cached_entities)) {
-        $this->cacheSet($cached_entities);
+        // Add loaded entities to the static cache.
+        if ($this->cache && !empty($cached_entities)) {
+          $this->cacheSet($cached_entities);
+        }
       }
     }
 
