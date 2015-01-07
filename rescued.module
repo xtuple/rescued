@@ -733,6 +733,18 @@ function rescued_field_extra_fields() {
 
   // Build up entity fields array.
   if (isset($discovery)) {
+    // Delete all of the default 'erp_xxx' fields and recreate them so they always reflect the resource's properties.
+    $erp_fields = field_read_fields(array('type' => 'xdruple_entityreference'));
+
+    // Loop over 'erp_xxx' fields and delete them.
+    foreach ($erp_fields as $field_key => $field) {
+      if (substr($field_key, 0, 4) === 'erp_') {
+        field_delete_field($field_key);
+      }
+    }
+    // Purge 'erp_xxx' fields.
+    field_purge_batch(100);
+
     foreach ($discovery as $name => $resources) {
       $handled_properties[$name] = array();
 
