@@ -733,17 +733,18 @@ function rescued_field_extra_fields() {
 
   // Build up entity fields array.
   if (isset($discovery)) {
-    // Delete all of the default 'erp_xxx' fields and recreate them so they always reflect the resource's properties.
-    $erp_fields = field_read_fields(array('type' => 'xdruple_entityreference'));
+    $created_fields = array();
+    $erp_fields = array();
 
-    // Loop over 'erp_xxx' fields and delete them.
-    foreach ($erp_fields as $field_key => $field) {
+    // Get all of the default 'erp_xxx' fields so we can delete invalid ones below.
+    $xdref_fields = field_read_fields(array('type' => 'xdruple_entityreference'));
+
+    // Loop over and find 'erp_xxx' fields.
+    foreach ($xdref_fields as $field_key => $field) {
       if (substr($field_key, 0, 4) === 'erp_') {
-        field_delete_field($field_key);
+        $erp_fields[] = $field_key;
       }
     }
-    // Purge 'erp_xxx' fields.
-    field_purge_batch(100);
 
     foreach ($discovery as $name => $resources) {
       $handled_properties[$name] = array();
@@ -760,7 +761,10 @@ function rescued_field_extra_fields() {
             $cardinality = 1;
             $weight = 20;
             $child = $value['$ref'];
-            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
+            $new_field = rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
+            if (!empty($new_field)) {
+              $created_fields[] = $new_field;
+            }
           }
           elseif ((isset($value['items']) && isset($value['items']['$ref']) &&
             strpos($value['items']['$ref'], '/') === FALSE)
@@ -770,7 +774,10 @@ function rescued_field_extra_fields() {
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 10;
             $child = $value['items']['$ref'];
-            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
+            $new_field = rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
+            if (!empty($new_field)) {
+              $created_fields[] = $new_field;
+            }
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -791,7 +798,10 @@ function rescued_field_extra_fields() {
             $cardinality = FIELD_CARDINALITY_UNLIMITED;
             $weight = 30;
             $child = strtolower(array_shift(explode('/', $value['items']['$ref'], 2)));
-            rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
+            $new_field = rescued_create_child_fields($name, $resource, $key, $child, $value['title'], $cardinality, $weight, $handled_properties);
+            if (!empty($new_field)) {
+              $created_fields[] = $new_field;
+            }
 
             $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
@@ -821,6 +831,15 @@ function rescued_field_extra_fields() {
         }
       }
     }
+
+    // Delete invalid erp_xxx fields.
+    foreach ($erp_fields as $erp_field_name) {
+      if (!in_array($erp_field_name, $created_fields)) {
+        field_delete_field($erp_field_name);
+      }
+    }
+    // Purge 'erp_xxx' fields.
+    field_purge_batch(100);
   }
 
   return $extra;
@@ -854,6 +873,8 @@ function rescued_field_extra_fields() {
  *  $resource and $properties registered to be handled by another module.
  */
 function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight, $handled_properties) {
+  $field_name = null;
+
   // Check $resource and $property to see if it's registered to be handled by
   // another module.
   if (isset($handled_properties[$name], $handled_properties[$name][$resource]) &&
@@ -865,8 +886,10 @@ function rescued_create_child_fields($name, $resource, $property, $child, $title
   }
   else {
     // Handle default field creation for non-registered $resource[$property].
-    xdruple_entityreference_create_default_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight);
+    $field_name = xdruple_entityreference_create_default_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight);
   }
+
+  return $field_name;
 }
 
 /**
