@@ -2329,3 +2329,17 @@ function rescued_features_exclude() {
     ),
   );
 }
+
+/**
+ * Return client id (also known as: app name, XdSite)
+ */
+function rescued_get_current_client_id() {
+  $id = NULL;
+  global $rescued_clients;
+
+  if (!empty($rescued_clients['xtuple']['settings']['discovery']['application_name'])) {
+    $id = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
+  }
+  
+  return $id;
+}
