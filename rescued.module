@@ -529,9 +529,6 @@ function rescued_reset_session($account) {
     // Remove 'account' from the $_SESSION, we'll set roles below from the account.
     $session->removeRescued('account');
 
-    // We need to update the user, so we load it.
-    $account = user_load($account->uid);
-
     // XdUserContact doesn't have the account parameter because end users fill out the contact for at User Reg.
     // We need to get a Contact resource that have account and accountParent params.
     // TODO: Consider loading the full account resource to check for employee, owner roles.
@@ -613,8 +610,6 @@ function rescued_reset_session($account) {
         xdruple_rescued_scheduled_date('tomorrow');
       }
     }
-
-    user_save($account);
   }
 
   return $account;
@@ -971,7 +966,6 @@ function rescued_entity_query_alter(&$query) {
       isset($entityInfo['module']) &&
       strpos($entityInfo['module'], 'rescued') !== FALSE)
   ) {
-
     $query->executeCallback = 'rescued_entity_field_query_builder';
   }
 }
