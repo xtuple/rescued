@@ -353,20 +353,6 @@ function rescued_resources_exist($resources, $discovery_client = 'xtuple') {
 }
 
 /**
- * Implements hook_user_login().
- */
-function rescued_user_login(&$edit, $account) {
-  $is_admin = user_access('administer rescued entities', $account);
-  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  $session = extensions_get_session();
-
-  if (!$is_admin && $account->uid !== 0 && $session->getRescued('expires', 0) < time()) {
-    // Initialize the user's $_SESSION.
-    rescued_reset_session($account);
-  }
-}
-
-/**
  * Access callback for RESCUED entities.
  */
 function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
