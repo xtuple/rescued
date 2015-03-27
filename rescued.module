@@ -107,7 +107,7 @@ function rescued_hook_info() {
 /**
  * Implements hook_entity_info().
  *
- * We are programatically building entities here. Part of the process will call
+ * We are programmatically building entities here. Part of the process will call
  * get_entity_info() which ends up calling this recursively. To avoid an
  * endless loop, we leverage the 'rescued_docs_loaded' variable to only return
  * our RESCUED entities once from this function. Those dynamic entities will
@@ -115,161 +115,89 @@ function rescued_hook_info() {
  */
 function rescued_entity_info() {
   if ($cache = cache_get('rescued_entity_info')) {
-    // Returned the cached data if we've already built it.
     $return = $cache->data;
   }
   else {
-    $loaded = variable_get('rescued_docs_loaded', FALSE);
-    // Skip creating RESCUED entities when this is a recursive call from
-    // rescued_get_discovery_client_docs() or we will get a PHP Fatal error:
-    // - Maximum function nesting level of '100' reached, aborting!
-    if (!$loaded) {
-      variable_set('rescued_docs_loaded', TRUE);
-      $discovery = rescued_get_discovery_client_docs();
-
-      $return = array();
-
-      // Build up entity info array.
-      if (isset($discovery)) {
-        foreach ($discovery as $name => $properties) {
-          foreach ($properties['schemas'] as $resource => $schemas) {
-            // Add an entity for all JSON-Schema properties.
-            $resource_key = rescued_json_schema_get_resource_key($schemas['properties']);
-
-            // Services do not have keys and are not entities, skip them.
-            if (isset($resource_key)) {
-              $return[$name . '_' . strtolower($resource)] = array(
-                'label' => t($resource),
-                'resource' => $resource,
-                'discovery-client' => $name,
-                'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
-                'controller class' => 'RescuedControllerNew',
-                'api-delete-callback' => 'rescued_api_resource_delete',
-                'api-insert-callback' => 'rescued_api_resource_insert',
-                'api-list-callback' => 'rescued_api_resource_list',
-                'api-load-callback' => 'rescued_api_resource_load',
-                'api-patch-callback' => 'rescued_api_resource_patch',
-                // TODO: For development only.
-                'field cache' => FALSE,
-// TODO: Figure out which entities we actually want to cache.
-// Do that with a hook_entity_into_alter() and not here.
-                //'entity cache' => TRUE,
-                'fieldable' => TRUE, // Have to be fieldable so Display Suite module works.
-                'entity keys' => array(
-                  'id' => $resource_key,
-                  'label' => $resource_key,
+    $discovery = rescued_get_discovery_client_docs();
+    $return = array();
+    // Build up entity info array.
+    if (isset($discovery)) {
+      foreach ($discovery as $name => $properties) {
+        foreach ($properties['schemas'] as $resource => $schemas) {
+          // Add an entity for all JSON-Schema properties.
+          $resource_key = rescued_json_schema_get_resource_key($schemas['properties']);
+          if (empty($resource_key)) {
+            watchdog("rescued", "!resource doesn't have a key, so it's a service; skipping entity declaration", array(
+              '!resource' => $resource,
+            ));
+          }
+          else {
+            $return[$name . '_' . strtolower($resource)] = array(
+              'label' => t($resource),
+              'resource' => $resource,
+              'discovery-client' => $name,
+              'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
+              'controller class' => 'RescuedControllerNew',
+              'api-delete-callback' => 'rescued_api_resource_delete',
+              'api-insert-callback' => 'rescued_api_resource_insert',
+              'api-list-callback' => 'rescued_api_resource_list',
+              'api-load-callback' => 'rescued_api_resource_load',
+              'api-patch-callback' => 'rescued_api_resource_patch',
+              'field cache' => FALSE, // TODO: For development only
+              'fieldable' => TRUE,
+              'entity keys' => array(
+                'id' => $resource_key,
+                'label' => $resource_key,
+              ),
+              'label callback' => 'entity_class_label',
+              'bundle keys' => array(),
+              'base table' => NULL,
+              'bundles' => array(
+                $name . '_' . strtolower($resource) => array(
+                  'label' => t($resource),
                 ),
-                'label callback' => 'entity_class_label',
-                'bundle keys' => array(),
-                'base table' => NULL, // We don’t have a base table, since entities are remote.
-                'bundles' => array(
-                  $name . '_' . strtolower($resource) => array(
-                    'label' => t($resource),
-                  ),
+              ),
+              'view modes' => array(
+                'full' => array(
+                  'label' => t('Full content'),
+                  'custom settings' => FALSE,
                 ),
-                'view modes' => array(
-                  'full' => array(
-                    'label' => t('Full content'),
-                    'custom settings' => FALSE,
-                  ),
-                ),
-                // Entity API properties.
-                'module' => 'rescued',
-                'entity class' => 'RescuedEntityNew',
-                'permission labels' => array(
-                  'singular' => $resource,
-                  'plural' => $resource,
-                ),
-                'access callback' => 'rescued_access',
-              );
+              ),
+              // Entity API properties.
+              'module' => 'rescued',
+              'entity class' => 'RescuedEntityNew',
+              'permission labels' => array(
+                'singular' => $resource,
+                'plural' => $resource,
+              ),
+              'access callback' => 'rescued_access',
+            );
 
-              if ($properties['schemas'][$resource]['properties'][$resource_key]['type'] === 'string') {
-                $return[$name . '_' . strtolower($resource)]['uuid'] = TRUE;
-                $return[$name . '_' . strtolower($resource)]['entity keys']['uuid'] = $resource_key;
-              }
+            if ($properties['schemas'][$resource]['properties'][$resource_key]['type'] === 'string') {
+              $return[$name . '_' . strtolower($resource)]['uuid'] = TRUE;
+              $return[$name . '_' . strtolower($resource)]['entity keys']['uuid'] = $resource_key;
+            }
 
-              // Augment the JSON-Schema entities that are also a resource.
-              // These are the main entities that have a UI.
-              if (isset($properties['resources'][$resource])) {
-                // Generic callback: one less callback to define.
-                $return[$name . '_' . strtolower($resource)]['uri callback'] = 'entity_operations_entity_uri';
-                $return[$name . '_' . strtolower($resource)]['resource-methods'] = $properties['resources'][$resource]['methods'];
+            // Augment the JSON-Schema entities that are also a resource.
+            // These are the main entities that have a UI.
+            if (isset($properties['resources'][$resource])) {
+              // Generic callback: one less callback to define.
+              $return[$name . '_' . strtolower($resource)]['uri callback'] = 'entity_operations_entity_uri';
+              $return[$name . '_' . strtolower($resource)]['resource-methods'] = $properties['resources'][$resource]['methods'];
 
-                // If there's a delete method, the entity gets a full UI because it's not just a list type resource.
-                if (isset($properties['resources'][$resource]['methods']['delete'])) {
-                  $return[$name . '_' . strtolower($resource)]['bundles'][$name . '_' . strtolower($resource)]['admin'] = array(
-                    'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
-                  );
-                  $return[$name . '_' . strtolower($resource)]['admin ui'] = array(
-                    'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
-                    'controller class' => 'EntityOperationsDefaultAdminUIController',
-                  );
+              // If there's a delete method, the entity gets a full UI because it's not just a list type resource.
+              if (isset($properties['resources'][$resource]['methods']['delete'])) {
+                $return[$name . '_' . strtolower($resource)]['bundles'][$name . '_' . strtolower($resource)]['admin'] = array(
+                  'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
+                );
+                $return[$name . '_' . strtolower($resource)]['admin ui'] = array(
+                  'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
+                  'controller class' => 'EntityOperationsDefaultAdminUIController',
+                );
 
-                  // TODO: Should parent resources like this get an InlineEntityFormController?
-                  // This is a NOT read only resource, so do we give it an InlineEntityFormController?
-                  $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
-                    'controller' => 'RescuedRelationInlineEntityFormController',
-                  );
-
-                  // Entity Operations API.
-                  $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
-                    // The base path for your entities. This is the same as your entity's URI
-                    // but without the ID suffix. (In fact, you can set
-                    // entity_operations_entity_uri() as your URI callback, which will use the
-                    // value here).
-                    'path' => $name . '/' . strtolower($resource),
-                    'operations' => array(
-                      'add' => array(
-                        //'handler' => 'EntityOperationsOperationAdd',
-                        'handler' => 'RescuedEntityOperationsOperationAddGeneric',
-                      ),
-                      'view' => array(
-                        // Or try EntityOperationsOperationEntityViewOperations!
-                        'handler' => 'EntityOperationsOperationEntityView',
-                        'default' => TRUE,
-                      ),
-                      'edit' => array(
-                        //'handler' => 'EntityOperationsOperationEdit',
-                        //'handler' => 'EntityOperationsOperationEditGeneric',
-                        'handler' => 'RescuedEntityOperationsOperationEditGeneric',
-                      ),
-                      'delete' => array(
-                        'handler' => 'EntityOperationsOperationDelete',
-                      ),
-                    ),
-                  );
-                }
-                else {
-                  // This is a read only resource, so we give it an InlineEntityFormController.
-                  $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
-                    'controller' => 'RescuedRelationInlineEntityFormController',
-                  );
-
-                  // Entity Operations API.
-                  $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
-                    // The base path for your entities. This is the same as your entity's URI
-                    // but without the ID suffix. (In fact, you can set
-                    // entity_operations_entity_uri() as your URI callback, which will use the
-                    // value here).
-                    'path' => $name . '/' . strtolower($resource),
-                    'operations' => array(
-                      'view' => array(
-                        // Or try EntityOperationsOperationEntityViewOperations!
-                        'handler' => 'EntityOperationsOperationEntityView',
-                        'default' => TRUE,
-                      ),
-                    ),
-                  );
-                }
-              }
-              else {
-                // The 'is_nested_only' resources are not exposed by the REST API
-                // and must be accessed by through their parent.
-                $return[$name . '_' . strtolower($resource)]['is_nested_only'] = TRUE;
-
-                // This is not a resource, so we give it an InlineEntityFormController.
+                // TODO: Should parent resources like this get an InlineEntityFormController?
+                // This is a NOT read only resource, so do we give it an InlineEntityFormController?
                 $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
-                  //'controller' => 'RescuedChildInlineEntityFormController',
                   'controller' => 'RescuedRelationInlineEntityFormController',
                 );
 
@@ -282,30 +210,78 @@ function rescued_entity_info() {
                   'path' => $name . '/' . strtolower($resource),
                   'operations' => array(
                     'add' => array(
-                      //'handler' => 'EntityOperationsOperationAdd',
                       'handler' => 'RescuedEntityOperationsOperationAddGeneric',
                     ),
+                    'view' => array(
+                      'handler' => 'EntityOperationsOperationEntityView',
+                      'default' => TRUE,
+                    ),
                     'edit' => array(
-                      //'handler' => 'EntityOperationsOperationEdit',
-                      //'handler' => 'EntityOperationsOperationEditGeneric',
                       'handler' => 'RescuedEntityOperationsOperationEditGeneric',
                     ),
-                    // TODO: Some of these isNestedOnly resources can't be deleted like comments.
                     'delete' => array(
                       'handler' => 'EntityOperationsOperationDelete',
                     ),
                   ),
                 );
               }
+              else {
+                // This is a read only resource, so we give it an InlineEntityFormController.
+                $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
+                  'controller' => 'RescuedRelationInlineEntityFormController',
+                );
+
+                // Entity Operations API.
+                $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
+                  // The base path for your entities. This is the same as your entity's URI
+                  // but without the ID suffix. (In fact, you can set
+                  // entity_operations_entity_uri() as your URI callback, which will use the
+                  // value here).
+                  'path' => $name . '/' . strtolower($resource),
+                  'operations' => array(
+                    'view' => array(
+                      'handler' => 'EntityOperationsOperationEntityView',
+                      'default' => TRUE,
+                    ),
+                  ),
+                );
+              }
+            }
+            else {
+              // The 'is_nested_only' resources are not exposed by the REST API
+              // and must be accessed by through their parent.
+              $return[$name . '_' . strtolower($resource)]['is_nested_only'] = TRUE;
+
+              // This is not a resource, so we give it an InlineEntityFormController.
+              $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
+                'controller' => 'RescuedRelationInlineEntityFormController',
+              );
+
+              // Entity Operations API.
+              $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
+                // The base path for your entities. This is the same as your entity's URI
+                // but without the ID suffix. (In fact, you can set
+                // entity_operations_entity_uri() as your URI callback, which will use the
+                // value here).
+                'path' => $name . '/' . strtolower($resource),
+                'operations' => array(
+                  'add' => array(
+                    'handler' => 'RescuedEntityOperationsOperationAddGeneric',
+                  ),
+                  'edit' => array(
+                    'handler' => 'RescuedEntityOperationsOperationEditGeneric',
+                  ),
+                  // TODO: Some of these isNestedOnly resources can't be deleted like comments.
+                  'delete' => array(
+                    'handler' => 'EntityOperationsOperationDelete',
+                  ),
+                ),
+              );
             }
           }
         }
-
-        cache_set('rescued_entity_info', $return);
       }
-    }
-    else {
-      $return = array();
+      cache_set('rescued_entity_info', $return);
     }
   }
 
