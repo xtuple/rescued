@@ -2279,6 +2279,7 @@ function rescued_json_schema_get_resource_key($properties) {
       return $key;
     }
   }
+  return NULL;
 }
 
 /**
