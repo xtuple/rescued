@@ -19,26 +19,20 @@ function rescued_init() {
 function rescued_menu() {
   $items = array();
 
-  $discovery_clients = rescued_get_discovery_clients();
+  $items['admin/structure/xtuple'] = array(
+    'title' => "xTuple",
+    'menu_name' => 'management',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => -100,
+  );
 
-  foreach ($discovery_clients as $discovery_client) {
-    // Add a base menu item for this client so all generated entities will show up under it.
-    $items['admin/structure/' . $discovery_client->name] = array(
-      'title' => $discovery_client->label,
-      'menu_name' => 'management',
-      'access callback' => TRUE,
-      'type' => MENU_NORMAL_ITEM,
-      'weight' => -100,
-    );
-
-    // Add an autocomplete callback that will search for ResourceRelations like Taxonomy Relation.
-    $items[$discovery_client->name . '/autocomplete'] = array(
-      'title' => 'Autocomplete ' . $discovery_client->label,
-      'page callback' => 'rescued_autocomplete',
-      'access arguments' => array('access content'),
-      'type' => MENU_CALLBACK,
-    );
-  }
+  $items['xtuple/autocomplete'] = array(
+    'title' => 'Autocomplete xTuple',
+    'page callback' => 'rescued_autocomplete',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
 
   return $items;
 }
@@ -329,13 +323,8 @@ function rescued_entity_info() {
  * @return boolean
  *   True if all resources in the array exist.
  */
-function rescued_resources_exist($resources, $discovery_client = 'xtuple') {
-  $serviceInfo = entity_get_info('wsclient_service');
-  if (empty($serviceInfo)) {
-    return FALSE;
-  }
-
-  $client = rescued_api_get_client($discovery_client);
+function rescued_resources_exist($resources) {
+  $client = rescued_api_get_client("xtuple");
   foreach ($resources as $resource) {
     $entityName = 'xtuple_' . strtolower($resource);
 
@@ -867,7 +856,7 @@ function rescued_field_extra_fields() {
  *  $resource and $properties registered to be handled by another module.
  */
 function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight, $handled_properties) {
-  $field_name = null;
+  $field_name = NULL;
 
   // Check $resource and $property to see if it's registered to be handled by
   // another module.
@@ -1514,38 +1503,11 @@ function rescued_get_discovery_client_docs() {
   $docs = &drupal_static(__FUNCTION__);
 
   if (!isset($docs)) {
-    $discovery_clients = rescued_get_discovery_clients();
-
-    foreach ($discovery_clients as $discovery_client) {
-      $endpoint = $discovery_client->endpoint();
-      $client = $endpoint->client();
-      $docs[$discovery_client->name] = $client->getDiscovery($discovery_client->url);
-    }
+    $client = rescued_get_xtuple_rest_service();
+    $docs["xtuple"] = $client->service()->getDiscovery($client->config()->url());
   }
 
   return $docs;
-}
-
-/**
- * Get id's for all 'discovery' WSClients.
- *
- * @return
- *   An array of id's.
- */
-function rescued_get_discovery_client_ids() {
-  // TODO: Not using this function in rescued_get_discovery_clients() above.
-  // This might be faster. Consider switching to it or deleting it.
-  $ids = &drupal_static(__FUNCTION__);
-
-  if (!isset($ids)) {
-    $ids = db_select('wsclient_service', 'ws')
-      ->condition('ws.type', 'discovery', '=')
-      ->fields('ws', array('id'))
-      ->execute()
-      ->fetchAllAssoc('id');
-  }
-
-  return $ids;
 }
 
 /**
@@ -1572,11 +1534,6 @@ function rescued_module_implements_alter(&$implementations, $hook) {
  * in rescued_module_implements_alter() and when all caches are flushed.
  */
 function rescued_flush_caches() {
-  // TODO: May need to find a way to programatically re-save the WSClient to
-  // force it to update the operations and datatypes. These get saved to a db
-  // table, so they're not going to be updated constantly if the Discover Doc
-  // changes when the cache is flushed.
-
   // Set to false to force rescued_entity_info() to rebuild the entities.
   variable_set('rescued_docs_loaded', FALSE);
 
@@ -1755,140 +1712,72 @@ function rescued_rescued_register_clients_resources_alter(&$rescued_clients_url_
 }
 
 /**
- * We force the rescued client to be loaded from our config file and ignore
- * what is in the database.
+ * We force the rescued client to be loaded from our config file and ignore what is in the database.
+ *
+ * @see \CDD\Config\DrupalConfigReader
  */
 function rescued_get_wsclient_service_from_config() {
-  // Get $rescued_clients configuration settings from settings.php.
+  // Get $rescued_clients configuration settings from settings.php
   global $rescued_clients;
-  $rescued_clients_url_resources = array();
-  $services = array();
-
-  foreach ($rescued_clients as $name => $client) {
-    $rescued_clients_url_resources[$name] = array();
-
-    // Let other modules add their resources.
-    drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
-    $resources_path = implode('&resources[]=', $rescued_clients_url_resources[$name]);
-
-    if (!empty($resources_path)) {
-      // Concatenate into the discovery url.
-      $client['url'] = $client['url'] . '?resources[]=' . $resources_path;
-
-      // Since $rescued_clients is a global var, concatenate it in there as well.
-      $rescued_clients[$name]['url'] = $rescued_clients[$name]['url'] . '?resources[]=' . $resources_path;
-    }
-
-    $service = new WSClientServiceDescription($client);
-
-    if ($service->settings['discovery']['debug']) {
-      variable_set('rescued_debug_mode', TRUE);
-    }
-
-    $services[$service->name] = $service;
+  $rescued_clients_url_resources["xtuple"] = array();
+  drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
+  $resources_path = implode('&resources[]=', $rescued_clients_url_resources["xtuple"]);
+  if (!empty($resources_path)) {
+    $rescued_clients["xtuple"]['url'] = $rescued_clients["xtuple"]['url'] . '?resources[]=' . $resources_path;
   }
-
-  return $services;
-}
-
-/**
- * Implements hook_default_wsclient_service()
- */
-function rescued_default_wsclient_service() {
-  // Get $rescued_clients configureation settings from settings.php and config.yaml.
-  $services = rescued_get_wsclient_service_from_config();
-
-  return $services;
-}
-
-/**
- * Implements hook_wsclient_service_load()
- *
- * Act on web service descriptions being loaded from the database.
- *
- * This hook is invoked during web service description loading, which is
- * handled by entity_load(), via the EntityCRUDController.
- *
- * @param $services
- *   An array of web service descriptions being loaded, keyed by id.
- */
-function rescued_wsclient_service_load($services) {
-  // Get $rescued_clients configureation settings from settings.php and config.yaml.
-  $config_services = rescued_get_wsclient_service_from_config();
-
-  foreach ($config_services as $service => $config) {
-    if (!empty($services[$service])) {
-      // Merge the config settings into the $services client object.
-      foreach ($config as $key => $value) {
-        $services[$service]->$key = $value;
-      }
-    }
-    else {
-      $services[$service] = $config;
-    }
-  }
+  return $rescued_clients["xtuple"];
 }
 
 /**
  * Initialize a WSClient and static cache the Client for all future requests.
  *
- * @param string $discovery_client
- *   The name of the discovery service client. e.g. 'xtuple'
- *
- * @return object
- *   The WSClient
+ * @return \Rescued_ApiService
+ * @throws \Exception
  */
-function rescued_api_get_client($discovery_client) {
-  // Use drupal_static because this gets calls a lot repeatedly.
+function rescued_api_get_client() {
   $rescued = &drupal_static(__FUNCTION__);
 
-  if (!isset($rescued[$discovery_client]['client'])) {
-    $service = wsclient_service_load($discovery_client);
-    $endpoint = $service->endpoint();
-    $client = $endpoint->client();
-    $rescued[$discovery_client]['client'] = $client;
-    $rescued[$discovery_client]['prn'] = $service->settings['discovery']['prn'];
+  if (empty($rescued["xtuple"]["client"])) {
+    $client = rescued_get_xtuple_rest_service();
+    $rescued["xtuple"]["client"] = $client->service();
+    $rescued["xtuple"]['prn'] = $client->config()->prn();
   }
-  else {
-    $client = $rescued[$discovery_client]['client'];
-  }
+  /** @var \Rescued_ApiService $client */
+  $client = $rescued["xtuple"]['client'];
 
   // Reset $oauth-prn because drupal_static's client may be stale.
+  /** @var \Google_OAuth2 $auth */
   $auth = $client->client->getAuth();
   $oauth = $auth->assertionCredentials;
 
-  if (isset($rescued[$discovery_client]['prn'])) {
-    $prn = $rescued[$discovery_client]['prn'];
+  if (isset($rescued["xtuple"]['prn'])) {
+    $prn = $rescued["xtuple"]['prn'];
   }
 
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
-  $reset = FALSE;
+  $oauth_user = NULL;
 
   // Set OAuth 2.0 JWT Delegated user.
   if ($role_user = $session->getRescued('user')) {
     if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $role_user) ||
       $oauth->prn !== $role_user
     ) {
-
       $oauth->prn = $role_user;
       $oauth_user = $role_user;
-      $reset = TRUE;
     }
   }
   elseif (isset($prn)) {
     if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $prn) ||
       $oauth->prn !== $prn
     ) {
-
       $oauth->prn = $prn;
       $oauth_user = $prn;
-      $reset = TRUE;
     }
   }
 
   // Reset AssertionCredentials so cached client has correct prn username and access token.
-  if ($reset) {
+  if ($oauth_user !== NULL) {
     unset($_SESSION['access_token']);
     unset($_SESSION['oauth_user']);
     $auth->token = NULL;
@@ -2311,6 +2200,6 @@ function rescued_get_current_client_id() {
   if (!empty($rescued_clients['xtuple']['settings']['discovery']['application_name'])) {
     $id = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
   }
-  
+
   return $id;
 }
