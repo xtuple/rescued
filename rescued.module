@@ -1484,34 +1484,24 @@ function rescued_autocomplete($discovery_client, $resource, $key_column) {
 }
 
 /**
- * Get all 'discovery' WSClients.
- *
- * @return
- *   An array of discovery WSClient names.
+ * @return \Xtuple\REST\Client\Client
+ * @throws \Exception
  */
-function rescued_get_discovery_clients() {
-  $discovery_clients = &drupal_static(__FUNCTION__);
-
-  if (!isset($discovery_clients)) {
-    $query = new EntityFieldQuery();
-    $query
-      ->entityCondition('entity_type', 'wsclient_service', '=')
-      ->propertyCondition('type', 'discovery', '=');
-
-    $results = $query->execute();
-    if (isset($results['wsclient_service'])) {
-      $discovery_clients = entity_load('wsclient_service', array_keys(($results['wsclient_service'])));
-    }
-    else {
-      return array();
-    }
-
-    // TODO: This might be faster.
-    //$ids = rescued_get_discovery_client_ids();
-    //$discovery_clients = entity_load('wsclient_service', $ids);
-  }
-
-  return $discovery_clients;
+function rescued_get_xtuple_rest_service() {
+  $service = rescued_get_wsclient_service_from_config();
+  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+  $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
+  $configuration = new \Xtuple\REST\Client\Configuration(
+    $service["settings"]["discovery"]["application_name"],
+    $service["settings"]["discovery"]["url"],
+    $service["settings"]["discovery"]["iss"],
+    $service["settings"]["discovery"]["keyfile"],
+    $service["settings"]["discovery"]["debug"],
+    $service["url"]
+  );
+  variable_set('rescued_debug_mode', $configuration->debug());
+  $client = new \Xtuple\REST\Client\Client($configuration, $session);
+  return $client;
 }
 
 /**
