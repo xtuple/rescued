@@ -19,26 +19,20 @@ function rescued_init() {
 function rescued_menu() {
   $items = array();
 
-  $discovery_clients = rescued_get_discovery_clients();
+  $items['admin/structure/xtuple'] = array(
+    'title' => "xTuple",
+    'menu_name' => 'management',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => -100,
+  );
 
-  foreach ($discovery_clients as $discovery_client) {
-    // Add a base menu item for this client so all generated entities will show up under it.
-    $items['admin/structure/' . $discovery_client->name] = array(
-      'title' => $discovery_client->label,
-      'menu_name' => 'management',
-      'access callback' => TRUE,
-      'type' => MENU_NORMAL_ITEM,
-      'weight' => -100,
-    );
-
-    // Add an autocomplete callback that will search for ResourceRelations like Taxonomy Relation.
-    $items[$discovery_client->name . '/autocomplete'] = array(
-      'title' => 'Autocomplete ' . $discovery_client->label,
-      'page callback' => 'rescued_autocomplete',
-      'access arguments' => array('access content'),
-      'type' => MENU_CALLBACK,
-    );
-  }
+  $items['xtuple/autocomplete'] = array(
+    'title' => 'Autocomplete xTuple',
+    'page callback' => 'rescued_autocomplete',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
 
   return $items;
 }
@@ -113,7 +107,7 @@ function rescued_hook_info() {
 /**
  * Implements hook_entity_info().
  *
- * We are programatically building entities here. Part of the process will call
+ * We are programmatically building entities here. Part of the process will call
  * get_entity_info() which ends up calling this recursively. To avoid an
  * endless loop, we leverage the 'rescued_docs_loaded' variable to only return
  * our RESCUED entities once from this function. Those dynamic entities will
@@ -121,161 +115,89 @@ function rescued_hook_info() {
  */
 function rescued_entity_info() {
   if ($cache = cache_get('rescued_entity_info')) {
-    // Returned the cached data if we've already built it.
     $return = $cache->data;
   }
   else {
-    $loaded = variable_get('rescued_docs_loaded', FALSE);
-    // Skip creating RESCUED entities when this is a recursive call from
-    // rescued_get_discovery_client_docs() or we will get a PHP Fatal error:
-    // - Maximum function nesting level of '100' reached, aborting!
-    if (!$loaded) {
-      variable_set('rescued_docs_loaded', TRUE);
-      $discovery = rescued_get_discovery_client_docs();
-
-      $return = array();
-
-      // Build up entity info array.
-      if (isset($discovery)) {
-        foreach ($discovery as $name => $properties) {
-          foreach ($properties['schemas'] as $resource => $schemas) {
-            // Add an entity for all JSON-Schema properties.
-            $resource_key = rescued_json_schema_get_resource_key($schemas['properties']);
-
-            // Services do not have keys and are not entities, skip them.
-            if (isset($resource_key)) {
-              $return[$name . '_' . strtolower($resource)] = array(
-                'label' => t($resource),
-                'resource' => $resource,
-                'discovery-client' => $name,
-                'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
-                'controller class' => 'RescuedControllerNew',
-                'api-delete-callback' => 'rescued_api_resource_delete',
-                'api-insert-callback' => 'rescued_api_resource_insert',
-                'api-list-callback' => 'rescued_api_resource_list',
-                'api-load-callback' => 'rescued_api_resource_load',
-                'api-patch-callback' => 'rescued_api_resource_patch',
-                // TODO: For development only.
-                'field cache' => FALSE,
-// TODO: Figure out which entities we actually want to cache.
-// Do that with a hook_entity_into_alter() and not here.
-                //'entity cache' => TRUE,
-                'fieldable' => TRUE, // Have to be fieldable so Display Suite module works.
-                'entity keys' => array(
-                  'id' => $resource_key,
-                  'label' => $resource_key,
+    $discovery = rescued_get_discovery_client_docs();
+    $return = array();
+    // Build up entity info array.
+    if (isset($discovery)) {
+      foreach ($discovery as $name => $properties) {
+        foreach ($properties['schemas'] as $resource => $schemas) {
+          // Add an entity for all JSON-Schema properties.
+          $resource_key = rescued_json_schema_get_resource_key($schemas['properties']);
+          if (empty($resource_key)) {
+            watchdog("rescued", "!resource doesn't have a key, so it's a service; skipping entity declaration", array(
+              '!resource' => $resource,
+            ));
+          }
+          else {
+            $return[$name . '_' . strtolower($resource)] = array(
+              'label' => t($resource),
+              'resource' => $resource,
+              'discovery-client' => $name,
+              'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
+              'controller class' => 'RescuedControllerNew',
+              'api-delete-callback' => 'rescued_api_resource_delete',
+              'api-insert-callback' => 'rescued_api_resource_insert',
+              'api-list-callback' => 'rescued_api_resource_list',
+              'api-load-callback' => 'rescued_api_resource_load',
+              'api-patch-callback' => 'rescued_api_resource_patch',
+              'field cache' => FALSE, // TODO: For development only
+              'fieldable' => TRUE,
+              'entity keys' => array(
+                'id' => $resource_key,
+                'label' => $resource_key,
+              ),
+              'label callback' => 'entity_class_label',
+              'bundle keys' => array(),
+              'base table' => NULL,
+              'bundles' => array(
+                $name . '_' . strtolower($resource) => array(
+                  'label' => t($resource),
                 ),
-                'label callback' => 'entity_class_label',
-                'bundle keys' => array(),
-                'base table' => NULL, // We don’t have a base table, since entities are remote.
-                'bundles' => array(
-                  $name . '_' . strtolower($resource) => array(
-                    'label' => t($resource),
-                  ),
+              ),
+              'view modes' => array(
+                'full' => array(
+                  'label' => t('Full content'),
+                  'custom settings' => FALSE,
                 ),
-                'view modes' => array(
-                  'full' => array(
-                    'label' => t('Full content'),
-                    'custom settings' => FALSE,
-                  ),
-                ),
-                // Entity API properties.
-                'module' => 'rescued',
-                'entity class' => 'RescuedEntityNew',
-                'permission labels' => array(
-                  'singular' => $resource,
-                  'plural' => $resource,
-                ),
-                'access callback' => 'rescued_access',
-              );
+              ),
+              // Entity API properties.
+              'module' => 'rescued',
+              'entity class' => 'RescuedEntityNew',
+              'permission labels' => array(
+                'singular' => $resource,
+                'plural' => $resource,
+              ),
+              'access callback' => 'rescued_access',
+            );
 
-              if ($properties['schemas'][$resource]['properties'][$resource_key]['type'] === 'string') {
-                $return[$name . '_' . strtolower($resource)]['uuid'] = TRUE;
-                $return[$name . '_' . strtolower($resource)]['entity keys']['uuid'] = $resource_key;
-              }
+            if ($properties['schemas'][$resource]['properties'][$resource_key]['type'] === 'string') {
+              $return[$name . '_' . strtolower($resource)]['uuid'] = TRUE;
+              $return[$name . '_' . strtolower($resource)]['entity keys']['uuid'] = $resource_key;
+            }
 
-              // Augment the JSON-Schema entities that are also a resource.
-              // These are the main entities that have a UI.
-              if (isset($properties['resources'][$resource])) {
-                // Generic callback: one less callback to define.
-                $return[$name . '_' . strtolower($resource)]['uri callback'] = 'entity_operations_entity_uri';
-                $return[$name . '_' . strtolower($resource)]['resource-methods'] = $properties['resources'][$resource]['methods'];
+            // Augment the JSON-Schema entities that are also a resource.
+            // These are the main entities that have a UI.
+            if (isset($properties['resources'][$resource])) {
+              // Generic callback: one less callback to define.
+              $return[$name . '_' . strtolower($resource)]['uri callback'] = 'entity_operations_entity_uri';
+              $return[$name . '_' . strtolower($resource)]['resource-methods'] = $properties['resources'][$resource]['methods'];
 
-                // If there's a delete method, the entity gets a full UI because it's not just a list type resource.
-                if (isset($properties['resources'][$resource]['methods']['delete'])) {
-                  $return[$name . '_' . strtolower($resource)]['bundles'][$name . '_' . strtolower($resource)]['admin'] = array(
-                    'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
-                  );
-                  $return[$name . '_' . strtolower($resource)]['admin ui'] = array(
-                    'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
-                    'controller class' => 'EntityOperationsDefaultAdminUIController',
-                  );
+              // If there's a delete method, the entity gets a full UI because it's not just a list type resource.
+              if (isset($properties['resources'][$resource]['methods']['delete'])) {
+                $return[$name . '_' . strtolower($resource)]['bundles'][$name . '_' . strtolower($resource)]['admin'] = array(
+                  'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
+                );
+                $return[$name . '_' . strtolower($resource)]['admin ui'] = array(
+                  'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
+                  'controller class' => 'EntityOperationsDefaultAdminUIController',
+                );
 
-                  // TODO: Should parent resources like this get an InlineEntityFormController?
-                  // This is a NOT read only resource, so do we give it an InlineEntityFormController?
-                  $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
-                    'controller' => 'RescuedRelationInlineEntityFormController',
-                  );
-
-                  // Entity Operations API.
-                  $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
-                    // The base path for your entities. This is the same as your entity's URI
-                    // but without the ID suffix. (In fact, you can set
-                    // entity_operations_entity_uri() as your URI callback, which will use the
-                    // value here).
-                    'path' => $name . '/' . strtolower($resource),
-                    'operations' => array(
-                      'add' => array(
-                        //'handler' => 'EntityOperationsOperationAdd',
-                        'handler' => 'RescuedEntityOperationsOperationAddGeneric',
-                      ),
-                      'view' => array(
-                        // Or try EntityOperationsOperationEntityViewOperations!
-                        'handler' => 'EntityOperationsOperationEntityView',
-                        'default' => TRUE,
-                      ),
-                      'edit' => array(
-                        //'handler' => 'EntityOperationsOperationEdit',
-                        //'handler' => 'EntityOperationsOperationEditGeneric',
-                        'handler' => 'RescuedEntityOperationsOperationEditGeneric',
-                      ),
-                      'delete' => array(
-                        'handler' => 'EntityOperationsOperationDelete',
-                      ),
-                    ),
-                  );
-                }
-                else {
-                  // This is a read only resource, so we give it an InlineEntityFormController.
-                  $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
-                    'controller' => 'RescuedRelationInlineEntityFormController',
-                  );
-
-                  // Entity Operations API.
-                  $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
-                    // The base path for your entities. This is the same as your entity's URI
-                    // but without the ID suffix. (In fact, you can set
-                    // entity_operations_entity_uri() as your URI callback, which will use the
-                    // value here).
-                    'path' => $name . '/' . strtolower($resource),
-                    'operations' => array(
-                      'view' => array(
-                        // Or try EntityOperationsOperationEntityViewOperations!
-                        'handler' => 'EntityOperationsOperationEntityView',
-                        'default' => TRUE,
-                      ),
-                    ),
-                  );
-                }
-              }
-              else {
-                // The 'is_nested_only' resources are not exposed by the REST API
-                // and must be accessed by through their parent.
-                $return[$name . '_' . strtolower($resource)]['is_nested_only'] = TRUE;
-
-                // This is not a resource, so we give it an InlineEntityFormController.
+                // TODO: Should parent resources like this get an InlineEntityFormController?
+                // This is a NOT read only resource, so do we give it an InlineEntityFormController?
                 $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
-                  //'controller' => 'RescuedChildInlineEntityFormController',
                   'controller' => 'RescuedRelationInlineEntityFormController',
                 );
 
@@ -288,30 +210,78 @@ function rescued_entity_info() {
                   'path' => $name . '/' . strtolower($resource),
                   'operations' => array(
                     'add' => array(
-                      //'handler' => 'EntityOperationsOperationAdd',
                       'handler' => 'RescuedEntityOperationsOperationAddGeneric',
                     ),
+                    'view' => array(
+                      'handler' => 'EntityOperationsOperationEntityView',
+                      'default' => TRUE,
+                    ),
                     'edit' => array(
-                      //'handler' => 'EntityOperationsOperationEdit',
-                      //'handler' => 'EntityOperationsOperationEditGeneric',
                       'handler' => 'RescuedEntityOperationsOperationEditGeneric',
                     ),
-                    // TODO: Some of these isNestedOnly resources can't be deleted like comments.
                     'delete' => array(
                       'handler' => 'EntityOperationsOperationDelete',
                     ),
                   ),
                 );
               }
+              else {
+                // This is a read only resource, so we give it an InlineEntityFormController.
+                $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
+                  'controller' => 'RescuedRelationInlineEntityFormController',
+                );
+
+                // Entity Operations API.
+                $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
+                  // The base path for your entities. This is the same as your entity's URI
+                  // but without the ID suffix. (In fact, you can set
+                  // entity_operations_entity_uri() as your URI callback, which will use the
+                  // value here).
+                  'path' => $name . '/' . strtolower($resource),
+                  'operations' => array(
+                    'view' => array(
+                      'handler' => 'EntityOperationsOperationEntityView',
+                      'default' => TRUE,
+                    ),
+                  ),
+                );
+              }
+            }
+            else {
+              // The 'is_nested_only' resources are not exposed by the REST API
+              // and must be accessed by through their parent.
+              $return[$name . '_' . strtolower($resource)]['is_nested_only'] = TRUE;
+
+              // This is not a resource, so we give it an InlineEntityFormController.
+              $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
+                'controller' => 'RescuedRelationInlineEntityFormController',
+              );
+
+              // Entity Operations API.
+              $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
+                // The base path for your entities. This is the same as your entity's URI
+                // but without the ID suffix. (In fact, you can set
+                // entity_operations_entity_uri() as your URI callback, which will use the
+                // value here).
+                'path' => $name . '/' . strtolower($resource),
+                'operations' => array(
+                  'add' => array(
+                    'handler' => 'RescuedEntityOperationsOperationAddGeneric',
+                  ),
+                  'edit' => array(
+                    'handler' => 'RescuedEntityOperationsOperationEditGeneric',
+                  ),
+                  // TODO: Some of these isNestedOnly resources can't be deleted like comments.
+                  'delete' => array(
+                    'handler' => 'EntityOperationsOperationDelete',
+                  ),
+                ),
+              );
             }
           }
         }
-
-        cache_set('rescued_entity_info', $return);
       }
-    }
-    else {
-      $return = array();
+      cache_set('rescued_entity_info', $return);
     }
   }
 
@@ -329,13 +299,8 @@ function rescued_entity_info() {
  * @return boolean
  *   True if all resources in the array exist.
  */
-function rescued_resources_exist($resources, $discovery_client = 'xtuple') {
-  $serviceInfo = entity_get_info('wsclient_service');
-  if (empty($serviceInfo)) {
-    return FALSE;
-  }
-
-  $client = rescued_api_get_client($discovery_client);
+function rescued_resources_exist($resources) {
+  $client = rescued_api_get_client("xtuple");
   foreach ($resources as $resource) {
     $entityName = 'xtuple_' . strtolower($resource);
 
@@ -867,7 +832,7 @@ function rescued_field_extra_fields() {
  *  $resource and $properties registered to be handled by another module.
  */
 function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight, $handled_properties) {
-  $field_name = null;
+  $field_name = NULL;
 
   // Check $resource and $property to see if it's registered to be handled by
   // another module.
@@ -1484,34 +1449,24 @@ function rescued_autocomplete($discovery_client, $resource, $key_column) {
 }
 
 /**
- * Get all 'discovery' WSClients.
- *
- * @return
- *   An array of discovery WSClient names.
+ * @return \Xtuple\REST\Client\Client
+ * @throws \Exception
  */
-function rescued_get_discovery_clients() {
-  $discovery_clients = &drupal_static(__FUNCTION__);
-
-  if (!isset($discovery_clients)) {
-    $query = new EntityFieldQuery();
-    $query
-      ->entityCondition('entity_type', 'wsclient_service', '=')
-      ->propertyCondition('type', 'discovery', '=');
-
-    $results = $query->execute();
-    if (isset($results['wsclient_service'])) {
-      $discovery_clients = entity_load('wsclient_service', array_keys(($results['wsclient_service'])));
-    }
-    else {
-      return array();
-    }
-
-    // TODO: This might be faster.
-    //$ids = rescued_get_discovery_client_ids();
-    //$discovery_clients = entity_load('wsclient_service', $ids);
-  }
-
-  return $discovery_clients;
+function rescued_get_xtuple_rest_service() {
+  $service = rescued_get_wsclient_service_from_config();
+  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+  $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
+  $configuration = new \Xtuple\REST\Client\Configuration(
+    $service["settings"]["discovery"]["application_name"],
+    $service["settings"]["discovery"]["url"],
+    $service["settings"]["discovery"]["iss"],
+    $service["settings"]["discovery"]["keyfile"],
+    $service["settings"]["discovery"]["debug"],
+    $service["url"]
+  );
+  variable_set('rescued_debug_mode', $configuration->debug());
+  $client = new \Xtuple\REST\Client\Client($configuration, $session);
+  return $client;
 }
 
 /**
@@ -1524,38 +1479,11 @@ function rescued_get_discovery_client_docs() {
   $docs = &drupal_static(__FUNCTION__);
 
   if (!isset($docs)) {
-    $discovery_clients = rescued_get_discovery_clients();
-
-    foreach ($discovery_clients as $discovery_client) {
-      $endpoint = $discovery_client->endpoint();
-      $client = $endpoint->client();
-      $docs[$discovery_client->name] = $client->getDiscovery($discovery_client->url);
-    }
+    $client = rescued_get_xtuple_rest_service();
+    $docs["xtuple"] = $client->service()->getDiscovery($client->config()->url());
   }
 
   return $docs;
-}
-
-/**
- * Get id's for all 'discovery' WSClients.
- *
- * @return
- *   An array of id's.
- */
-function rescued_get_discovery_client_ids() {
-  // TODO: Not using this function in rescued_get_discovery_clients() above.
-  // This might be faster. Consider switching to it or deleting it.
-  $ids = &drupal_static(__FUNCTION__);
-
-  if (!isset($ids)) {
-    $ids = db_select('wsclient_service', 'ws')
-      ->condition('ws.type', 'discovery', '=')
-      ->fields('ws', array('id'))
-      ->execute()
-      ->fetchAllAssoc('id');
-  }
-
-  return $ids;
 }
 
 /**
@@ -1582,11 +1510,6 @@ function rescued_module_implements_alter(&$implementations, $hook) {
  * in rescued_module_implements_alter() and when all caches are flushed.
  */
 function rescued_flush_caches() {
-  // TODO: May need to find a way to programatically re-save the WSClient to
-  // force it to update the operations and datatypes. These get saved to a db
-  // table, so they're not going to be updated constantly if the Discover Doc
-  // changes when the cache is flushed.
-
   // Set to false to force rescued_entity_info() to rebuild the entities.
   variable_set('rescued_docs_loaded', FALSE);
 
@@ -1765,140 +1688,72 @@ function rescued_rescued_register_clients_resources_alter(&$rescued_clients_url_
 }
 
 /**
- * We force the rescued client to be loaded from our config file and ignore
- * what is in the database.
+ * We force the rescued client to be loaded from our config file and ignore what is in the database.
+ *
+ * @see \CDD\Config\DrupalConfigReader
  */
 function rescued_get_wsclient_service_from_config() {
-  // Get $rescued_clients configuration settings from settings.php.
+  // Get $rescued_clients configuration settings from settings.php
   global $rescued_clients;
-  $rescued_clients_url_resources = array();
-  $services = array();
-
-  foreach ($rescued_clients as $name => $client) {
-    $rescued_clients_url_resources[$name] = array();
-
-    // Let other modules add their resources.
-    drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
-    $resources_path = implode('&resources[]=', $rescued_clients_url_resources[$name]);
-
-    if (!empty($resources_path)) {
-      // Concatenate into the discovery url.
-      $client['url'] = $client['url'] . '?resources[]=' . $resources_path;
-
-      // Since $rescued_clients is a global var, concatenate it in there as well.
-      $rescued_clients[$name]['url'] = $rescued_clients[$name]['url'] . '?resources[]=' . $resources_path;
-    }
-
-    $service = new WSClientServiceDescription($client);
-
-    if ($service->settings['discovery']['debug']) {
-      variable_set('rescued_debug_mode', TRUE);
-    }
-
-    $services[$service->name] = $service;
+  $rescued_clients_url_resources["xtuple"] = array();
+  drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
+  $resources_path = implode('&resources[]=', $rescued_clients_url_resources["xtuple"]);
+  if (!empty($resources_path)) {
+    $rescued_clients["xtuple"]['url'] = $rescued_clients["xtuple"]['url'] . '?resources[]=' . $resources_path;
   }
-
-  return $services;
-}
-
-/**
- * Implements hook_default_wsclient_service()
- */
-function rescued_default_wsclient_service() {
-  // Get $rescued_clients configureation settings from settings.php and config.yaml.
-  $services = rescued_get_wsclient_service_from_config();
-
-  return $services;
-}
-
-/**
- * Implements hook_wsclient_service_load()
- *
- * Act on web service descriptions being loaded from the database.
- *
- * This hook is invoked during web service description loading, which is
- * handled by entity_load(), via the EntityCRUDController.
- *
- * @param $services
- *   An array of web service descriptions being loaded, keyed by id.
- */
-function rescued_wsclient_service_load($services) {
-  // Get $rescued_clients configureation settings from settings.php and config.yaml.
-  $config_services = rescued_get_wsclient_service_from_config();
-
-  foreach ($config_services as $service => $config) {
-    if (!empty($services[$service])) {
-      // Merge the config settings into the $services client object.
-      foreach ($config as $key => $value) {
-        $services[$service]->$key = $value;
-      }
-    }
-    else {
-      $services[$service] = $config;
-    }
-  }
+  return $rescued_clients["xtuple"];
 }
 
 /**
  * Initialize a WSClient and static cache the Client for all future requests.
  *
- * @param string $discovery_client
- *   The name of the discovery service client. e.g. 'xtuple'
- *
- * @return object
- *   The WSClient
+ * @return \Rescued_ApiService
+ * @throws \Exception
  */
-function rescued_api_get_client($discovery_client) {
-  // Use drupal_static because this gets calls a lot repeatedly.
+function rescued_api_get_client() {
   $rescued = &drupal_static(__FUNCTION__);
 
-  if (!isset($rescued[$discovery_client]['client'])) {
-    $service = wsclient_service_load($discovery_client);
-    $endpoint = $service->endpoint();
-    $client = $endpoint->client();
-    $rescued[$discovery_client]['client'] = $client;
-    $rescued[$discovery_client]['prn'] = $service->settings['discovery']['prn'];
+  if (empty($rescued["xtuple"]["client"])) {
+    $client = rescued_get_xtuple_rest_service();
+    $rescued["xtuple"]["client"] = $client->service();
+    $rescued["xtuple"]['prn'] = $client->config()->prn();
   }
-  else {
-    $client = $rescued[$discovery_client]['client'];
-  }
+  /** @var \Rescued_ApiService $client */
+  $client = $rescued["xtuple"]['client'];
 
   // Reset $oauth-prn because drupal_static's client may be stale.
+  /** @var \Google_OAuth2 $auth */
   $auth = $client->client->getAuth();
   $oauth = $auth->assertionCredentials;
 
-  if (isset($rescued[$discovery_client]['prn'])) {
-    $prn = $rescued[$discovery_client]['prn'];
+  if (isset($rescued["xtuple"]['prn'])) {
+    $prn = $rescued["xtuple"]['prn'];
   }
 
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
-  $reset = FALSE;
+  $oauth_user = NULL;
 
   // Set OAuth 2.0 JWT Delegated user.
   if ($role_user = $session->getRescued('user')) {
     if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $role_user) ||
       $oauth->prn !== $role_user
     ) {
-
       $oauth->prn = $role_user;
       $oauth_user = $role_user;
-      $reset = TRUE;
     }
   }
   elseif (isset($prn)) {
     if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $prn) ||
       $oauth->prn !== $prn
     ) {
-
       $oauth->prn = $prn;
       $oauth_user = $prn;
-      $reset = TRUE;
     }
   }
 
   // Reset AssertionCredentials so cached client has correct prn username and access token.
-  if ($reset) {
+  if ($oauth_user !== NULL) {
     unset($_SESSION['access_token']);
     unset($_SESSION['oauth_user']);
     $auth->token = NULL;
@@ -2279,6 +2134,7 @@ function rescued_json_schema_get_resource_key($properties) {
       return $key;
     }
   }
+  return NULL;
 }
 
 /**
@@ -2320,6 +2176,6 @@ function rescued_get_current_client_id() {
   if (!empty($rescued_clients['xtuple']['settings']['discovery']['application_name'])) {
     $id = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
   }
-  
+
   return $id;
 }
