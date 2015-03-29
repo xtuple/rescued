@@ -32,7 +32,7 @@ function rescued_requirements($phase) {
     '@version' => $google_version,
     '!url' => $google_url
   ));
-  // Detect actaully installed version of Google library.
+  // Detect actually installed version of Google library.
   $google_info = libraries_detect('google-api-php-client');
 
   $requirements = array();
