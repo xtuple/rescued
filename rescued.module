@@ -1449,23 +1449,37 @@ function rescued_autocomplete($discovery_client, $resource, $key_column) {
 }
 
 /**
+ * @return \Xtuple\REST\Client\Configuration
+ * @throws \Exception
+ */
+function rescued_get_configuration() {
+  global $rescued_config;
+  if (empty($rescued_config)) {
+    throw new Exception("RESCUED configuration is not set");
+  }
+  return $rescued_config;
+}
+
+/**
+ * @return array
+ */
+function rescued_get_required_resources() {
+  $rescued_clients_url_resources["xtuple"] = array();
+  drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
+  return $rescued_clients_url_resources;
+}
+
+/**
  * @return \Xtuple\REST\Client\Client
  * @throws \Exception
  */
 function rescued_get_xtuple_rest_service() {
-  $service = rescued_get_wsclient_service_from_config();
+  $configuration = rescued_get_configuration();
+  variable_set('rescued_debug_mode', $configuration->debug());
+  $resources = rescued_get_required_resources();
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
-  $configuration = new \Xtuple\REST\Client\Configuration(
-    $service["settings"]["discovery"]["application_name"],
-    $service["settings"]["discovery"]["url"],
-    $service["settings"]["discovery"]["iss"],
-    $service["settings"]["discovery"]["keyfile"],
-    $service["settings"]["discovery"]["debug"],
-    $service["url"]
-  );
-  variable_set('rescued_debug_mode', $configuration->debug());
-  $client = new \Xtuple\REST\Client\Client($configuration, $session);
+  $client = new \Xtuple\REST\Client\Client($configuration, $resources["xtuple"], $session);
   return $client;
 }
 
@@ -1480,7 +1494,7 @@ function rescued_get_discovery_client_docs() {
 
   if (!isset($docs)) {
     $client = rescued_get_xtuple_rest_service();
-    $docs["xtuple"] = $client->service()->getDiscovery($client->config()->url());
+    $docs["xtuple"] = $client->service()->getDiscovery($client->config()->restUrl());
   }
 
   return $docs;
@@ -1685,23 +1699,6 @@ function rescued_rescued_register_clients_resources_alter(&$rescued_clients_url_
   }
 
   return $rescued_clients_url_resources;
-}
-
-/**
- * We force the rescued client to be loaded from our config file and ignore what is in the database.
- *
- * @see \CDD\Config\DrupalConfigReader
- */
-function rescued_get_wsclient_service_from_config() {
-  // Get $rescued_clients configuration settings from settings.php
-  global $rescued_clients;
-  $rescued_clients_url_resources["xtuple"] = array();
-  drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
-  $resources_path = implode('&resources[]=', $rescued_clients_url_resources["xtuple"]);
-  if (!empty($resources_path)) {
-    $rescued_clients["xtuple"]['url'] = $rescued_clients["xtuple"]['url'] . '?resources[]=' . $resources_path;
-  }
-  return $rescued_clients["xtuple"];
 }
 
 /**
