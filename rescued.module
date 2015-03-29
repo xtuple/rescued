@@ -453,9 +453,7 @@ function rescued_reset_session($account) {
     return $account;
   }
 
-  global $rescued_clients;
-  $app_name = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
-
+  $app_name = rescued_application_name();
   $queryParams = array(
     'query' => array(
       'drupalUserUuid' => array(
@@ -1461,6 +1459,14 @@ function rescued_get_configuration() {
 }
 
 /**
+ * Shortcut to get application name
+ */
+function rescued_application_name() {
+  $config = rescued_get_configuration();
+  return $config->applicationName();
+}
+
+/**
  * @return array
  */
 function rescued_resources_list() {
@@ -2152,18 +2158,4 @@ function rescued_features_exclude() {
       'rescued_docs_loaded',
     ),
   );
-}
-
-/**
- * Return client id (also known as: app name, XdSite)
- */
-function rescued_get_current_client_id() {
-  $id = NULL;
-  global $rescued_clients;
-
-  if (!empty($rescued_clients['xtuple']['settings']['discovery']['application_name'])) {
-    $id = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
-  }
-
-  return $id;
 }
