@@ -305,7 +305,7 @@ function rescued_wsclient_service_form_submit($form, &$form_state) {
 
     $service = $form_state['wsclient_service'];
 
-    // Save client's custom discovery settings paramters.
+    // Save client's custom discovery settings parameters.
     if (isset($form['discovery'])) {
       $service->settings = array();
       $keys = rescued_get_discovery_form_fields($form['discovery']);

@@ -107,11 +107,7 @@ function rescued_hook_info() {
 /**
  * Implements hook_entity_info().
  *
- * We are programmatically building entities here. Part of the process will call
- * get_entity_info() which ends up calling this recursively. To avoid an
- * endless loop, we leverage the 'rescued_docs_loaded' variable to only return
- * our RESCUED entities once from this function. Those dynamic entities will
- * be cached by Drupal and only reloaded when the entity cache is cleared.
+ * We are programmatically building entities here.
  */
 function rescued_entity_info() {
   if ($cache = cache_get('rescued_entity_info')) {
@@ -132,7 +128,8 @@ function rescued_entity_info() {
             ));
           }
           else {
-            $return[$name . '_' . strtolower($resource)] = array(
+            $resource_code = $name . '_' . strtolower($resource);
+            $return[$resource_code] = array(
               'label' => t($resource),
               'resource' => $resource,
               'discovery-client' => $name,
@@ -153,7 +150,7 @@ function rescued_entity_info() {
               'bundle keys' => array(),
               'base table' => NULL,
               'bundles' => array(
-                $name . '_' . strtolower($resource) => array(
+                $resource_code => array(
                   'label' => t($resource),
                 ),
               ),
@@ -174,35 +171,35 @@ function rescued_entity_info() {
             );
 
             if ($properties['schemas'][$resource]['properties'][$resource_key]['type'] === 'string') {
-              $return[$name . '_' . strtolower($resource)]['uuid'] = TRUE;
-              $return[$name . '_' . strtolower($resource)]['entity keys']['uuid'] = $resource_key;
+              $return[$resource_code]['uuid'] = TRUE;
+              $return[$resource_code]['entity keys']['uuid'] = $resource_key;
             }
 
             // Augment the JSON-Schema entities that are also a resource.
             // These are the main entities that have a UI.
             if (isset($properties['resources'][$resource])) {
               // Generic callback: one less callback to define.
-              $return[$name . '_' . strtolower($resource)]['uri callback'] = 'entity_operations_entity_uri';
-              $return[$name . '_' . strtolower($resource)]['resource-methods'] = $properties['resources'][$resource]['methods'];
+              $return[$resource_code]['uri callback'] = 'entity_operations_entity_uri';
+              $return[$resource_code]['resource-methods'] = $properties['resources'][$resource]['methods'];
 
               // If there's a delete method, the entity gets a full UI because it's not just a list type resource.
               if (isset($properties['resources'][$resource]['methods']['delete'])) {
-                $return[$name . '_' . strtolower($resource)]['bundles'][$name . '_' . strtolower($resource)]['admin'] = array(
+                $return[$resource_code]['bundles'][$name . '_' . strtolower($resource)]['admin'] = array(
                   'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
                 );
-                $return[$name . '_' . strtolower($resource)]['admin ui'] = array(
+                $return[$resource_code]['admin ui'] = array(
                   'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
                   'controller class' => 'EntityOperationsDefaultAdminUIController',
                 );
 
                 // TODO: Should parent resources like this get an InlineEntityFormController?
                 // This is a NOT read only resource, so do we give it an InlineEntityFormController?
-                $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
+                $return[$resource_code]['inline entity form'] = array(
                   'controller' => 'RescuedRelationInlineEntityFormController',
                 );
 
                 // Entity Operations API.
-                $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
+                $return[$resource_code]['operations ui'] = array(
                   // The base path for your entities. This is the same as your entity's URI
                   // but without the ID suffix. (In fact, you can set
                   // entity_operations_entity_uri() as your URI callback, which will use the
@@ -227,12 +224,12 @@ function rescued_entity_info() {
               }
               else {
                 // This is a read only resource, so we give it an InlineEntityFormController.
-                $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
+                $return[$resource_code]['inline entity form'] = array(
                   'controller' => 'RescuedRelationInlineEntityFormController',
                 );
 
                 // Entity Operations API.
-                $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
+                $return[$resource_code]['operations ui'] = array(
                   // The base path for your entities. This is the same as your entity's URI
                   // but without the ID suffix. (In fact, you can set
                   // entity_operations_entity_uri() as your URI callback, which will use the
@@ -250,15 +247,15 @@ function rescued_entity_info() {
             else {
               // The 'is_nested_only' resources are not exposed by the REST API
               // and must be accessed by through their parent.
-              $return[$name . '_' . strtolower($resource)]['is_nested_only'] = TRUE;
+              $return[$resource_code]['is_nested_only'] = TRUE;
 
               // This is not a resource, so we give it an InlineEntityFormController.
-              $return[$name . '_' . strtolower($resource)]['inline entity form'] = array(
+              $return[$resource_code]['inline entity form'] = array(
                 'controller' => 'RescuedRelationInlineEntityFormController',
               );
 
               // Entity Operations API.
-              $return[$name . '_' . strtolower($resource)]['operations ui'] = array(
+              $return[$resource_code]['operations ui'] = array(
                 // The base path for your entities. This is the same as your entity's URI
                 // but without the ID suffix. (In fact, you can set
                 // entity_operations_entity_uri() as your URI callback, which will use the
@@ -319,8 +316,16 @@ function rescued_resources_exist($resources) {
 
 /**
  * Access callback for RESCUED entities.
+ *
+ * @param string   $op
+ * @param          $entity
+ * @param stdClass $account
+ * @param string   $entity_type
+ *
+ * @return bool
  */
 function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
+  /** @var \stdClass $user */
   global $user;
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   $session = extensions_get_session();
@@ -430,6 +435,10 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
 
 /**
  * Determine this user's xTuple Contact association and what role they belong to.
+ *
+ * @param $account
+ *
+ * @return
  */
 function rescued_reset_session($account) {
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
@@ -453,9 +462,7 @@ function rescued_reset_session($account) {
     return $account;
   }
 
-  global $rescued_clients;
-  $app_name = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
-
+  $app_name = rescued_application_name();
   $queryParams = array(
     'query' => array(
       'drupalUserUuid' => array(
@@ -830,6 +837,8 @@ function rescued_field_extra_fields() {
  *
  * @param array   $handled_properties
  *  $resource and $properties registered to be handled by another module.
+ *
+ * @return null|string
  */
 function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight, $handled_properties) {
   $field_name = NULL;
@@ -907,6 +916,8 @@ function rescued_entity_operation_info() {
 
 /**
  * Implements hook_entity_query_alter().
+ *
+ * @param $query
  */
 function rescued_entity_query_alter(&$query) {
   $conditions = $query->entityConditions;
@@ -934,8 +945,8 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
   $entityType = $query->entityConditions['entity_type']['value'];
   $entityInfo = entity_get_info($entityType);
 
+  $queryParams = array();
   if (isset($propertyConditions)) {
-    $queryParams = array();
     foreach ($propertyConditions as $queryParam) {
       if (isset($queryParam['operator']) && $queryParam['operator'] === 'IN') {
         // TODO: Need to add support for array searches. Just grabbing one value for now.
@@ -1024,6 +1035,11 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
  * This hook is needed to let ctools know about exportables.
  * If you create field groups by using hook_field_group_info, you
  * will need to include the ctools api hook as well.
+ *
+ * @param string $module
+ * @param string $api
+ *
+ * @return array
  */
 function rescued_ctools_plugin_api($module, $api) {
   if ($module == 'field_group' && $api == 'field_group') {
@@ -1147,10 +1163,10 @@ function rescued_field_group_info() {
  * @param $type
  *   Optional parameter specifying the type whose name to return.
  *
- * @return
+ * @return array|bool
  *   Either an array of all xTuple entity type names keyed by the machine name or a
- *     string containing the human readable name for the specified type. If a
- *     type is specified that does not exist, this function returns FALSE.
+ *   string containing the human readable name for the specified type. If a
+ *   type is specified that does not exist, this function returns FALSE.
  */
 function rescued_type_get_name($type = NULL) {
   // Loop over discovery clients and add all $ref objects as field groups.
@@ -1187,6 +1203,11 @@ function rescued_type_get_name($type = NULL) {
 /**
  * Build up the entity from a form submit, extracting the submitted values
  * and setting them on the corresponding entity properties.
+ *
+ * @param string  $entity_type
+ * @param \Entity $entity
+ * @param         $form
+ * @param         $form_state
  */
 function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_state) {
   $entityInfo = $entity->entityInfo();
@@ -1327,6 +1348,10 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
  * Implements hook_inline_entity_form_settings_alter().
  *
  * Modify the $settings array to work with RESCUED custom field.
+ *
+ * @param $settings
+ * @param $field
+ * @param $instance
  */
 function rescued_inline_entity_form_settings_alter(&$settings, $field, $instance) {
   // Modify the $settings array to work with your custom field.
@@ -1338,7 +1363,10 @@ function rescued_inline_entity_form_settings_alter(&$settings, $field, $instance
 /**
  * Implements hook_inline_entity_form_reference_form_alter().
  *
- * Override the IEF autocomplete_path to use the rescued_authcomplete() lookup.
+ * Override the IEF autocomplete_path to use the rescued_autocomplete() lookup.
+ *
+ * @param $reference_form
+ * @param $form_state
  */
 function rescued_inline_entity_form_reference_form_alter(&$reference_form, &$form_state) {
   // Make sure this is a RESCUED entity.
@@ -1359,6 +1387,10 @@ function rescued_inline_entity_form_reference_form_alter(&$reference_form, &$for
 
 /**
  * #element_validate callback for the RESCUED IEF autocomplete field.
+ *
+ * @param $element
+ * @param $form_state
+ * @param $form
  */
 function _rescued_inline_entity_form_autocomplete_validate($element, &$form_state, $form) {
   $value = '';
@@ -1394,15 +1426,12 @@ function _rescued_inline_entity_form_autocomplete_validate($element, &$form_stat
  *      };
  * @endcode
  *
- * @param $field_name
- *   The name of the resource relation field.
- * @param $tags_typed
- *   (optional) A comma-separated list of key names entered in the
- *   autocomplete form element. Only the last key is used for autocompletion.
- *   Defaults to '' (an empty string).
+ * @param $discovery_client
+ * @param $resource
+ * @param $key_column
  *
- * @see taxonomy_menu()
- * @see taxonomy_field_widget_info()
+ * @see      taxonomy_menu()
+ * @see      taxonomy_field_widget_info()
  */
 function rescued_autocomplete($discovery_client, $resource, $key_column) {
   // If the request has a '/' in the search text, then the menu system will have
@@ -1461,6 +1490,14 @@ function rescued_get_configuration() {
 }
 
 /**
+ * Shortcut to get application name
+ */
+function rescued_application_name() {
+  $config = rescued_get_configuration();
+  return $config->applicationName();
+}
+
+/**
  * @return array
  */
 function rescued_resources_list() {
@@ -1508,7 +1545,7 @@ function rescued_get_discovery_client_docs() {
 
   if (!isset($docs)) {
     $client = rescued_get_xtuple_rest_service();
-    $docs["xtuple"] = $client->service()->getDiscovery($client->config()->restUrl());
+    $docs["xtuple"] = $client->discovery();
   }
 
   return $docs;
@@ -1523,6 +1560,9 @@ function rescued_get_discovery_client_docs() {
  * 'hook_menu' is only called when flushing caches, we want to regenerate the
  * rescued entities returned by rescued_entity_info(). To do that, we have to
  * reset the rescued variables and cache.
+ *
+ * @param $implementations
+ * @param $hook
  */
 function rescued_module_implements_alter(&$implementations, $hook) {
   if ($hook === 'menu') {
@@ -1538,22 +1578,20 @@ function rescued_module_implements_alter(&$implementations, $hook) {
  * in rescued_module_implements_alter() and when all caches are flushed.
  */
 function rescued_flush_caches() {
-  // Set to false to force rescued_entity_info() to rebuild the entities.
-  variable_set('rescued_docs_loaded', FALSE);
-
   // Clear the rescued_entity_info cache.
   cache_clear_all('rescued_entity_info', 'cache');
 
-  // Once the Google library loads, this will be populated with the default settings.
-  global $apiConfig;
   // Make sure the Google API PHP Client Library loads. This will overwrite $apiConfig with Google's.
   if ((!$google_lib = libraries_load('google-api-php-client')) || empty($google_lib['loaded'])) {
     watchdog('RESCUED', 'Google API PHP Client Library not found!', array(), WATCHDOG_ERROR);
   }
 
-  // Delete Google's IO cache folder from system's /tmp.
+  // Delete Google IO cache folder from system's /tmp.
   if (variable_get('rescued_clear_google_cache', 1)) {
-    file_unmanaged_delete_recursive($apiConfig['ioFileCache_directory']);
+    global $apiConfig;
+    if (file_exists($apiConfig['ioFileCache_directory'])) {
+      file_unmanaged_delete_recursive($apiConfig['ioFileCache_directory']);
+    }
   }
 }
 
@@ -1563,7 +1601,7 @@ function rescued_flush_caches() {
  * @param array $form
  *   The array containing the WSClient $form.
  *
- * @return
+ * @return array
  *   A data type array with $form_state keys that are part of the Discover Service settings.
  */
 function rescued_get_discovery_form_fields($form) {
@@ -1591,8 +1629,8 @@ function rescued_get_discovery_form_fields($form) {
  * @param array $types
  *   The array containing the struct strings.
  *
- * @return
- *   A data type array with property information.
+ * @return array
+ *  A data type array with property information.
  */
 function rescued_discovery_parse_types(array $types) {
   $wsclient_types = array();
@@ -1618,7 +1656,7 @@ function rescued_discovery_parse_types(array $types) {
  * @param array $operations
  *   The array containing the operation signature strings.
  *
- * @return
+ * @return array
  *   An operations array with parameter information.
  */
 function rescued_discovery_parse_operations(array $operations) {
@@ -1650,6 +1688,10 @@ function rescued_discovery_parse_operations(array $operations) {
 
 /**
  * Maps data type names from a Discovery Document to wsclient/rules internals.
+ *
+ * @param $type
+ *
+ * @return string
  */
 function rescued_discovery_type_mapper($type) {
   $primitive_types = array(
@@ -1754,6 +1796,13 @@ function rescued_api_get_client() {
 
 /**
  * DELETE a REST resource.
+ *
+ * @param $discovery_client
+ * @param $resource
+ * @param $id
+ * @param $resource_key
+ *
+ * @return
  */
 function rescued_api_resource_delete($discovery_client, $resource, $id, $resource_key) {
   $client = rescued_api_get_client($discovery_client);
@@ -1766,6 +1815,13 @@ function rescued_api_resource_delete($discovery_client, $resource, $id, $resourc
 
 /**
  * GET a REST resource.
+ *
+ * @param $discovery_client
+ * @param $resource
+ * @param $id
+ * @param $resource_key
+ *
+ * @return
  */
 function rescued_api_resource_load($discovery_client, $resource, $id, $resource_key) {
   $client = rescued_api_get_client($discovery_client);
@@ -1778,6 +1834,13 @@ function rescued_api_resource_load($discovery_client, $resource, $id, $resource_
 
 /**
  * GET list of REST resources.
+ *
+ * @param       $discovery_client
+ * @param       $resource
+ * @param array $optParams
+ * @param bool  $data_only
+ *
+ * @return array
  */
 function rescued_api_resource_list($discovery_client, $resource, $optParams = array(), $data_only = TRUE) {
   // If this is a large query and would result in a long URL, query over POST instead.
@@ -1842,6 +1905,15 @@ function rescued_api_resource_post_query($discovery_client, $resource, $optParam
 
 /**
  * PATCH a REST resource.
+ *
+ * @param $discovery_client
+ * @param $resource
+ * @param $id
+ * @param $resource_key
+ * @param $postBody
+ * @param $optParams
+ *
+ * @return
  */
 function rescued_api_resource_patch($discovery_client, $resource, $id, $resource_key, $postBody, $optParams) {
   $client = rescued_api_get_client($discovery_client);
@@ -1854,6 +1926,13 @@ function rescued_api_resource_patch($discovery_client, $resource, $id, $resource
 
 /**
  * POST a REST resource.
+ *
+ * @param $discovery_client
+ * @param $resource
+ * @param $postBody
+ * @param $optParams
+ *
+ * @return
  */
 function rescued_api_resource_insert($discovery_client, $resource, $postBody, $optParams) {
   $client = rescued_api_get_client($discovery_client);
@@ -1942,11 +2021,11 @@ function rescued_get_recursive_json_schema($resource, $json_schema) {
 
   // If a property is a $ref, recurse into it and add it's properties as well.
   foreach ($schema[$resource]['properties'] as $property => $values) {
-    if (isset($values['$ref']) && strpos($properties['$ref'], '/') === FALSE) {
+    if (isset($values['$ref']) && strpos($property['$ref'], '/') === FALSE) {
       // Handle toOne relations.
       $schema = $schema + rescued_get_recursive_json_schema($values['$ref'], $json_schema);
     }
-    elseif (isset($values['$ref']) && strpos($properties['$ref'], '/') !== FALSE) {
+    elseif (isset($values['$ref']) && strpos($property['$ref'], '/') !== FALSE) {
       // Handle toOne key relations.
       $ref_parent = explode("/", $values['$ref']);
       $schema = $schema + rescued_get_recursive_json_schema($ref_parent[0], $json_schema);
@@ -1973,6 +2052,7 @@ function rescued_get_recursive_json_schema($resource, $json_schema) {
  * Map JSON-Schema data types to Drupal form field types.
  *
  * @param string $type JSON-Schema data type to map.
+ * @param string $format
  *
  * @return string Drupal form field type.
  */
@@ -1980,19 +2060,14 @@ function rescued_json_schema_to_form_type($type, $format = NULL) {
   switch (strtolower($type)) {
     case 'object':
       return 'textfield';
-      break;
     case 'array':
       return 'textfield';
-      break;
     case 'boolean':
       return 'checkbox';
-      break;
     case 'integer':
       return 'textfield';
-      break;
     case 'number':
       return 'textfield';
-      break;
     case 'string':
       if (isset($format) && $format === 'date') {
         return 'date_popup';
@@ -2000,9 +2075,6 @@ function rescued_json_schema_to_form_type($type, $format = NULL) {
       else {
         return 'textfield';
       }
-
-      return 'textfield';
-      break;
     default:
       return 'textfield';
   }
@@ -2012,6 +2084,7 @@ function rescued_json_schema_to_form_type($type, $format = NULL) {
  * Map JSON-Schema data types to Drupal entity data types.
  *
  * @param string $type JSON-Schema data type to map.
+ * @param string $format
  *
  * @return string Drupal data type.
  */
@@ -2019,19 +2092,14 @@ function rescued_json_schema_to_data_type($type, $format = NULL) {
   switch (strtolower($type)) {
     case 'object':
       return 'entities';
-      break;
     case 'array':
       return 'list';
-      break;
     case 'boolean':
       return 'boolean';
-      break;
     case 'integer':
       return 'integer';
-      break;
     case 'number':
       return 'decimal';
-      break;
     case 'string':
       if (isset($format) && $format === 'date') {
         return 'date';
@@ -2039,15 +2107,12 @@ function rescued_json_schema_to_data_type($type, $format = NULL) {
       else {
         return 'text';
       }
-      break;
   }
-
-  // Otherwise return the type as is.
   return $type;
 }
 
 /**
- * Convert Drupals query operator string to xTuples.
+ * Convert Drupal's query operator string to xTuple's.
  *
  * @param string
  *     Possible values:
@@ -2128,8 +2193,8 @@ function rescued_json_schema_get_resource_key($properties) {
 /**
  * Get the property data type from the resource's JSON-Schema.
  *
- * @param array $schema   The JSON-Schema for a single resource.
- * @param array $property The property name to get the type for.
+ * @param array  $schema   The JSON-Schema for a single resource.
+ * @param string $property The property name to get the type for.
  *
  * @return string Key name.
  */
@@ -2149,21 +2214,6 @@ function rescued_features_exclude() {
   return array(
     'variable' => array(
       'rescued_debug_mode',
-      'rescued_docs_loaded',
     ),
   );
-}
-
-/**
- * Return client id (also known as: app name, XdSite)
- */
-function rescued_get_current_client_id() {
-  $id = NULL;
-  global $rescued_clients;
-
-  if (!empty($rescued_clients['xtuple']['settings']['discovery']['application_name'])) {
-    $id = $rescued_clients['xtuple']['settings']['discovery']['application_name'];
-  }
-
-  return $id;
 }

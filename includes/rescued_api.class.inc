@@ -13,13 +13,16 @@
  * </p>
  */
 class Rescued_ApiService extends Google_Service {
-  // Debug mode to disabling SSL cert verificaiton for local dev testing on self signed cert.
+  // Debug mode to disabling SSL cert verification for local dev testing on self signed cert.
   protected $debug = FALSE;
 
   /**
    * Constructs the internal representation of REST resource services.
    *
    * @param Google_Client $client
+   * @param               $config
+   *
+   * @throws \Google_Exception
    */
   public function __construct(Google_Client $client, $config) {
     $this->version = 'v1alpha1';
@@ -54,9 +57,12 @@ class Rescued_ApiService extends Google_Service {
   /**
    * Get a Discovery Document for an full API or specific resource.
    *
-   * @param string $resource Optional API resource name to return a single resouce.
+   * @param $url
    *
    * @return array API Discovery Document.
+   * @throws \Google_IOException
+   * @internal param string $resource Optional API resource name to return a single resouce.
+   *
    */
   public function getDiscovery($url) {
     // Use drupal_static because this gets calls a lot repeatedly.
@@ -67,7 +73,7 @@ class Rescued_ApiService extends Google_Service {
       $io = new Google_CurlIO();
 
       if ($this->debug) {
-        // Disabling SSL cert verificaiton for local dev testing on self signed cert.
+        // Disabling SSL cert verification for local dev testing on self signed cert.
         $io->setOptions(array(CURLOPT_SSL_VERIFYPEER => FALSE));
       }
 
@@ -133,6 +139,8 @@ class Rescued_ServiceResource extends Google_ServiceResource {
    * our JSON-Patches to work below in the patch() function.
    *
    * @see Google_ServiceResource::stripNull()
+   *
+   * @param $o
    */
   protected function stripNull(&$o) {
     $o = (array) $o;
@@ -150,6 +158,11 @@ class Rescued_ServiceResource extends Google_ServiceResource {
    * Overridden so we can set and get the $service here.
    *
    * @see Google_ServiceResource#__construct()
+   *
+   * @param $service
+   * @param $serviceName
+   * @param $resourceName
+   * @param $resource
    */
   public function __construct($service, $serviceName, $resourceName, $resource) {
     $this->service = $service;
@@ -245,10 +258,11 @@ class Rescued_ServiceResource extends Google_ServiceResource {
    * Updates a resource. This method supports JSON-Patch semantics.
    *
    * @param string          $id        Resource key identifier.
+   * @param                 $resource_key
    * @param Rescued_Service $postBody  Resource object JSON-Patch.
    * @param array           $optParams Optional parameters.
    *
-   * @return Rescued_Service Resource object
+   * @return \Rescued_Service Resource object
    */
   public function patch($id, $resource_key, Rescued_Service $postBody, $optParams = array()) {
     // $postBody needs to be an array or the parent::__call will strip the null
@@ -274,7 +288,10 @@ class Rescued_ServiceResource extends Google_ServiceResource {
    * Deletes a resource.
    *
    * @param string $id        Resource key identifier.
+   * @param        $resource_key
    * @param array  $optParams Optional parameters.
+   *
+   * @return array|\Google_HttpRequest
    */
   public function delete($id, $resource_key, $optParams = array()) {
     $params = array($resource_key => $id);
