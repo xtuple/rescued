@@ -5,7 +5,6 @@ package = xDruple
 
 dependencies[] = xdruple_entityreference
 dependencies[] = xdfields_rest_storage
-dependencies[] = rescued_wsclient
 dependencies[] = xdruple
 
 dependencies[] = ctools

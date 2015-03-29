@@ -73,3 +73,15 @@ function rescued_enable() {
   // Call rescued_field_extra_fields() so all erp fields get created.
   rescued_field_extra_fields();
 }
+
+/**
+ * Disable WSClient
+ */
+function rescued_update_7001() {
+  module_disable(array(
+    "wsclient_ui",
+    "wsclient",
+    "rescued_wsclient",
+  ));
+  return t("WSClient disabled"); 
+}
