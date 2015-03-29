@@ -1544,9 +1544,6 @@ function rescued_module_implements_alter(&$implementations, $hook) {
  * in rescued_module_implements_alter() and when all caches are flushed.
  */
 function rescued_flush_caches() {
-  // Set to false to force rescued_entity_info() to rebuild the entities.
-  variable_set('rescued_docs_loaded', FALSE);
-
   // Clear the rescued_entity_info cache.
   cache_clear_all('rescued_entity_info', 'cache');
 
@@ -2155,7 +2152,6 @@ function rescued_features_exclude() {
   return array(
     'variable' => array(
       'rescued_debug_mode',
-      'rescued_docs_loaded',
     ),
   );
 }

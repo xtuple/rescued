@@ -85,3 +85,11 @@ function rescued_update_7001() {
   ));
   return t("WSClient disabled"); 
 }
+
+/**
+ * Delete rescued_docs_loaded variable
+ */
+function rescued_update_7002() {
+  variable_del("rescued_docs_loaded");
+  return t("rescued_docs_loaded deleted");
+}
