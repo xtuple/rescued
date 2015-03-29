@@ -1463,10 +1463,11 @@ function rescued_get_configuration() {
 /**
  * @return array
  */
-function rescued_get_required_resources() {
-  $rescued_clients_url_resources["xtuple"] = array();
-  drupal_alter('rescued_register_clients_resources', $rescued_clients_url_resources);
-  return $rescued_clients_url_resources;
+function rescued_resources_list() {
+  $resources = module_invoke_all("rescued_resources");
+  $resources = array_unique($resources);
+  sort($resources);
+  return $resources;
 }
 
 /**
@@ -1476,11 +1477,24 @@ function rescued_get_required_resources() {
 function rescued_get_xtuple_rest_service() {
   $configuration = rescued_get_configuration();
   variable_set('rescued_debug_mode', $configuration->debug());
-  $resources = rescued_get_required_resources();
+  $resources = rescued_resources_list();
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
-  $client = new \Xtuple\REST\Client\Client($configuration, $resources["xtuple"], $session);
+  $client = new \Xtuple\REST\Client\Client($configuration, $resources, $session);
   return $client;
+}
+
+/**
+ * Implements hook_rescued_resources().
+ */
+function rescued_rescued_resources() {
+  return array(
+    "Model",
+    "XdUserContact",
+    "Account",
+    "ContactRelation",
+    "XdCustomer",
+  );
 }
 
 /**
@@ -1676,29 +1690,6 @@ function rescued_discovery_type_mapper($type) {
 
   // Otherwise return the type as is.
   return $type;
-}
-
-/**
- * Implements hook_rescued_register_clients_resources_alter().
- */
-function rescued_rescued_register_clients_resources_alter(&$rescued_clients_url_resources) {
-  if (!in_array('Model', $rescued_clients_url_resources['xtuple'])) {
-    $rescued_clients_url_resources['xtuple'][] = 'Model';
-  }
-  if (!in_array('XdUserContact', $rescued_clients_url_resources['xtuple'])) {
-    $rescued_clients_url_resources['xtuple'][] = 'XdUserContact';
-  }
-  if (!in_array('Account', $rescued_clients_url_resources['xtuple'])) {
-    $rescued_clients_url_resources['xtuple'][] = 'Account';
-  }
-  if (!in_array('ContactRelation', $rescued_clients_url_resources['xtuple'])) {
-    $rescued_clients_url_resources['xtuple'][] = 'ContactRelation';
-  }
-  if (!in_array('XdCustomer', $rescued_clients_url_resources['xtuple'])) {
-    $rescued_clients_url_resources['xtuple'][] = 'XdCustomer';
-  }
-
-  return $rescued_clients_url_resources;
 }
 
 /**
