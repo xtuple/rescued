@@ -1,16 +1,12 @@
 <?php
 
 /**
- * Implements hook_init()
+ * Implements hook_xdruple_application().
+ *
+ * @param \Xtuple\Drupal7\Application $application
  */
-function rescued_init() {
-  if ((!$google_lib = libraries_load('google-api-php-client')) || empty($google_lib['loaded'])) {
-    watchdog('RESCUED', 'Google API PHP Client Library not found!', array(), WATCHDOG_ERROR);
-  }
-
-  if ((!$json_patch_lib = libraries_load('json-patch-php')) || empty($json_patch_lib['loaded'])) {
-    watchdog('RESCUED', 'JSON-Patch PHP Library not found!', array(), WATCHDOG_ERROR);
-  }
+function rescued_xdruple_application(\Xtuple\Drupal7\Application $application) {
+  $application->addLifecycleHandler(new \Xtuple\Drupal7\Module\Rescued());
 }
 
 /**
