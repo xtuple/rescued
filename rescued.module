@@ -1,15 +1,6 @@
 <?php
 
 /**
- * Implements hook_xdruple_application().
- *
- * @param \Xtuple\Drupal7\Application $application
- */
-function rescued_xdruple_application(\Xtuple\Drupal7\Application $application) {
-  $application->addLifecycleHandler(new \Xtuple\Drupal7\Module\Rescued());
-}
-
-/**
  * Implements hook_menu().
  */
 function rescued_menu() {
