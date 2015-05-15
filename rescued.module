@@ -1568,11 +1568,6 @@ function rescued_flush_caches() {
   // Clear the rescued_entity_info cache.
   cache_clear_all('rescued_entity_info', 'cache');
 
-  // Make sure the Google API PHP Client Library loads. This will overwrite $apiConfig with Google's.
-  if ((!$google_lib = libraries_load('google-api-php-client')) || empty($google_lib['loaded'])) {
-    watchdog('RESCUED', 'Google API PHP Client Library not found!', array(), WATCHDOG_ERROR);
-  }
-
   // Delete Google IO cache folder from system's /tmp.
   if (variable_get('rescued_clear_google_cache', 1)) {
     global $apiConfig;
