@@ -61,11 +61,6 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
 
     // Once the Google library loads, this will be populated with the default settings.
     global $apiConfig;
-    // Make sure the Google API PHP Client Library loads. This will overwrite $apiConfig with Google's.
-    if ((!$google_lib = libraries_load('google-api-php-client')) || empty($google_lib['loaded'])) {
-      watchdog('RESCUED', 'Google API PHP Client Library not found!', array(), WATCHDOG_ERROR);
-    }
-
     // If local configuration settings are found, merge it's values with the default configuration.
     if (!empty($localConfig)) {
       $apiConfig = array_merge($apiConfig, $localConfig);

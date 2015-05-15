@@ -8,18 +8,6 @@ class RescuedControllerNew extends EntityAPIController {
    * @see EntityAPIController#__construct()
    */
   public function __construct($entityType) {
-    // Once the Google library loads, this will be populated with the default settings.
-    global $apiConfig;
-    // Make sure the Google API PHP Client Library loads. This will overwrite $apiConfig with Google's.
-    if ((!$google_lib = libraries_load('google-api-php-client')) || empty($google_lib['loaded'])) {
-      watchdog('RESCUED', 'Google API PHP Client Library not found!', array(), WATCHDOG_ERROR);
-    }
-
-    // Make sure the JSON-Patch PHP Library loads.
-    if ((!$json_patch_lib = libraries_load('json-patch-php')) || empty($json_patch_lib['loaded'])) {
-      watchdog('RESCUED', 'JSON-Patch PHP Library not found!', array(), WATCHDOG_ERROR);
-    }
-
     parent::__construct($entityType);
   }
 
