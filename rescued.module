@@ -1321,66 +1321,6 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
 }
 
 /**
- * Implements hook_inline_entity_form_settings_alter().
- *
- * Modify the $settings array to work with RESCUED custom field.
- *
- * @param $settings
- * @param $field
- * @param $instance
- */
-function rescued_inline_entity_form_settings_alter(&$settings, $field, $instance) {
-  // Modify the $settings array to work with your custom field.
-  if (isset($instance['rescued'])) {
-    $settings = array_merge($settings, $instance['rescued']);
-  }
-}
-
-/**
- * Implements hook_inline_entity_form_reference_form_alter().
- *
- * Override the IEF autocomplete_path to use the rescued_autocomplete() lookup.
- *
- * @param $reference_form
- * @param $form_state
- */
-function rescued_inline_entity_form_reference_form_alter(&$reference_form, &$form_state) {
-  // Make sure this is a RESCUED entity.
-  // TODO: @See: Follow up with: https://drupal.org/node/2140255
-  // And we can use efq_views instead of this.
-  if (isset($reference_form['#entity_type'])) {
-    $entityInfo = entity_get_info($reference_form['#entity_type']);
-
-    if (isset($entityInfo['module']) && $entityInfo['module'] === 'rescued') {
-      // Override the IEF autocomplete_path to use the rescued_authcomplete() lookup.
-      //$reference_form['entity_id']['#autocomplete_path'] = $entityInfo['discovery-client'] . '/autocomplete/' . $entityInfo['discovery-client'] . '/' . $entityInfo['resource'] . '/' . $entityInfo['entity keys']['id'];
-
-      // Add validation callback to use _rescued_inline_entity_form_autocomplete_validate().
-      //$reference_form['entity_id']['#element_validate'][] = '_rescued_inline_entity_form_autocomplete_validate';
-    }
-  }
-}
-
-/**
- * #element_validate callback for the RESCUED IEF autocomplete field.
- *
- * @param $element
- * @param $form_state
- * @param $form
- */
-function _rescued_inline_entity_form_autocomplete_validate($element, &$form_state, $form) {
-  $value = '';
-
-  // Make sure a value is set.
-  if (!empty($element['#value'])) {
-    // RESCUED entity ids are the plain $element['#value'].
-    $value = $element['#value'];
-  }
-
-  form_set_value($element, $value, $form_state);
-}
-
-/**
  * Page callback: Outputs JSON for relation autocomplete suggestions.
  *
  * Path: {discovery-client}/autocomplete
