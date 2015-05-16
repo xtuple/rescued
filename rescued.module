@@ -582,8 +582,7 @@ function rescued_entity_property_info() {
             'type' => $type,
           );
 
-          // Our dates come in as Javascipt dates. Need to defaint getter and
-          // setter callbacks that will convert them to timestamps.
+          // Our dates come in as JavaScript dates. Need to define getter and setter callbacks that will convert them to timestamps.
           if ($type === 'date') {
             $info[$name . '_' . strtolower($resource)]['properties'][$key]['getter callback'] = 'entity_property_verbatim_date_get';
             // TODO: There is no set function for date.  Add a custom one.
@@ -614,10 +613,10 @@ function rescued_field_extra_fields() {
     $erp_fields = array();
 
     // Get all of the default 'erp_xxx' fields so we can delete invalid ones below.
-    $xdref_fields = field_read_fields(array('type' => 'xdruple_entityreference'));
+    $xd_ref_fields = field_read_fields(array('type' => 'xdruple_entityreference'));
 
     // Loop over and find 'erp_xxx' fields.
-    foreach ($xdref_fields as $field_key => $field) {
+    foreach ($xd_ref_fields as $field_key => $field) {
       if (substr($field_key, 0, 4) === 'erp_') {
         $erp_fields[] = $field_key;
       }

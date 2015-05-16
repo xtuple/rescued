@@ -366,7 +366,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
       ),
     );
 
-    // If the Entity API's admin UI is using our controller class, put this menu item as a local task on the admin page.
+    // If the Entity API admin UI is using our controller class, put this menu item as a local task on the admin page.
     // @see EntityOperationsDefaultAdminUIController::menu_item_make_task()
     $ui_controller = entity_ui_controller($this->entityType);
     if (is_a($ui_controller, 'EntityOperationsDefaultAdminUIController')) {
@@ -491,7 +491,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     // Kill the action button.
     unset($form_state['entity_operation_form_elements']['action button']);
 
-    // Get the base path. We will probably be on ENTITYBASE/add, though of
+    // Get the base path. We will probably be on ENTITY_BASE/add, though of
     // course the declaration for this operation could have set a different
     // operation path. We create links with the bundle name appended to that,
     // which will also be handled by this operation.

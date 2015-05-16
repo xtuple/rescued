@@ -43,7 +43,7 @@ class Rescued_ApiService extends Google_Service {
     if (!empty($discovery['resources'])) {
       // Add each service resource and it's methods.
       foreach ($discovery['resources'] as $key => $value) {
-        // TODO: Make the class we use here configurable from WSClient settings so you could use something like Google's Calendar class in their library.
+        // TODO: Make the class we use here configurable from WSClient settings so you could use something like Google Calendar class in their library.
         // The Rescued_ServiceResource class is currently specific to xTuple since it uses isKey in our custom JSON-Schema.
         // Consider looking for resource method parameters where 'location' === 'path' to make that more generic.
         $this->$key = new Rescued_ServiceResource($this, $this->serviceName, $key, $discovery['resources'][$key]);
@@ -58,7 +58,7 @@ class Rescued_ApiService extends Google_Service {
    *
    * @return array API Discovery Document.
    * @throws \Google_IOException
-   * @internal param string $resource Optional API resource name to return a single resouce.
+   * @internal param string $resource Optional API resource name to return a single resource.
    *
    */
   public function getDiscovery($url) {

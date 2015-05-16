@@ -17,7 +17,7 @@
 
 /**
  * Extend Google's OAuth 2 class to allow settings our own custom URI's.
- * Google hardcodes their URI's as PHP consts, which means they cannot be
+ * Google hardcodes their URI's as PHP constants, which means they cannot be
  * changed to our URI's.  This class changes them to private variables
  * and provides a setUris() function to change them.
  */
@@ -200,8 +200,8 @@ class Rescued_OAuth2 extends Google_OAuth2 {
     $this->approvalPrompt = $approvalPrompt;
   }
 
-  public function setAssertionCredentials(Google_AssertionCredentials $creds) {
-    $this->assertionCredentials = $creds;
+  public function setAssertionCredentials(Google_AssertionCredentials $credentials) {
+    $this->assertionCredentials = $credentials;
   }
 
   /**
@@ -489,7 +489,7 @@ class Rescued_OAuth2 extends Google_OAuth2 {
         "Token used too late, $now > $latest: $json_body");
     }
 
-    // TODO(beaton): check issuer field?
+    // TODO (beaton): check issuer field?
 
     // Check audience
     $aud = $payload["aud"];
