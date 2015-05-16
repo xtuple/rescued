@@ -184,12 +184,6 @@ function rescued_entity_info() {
                   'controller class' => 'EntityOperationsDefaultAdminUIController',
                 );
 
-                // TODO: Should parent resources like this get an InlineEntityFormController?
-                // This is a NOT read only resource, so do we give it an InlineEntityFormController?
-                $return[$resource_code]['inline entity form'] = array(
-                  'controller' => 'RescuedRelationInlineEntityFormController',
-                );
-
                 // Entity Operations API.
                 $return[$resource_code]['operations ui'] = array(
                   // The base path for your entities. This is the same as your entity's URI
@@ -215,11 +209,6 @@ function rescued_entity_info() {
                 );
               }
               else {
-                // This is a read only resource, so we give it an InlineEntityFormController.
-                $return[$resource_code]['inline entity form'] = array(
-                  'controller' => 'RescuedRelationInlineEntityFormController',
-                );
-
                 // Entity Operations API.
                 $return[$resource_code]['operations ui'] = array(
                   // The base path for your entities. This is the same as your entity's URI
@@ -240,11 +229,6 @@ function rescued_entity_info() {
               // The 'is_nested_only' resources are not exposed by the REST API
               // and must be accessed by through their parent.
               $return[$resource_code]['is_nested_only'] = TRUE;
-
-              // This is not a resource, so we give it an InlineEntityFormController.
-              $return[$resource_code]['inline entity form'] = array(
-                'controller' => 'RescuedRelationInlineEntityFormController',
-              );
 
               // Entity Operations API.
               $return[$resource_code]['operations ui'] = array(
