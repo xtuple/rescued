@@ -116,12 +116,17 @@ function rescued_entity_info() {
           }
           else {
             $resource_code = $name . '_' . strtolower($resource);
+            $persistent_cache_type = \Xtuple\Rescued\Controller\AbstractController::CACHE_PER_USER;
+            if (in_array($resource_code, xdruple_cache_entity_system_wide())) {
+              $persistent_cache_type = \Xtuple\Rescued\Controller\AbstractController::CACHE_PER_SYSTEM;
+            }
+            $entity['persistent cache'] = $persistent_cache_type;
             $return[$resource_code] = array(
               'label' => t($resource),
               'resource' => $resource,
               'discovery-client' => $name,
               'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
-              'controller class' => 'RescuedControllerNew',
+              'controller class' => '\Xtuple\Rescued\Controller\EntityController',
               'api-delete-callback' => 'rescued_api_resource_delete',
               'api-insert-callback' => 'rescued_api_resource_insert',
               'api-list-callback' => 'rescued_api_resource_list',
@@ -149,7 +154,7 @@ function rescued_entity_info() {
               ),
               // Entity API properties.
               'module' => 'rescued',
-              'entity class' => 'RescuedEntityNew',
+              'entity class' => '\Xtuple\Rescued\Controller\Entity',
               'permission labels' => array(
                 'singular' => $resource,
                 'plural' => $resource,
