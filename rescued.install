@@ -2,6 +2,10 @@
 
 /**
  * Implements hook_requirements().
+ *
+ * @param $phase
+ *
+ * @return array
  */
 function rescued_requirements($phase) {
   // TODO: Install doesn't seem to work right.  Drupal isn't fully loaded, so we can't do much.

@@ -46,6 +46,14 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
 
   /**
    * Form builder for this operation.
+   *
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+   *
+   * @return array
    */
   function form($form, &$form_state, $entity_type, $entity, $operation_path) {
     // Kill the cancel link.
@@ -64,7 +72,13 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
    * also used by the EntityOperationsOperationAddGeneric handler. If you want
    * to customize the form for your entity, you may want to consider using
    * the EntityOperationsOperationEdit handler instead.
-   */
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+   * @return
+*/
   function entityForm($form, &$form_state, $entity_type, $entity, $operation_path) {
     $entityInfo = $entity->entityInfo();
 
@@ -417,7 +431,12 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
    * Form validation handler for this operation.
    *
    * Receives the same parameters as the form builder as a convenience.
-   */
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+*/
   function formValidate($form, &$form_state, $entity_type, $entity, $operation_path) {
     // Notify field widgets to validate their data.
     entity_form_field_validate($this->entityType, $form, $form_state);
@@ -427,7 +446,12 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
    * Form submit handler for this operation.
    *
    * Receives the same parameters as the form builder as a convenience.
-   */
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+*/
   function formSubmit($form, &$form_state, $entity_type, $entity, $operation_path) {
     $entity_info = entity_get_info($entity_type);
 
@@ -477,7 +501,12 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
 
   /**
    * Override getOperationStringSubstitutions().
-   */
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+   * @param $parameters
+   * @return array
+*/
   function getOperationStringSubstitutions($entity_type, $entity, $operation_path, $parameters) {
     $substitutions = parent::getOperationStringSubstitutions($entity_type, $entity, $operation_path, $parameters);
 
@@ -491,7 +520,11 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
 
   /**
    * Properties for the menu item specific to this handler.
-   */
+   * @param $operation_path
+   * @param $operation_definition
+   * @param $loader_position
+   * @return array
+*/
   function menu_item($operation_path, $operation_definition, $loader_position) {
     $item = array(
       // Special path which doesn't have an entity loader.
@@ -534,6 +567,8 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
    *
    * To get different parameters, override menu_item().
    *
+   * @param $form
+   * @param $form_state
    * @param $entity_type
    *  The entity type.
    * @param $entity
@@ -542,7 +577,8 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
    * @param $operation_path
    *  The operation path of the current operation. This is the key of the
    *  definition array in hook_entity_info().
-   */
+   * @return array
+*/
   function form($form, &$form_state, $entity_type, $entity, $operation_path) {
     // TODO: consider instead of abusing $entity, look in form state
     // build info for an extra bundle parameter?
@@ -623,7 +659,13 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
    * This is not really a form, just a collection of add links. But we can't
    * handle this as a page type handler because that would require returning
    * multiple menu items from a single operation handler; so we fake it.
-   */
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+   * @return
+*/
   function bundleSelectionForm($form, &$form_state, $entity_type, $entity, $operation_path) {
     $entity_info = entity_get_info($this->entityType);
 
