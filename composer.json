@@ -9,5 +9,9 @@
       "email": "ben@xtuple.com",
       "role": "Software Engineer"
     }
-  ]
+  ],
+  "require": {
+    "google/apiclient": "dev-xtuple",
+    "mikemccacbe/json-patch-php": "dev-master"
+  }
 }
