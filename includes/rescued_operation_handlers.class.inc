@@ -74,7 +74,7 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
    * @param $form
    * @param $form_state
    * @param $entity_type
-   * @param $entity
+   * @param \Xtuple\Rescued\Controller\Entity $entity
    * @param $operation_path
    *
    * @return
@@ -388,7 +388,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
    * @param $form_state
    * @param $entity_type
    *  The entity type.
-   * @param $entity
+   * @param \Xtuple\Rescued\Controller\Entity $entity
    *  The bundle name to add. May be NULL if the entity has no bundles or only
    *  one bundle.
    * @param $operation_path
@@ -451,6 +451,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     }
     else {
       // In this case, $entity is the bundle name from the URL, not a full entity.
+      /** @var string $bundle_name */
       $bundle_name = $entity;
     }
     $values[$bundle_key] = $bundle_name;
