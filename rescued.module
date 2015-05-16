@@ -25,57 +25,6 @@ function rescued_menu() {
 }
 
 /**
- * Implements hook_libraries_info().
- */
-function rescued_libraries_info() {
-  $libraries['google-api-php-client'] = array(
-    'name' => 'Google API PHP Client Library',
-    'vendor url' => 'http://code.google.com/p/google-api-php-client/',
-    'download url' => 'http://code.google.com/p/google-api-php-client/downloads/detail?name=google-api-php-client-0.6.2.tar.gz&can=2&q=',
-    'version arguments' => array(
-      'file' => 'src/io/Google_HttpRequest.php',
-      'pattern' => '/\"google-api-php-client\/+([0-9a-zA-Z\.-]+)\"/',
-      'lines' => 50,
-      'cols' => 100,
-    ),
-    'versions' => array(
-      '0.6.0' => array(),
-      // TODO: This should actually be 0.6.2, but there's no place in the
-      // Google PHP library to detect it from.
-      // @see http://code.google.com/p/google-api-php-client/issues/detail?id=307
-    ),
-    'files' => array(
-      'php' => array(
-        'src/Google_Client.php',
-      ),
-    ),
-  );
-
-  $libraries['json-patch-php'] = array(
-    'name' => 'JSON-Patch PHP Library',
-    'vendor url' => 'https://github.com/bendiy/json-patch-php/tree/rfc',
-    // TODO: Change location if PR is merged: https://github.com/mikemccabe/json-patch-php/pull/3
-    'download url' => 'https://github.com/bendiy/json-patch-php/archive/rfc.zip',
-    'version arguments' => array(
-      'file' => 'JsonPatch.inc',
-      'pattern' => '/Version: +([0-9a-zA-Z\.-]+)/',
-      'lines' => 50,
-      'cols' => 20,
-    ),
-    'versions' => array(
-      '0.0.1' => array(),
-    ),
-    'files' => array(
-      'php' => array(
-        'JsonPatch.inc',
-      ),
-    ),
-  );
-
-  return $libraries;
-}
-
-/**
  * Implements hook_hook_info().
  */
 function rescued_hook_info() {
