@@ -83,7 +83,7 @@ function rescued_update_7001() {
     "wsclient",
     "rescued_wsclient",
   ));
-  return t("WSClient disabled"); 
+  return t("WSClient disabled");
 }
 
 /**

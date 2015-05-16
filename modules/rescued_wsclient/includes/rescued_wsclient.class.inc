@@ -184,10 +184,10 @@ class WSClientDiscoveryEndpoint extends WSClientEndpoint {
       return $response;
     } catch (DiscoveryServiceException $e) {
       throw new WSClientException('Error invoking the API Discovery Service %name, operation %operation: %error', array(
-          '%name' => $this->service->label,
-          '%operation' => $operation,
-          '%error' => $e->getMessage()
-        ));
+        '%name' => $this->service->label,
+        '%operation' => $operation,
+        '%error' => $e->getMessage()
+      ));
     }
   }
 }
