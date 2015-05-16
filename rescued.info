@@ -24,7 +24,5 @@ dependencies[] = views
 
 ; Module includes
 files[] = includes/rescued_api.class.inc
-files[] = includes/rescued_controller_new.class.inc
 files[] = includes/rescued_oauth2.class.inc
 files[] = includes/rescued_operation_handlers.class.inc
-files[] = includes/rescued_inline_entity_form.class.inc

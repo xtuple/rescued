@@ -3,7 +3,7 @@
 The RESCUED module adds support for using an APIs Discovery Service to
 dynamically expose remote REST resources as entities in Drupal using the
 REST API as a remote storage controller for those entities. Instead of having
-to define each entity in code by hand, the RESCUED module uses the API's
+to define each entity in code by hand, the RESCUED module uses the API
 Discovery Document to determine the resource's schema, permissions, methods
 and parameters. The module then dynamically exposed the entities to Drupal,
 uses the Entity Operations module to provide CRUD controllers and exposes
@@ -12,7 +12,7 @@ entities.
 
 ## Installation
 
- * RESCUED module has the follwing dependances. Download and install then from:
+ * RESCUED module has the following dependencies. Download and install then from:
    - Administration menu https://drupal.org/project/admin_menu
    - Chaos tool suite https://drupal.org/project/ctools
    - Date https://drupal.org/project/date
@@ -38,7 +38,7 @@ entities.
  * Refresh Drupal's cache and you should see your client listed here:
    admin/structure
  * All of your remote entities can then be accessed here:
-   admin/structure/{wscleint-name-here}
+   admin/structure/{wsclient-name-here}
 
 ## TODO
 

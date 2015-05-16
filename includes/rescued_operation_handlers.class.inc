@@ -35,17 +35,23 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
       'description' => 'Produces a form to edit the entity.',
       'page title' => t('Edit %label'),
       'button label' => t('Save'),
-      // This appears to be sufficient to result in the markup form element
-      // not being created.
+      // This appears to be sufficient to result in the markup form element not being created.
       'confirm question' => NULL,
       'submit message' => t('The @entity-type %label has been saved.'),
-      // These intentionally have no replacements for the placeholders; these
-      // are replaced in getOperationString().
+      // These intentionally have no replacements for the placeholders; these are replaced in getOperationString().
     );
   }
 
   /**
    * Form builder for this operation.
+   *
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+   *
+   * @return array
    */
   function form($form, &$form_state, $entity_type, $entity, $operation_path) {
     // Kill the cancel link.
@@ -64,6 +70,14 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
    * also used by the EntityOperationsOperationAddGeneric handler. If you want
    * to customize the form for your entity, you may want to consider using
    * the EntityOperationsOperationEdit handler instead.
+   *
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param \Xtuple\Rescued\Controller\Entity $entity
+   * @param $operation_path
+   *
+   * @return
    */
   function entityForm($form, &$form_state, $entity_type, $entity, $operation_path) {
     $entityInfo = $entity->entityInfo();
@@ -86,191 +100,7 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
         ((isset($properties['items']) && isset($properties['items']['$ref']) &&
           strpos($properties['items']['$ref'], '/') === FALSE))
       ) {
-//         // Handle toOne and toMany nested relations.
-//         if (isset($properties['$ref'])) {
-//           $relation_resource = $properties['$ref'];
-//           $cardinality = 1;
-//           $weight = -20; // Move toOne relations down.
-//         } else {
-//           $relation_resource = $properties['items']['$ref'];
-//           $cardinality = -1; // -1 means unlimited relations.
-//           $weight = -10; // Move toMany relations to the bottom.
-//         }
-
-//         $relation_entityType = strtolower($relation_resource);
-//         $child_entityType = $entityInfo['discovery-client'] . '_' . $relation_entityType;
-//         $child_entityInfo = entity_get_info($child_entityType);
-//         $relation_schema = $child_entityInfo['json-schema'][$relation_resource]['properties'];
-
-//         $class = $child_entityInfo['entity class'];
-//         $child_data = null;
-//         if (property_exists($entity, $key)) {
-//           $child_data = json_decode(json_encode($entity->{$key}), true);
-//         }
-//         if (!is_array($child_data) && (is_string($child_data)) || is_null($child_data)) {
-//           // If there's no data, we create a null array.
-//           $child_data = array($child_entityInfo['entity keys']['id'] => $child_data);
-//         }
-
-//         $child_entity_operations = entity_operations_get_operation_info($child_entityType);
-
-//         $handler_class = $child_entity_operations['edit']['handler'];
-//         $params = array();
-
-//         // If is_nested_only is set, this removes the "Add existing ..." button.
-//         $allow_existing = isset($child_entityInfo['is_nested_only']) ? false : true;
-
-//         $parents = isset($form['#parents']) ? $form['#parents'] : array();
-
-//         // TODO: Consider adding a hook_field_info() for this we can fetch.
-//         $field = array(
-//           'active' => 1,
-//           'bundles' => $entityInfo['bundles'],
-//           'cardinality' => $cardinality,
-//           'columns' => array_keys($relation_schema),
-//           'deleted' => 0,
-//           'field_name' => 'rescued_dummy_field',
-//           'locked' => 0,
-//           'module' => 'entityreference',
-//           'settings' => array(
-//             'target_type' => $child_entityType,
-//           ),
-//           'type' => 'entityreference',
-//         );
-//         if (isset($form_state['complete form']) && isset($form_state['complete form'][$key]) &&
-//           isset($form_state['complete form'][$key]['#ief_id'])
-//         ) {
-//           $id = $form_state['complete form'][$key]['#ief_id'];
-//         } else {
-//           $id = str_replace('.', '', uniqid('', true));
-//         }
-
-//         $id = $delta;
-//         $items = array();
-
-//         // If the child can be deleted and viewed, it's a full resource and we want IEF
-//         // to call entity_load() so the child will have an etag and can be edited inline.
-//         if (isset($child_entityInfo['operations ui']['operations']['delete'])
-//           && isset($child_entityInfo['operations ui']['operations']['view'])
-//         ) {
-//           $nested = false;
-
-//           // Set $items to the id value.
-//           if (isset($properties['$ref'])) {
-//             if (isset($child_data[$child_entityInfo['entity keys']['id']])) {
-//               $items[] = array($child_entityInfo['entity keys']['id'] => $child_data[$child_entityInfo['entity keys']['id']]);
-//             }
-//           } else {
-//             foreach ($child_data as $toMany_key => $toMany_data) {
-//               if (isset($child_data[$toMany_key][$child_entityInfo['entity keys']['id']])) {
-//                 $items[] = array($child_entityInfo['entity keys']['id'] => $child_data[$toMany_key][$child_entityInfo['entity keys']['id']]);
-//               }
-//             }
-//           }
-//         } else {
-//           $nested = true;
-
-//           // Embed the child entity into the items array.
-//           if (isset($properties['$ref'])) {
-//             if (isset($child_data[$child_entityInfo['entity keys']['id']])) {
-//               $items[] = new $class($child_data, $child_entityType);
-//             }
-//           } else {
-//             foreach ($child_data as $toMany_key => $toMany_data) {
-//               if (isset($child_data[$toMany_key][$child_entityInfo['entity keys']['id']])) {
-//                 $items[] = new $class($child_data[$toMany_key], $child_entityType);
-//               }
-//             }
-//           }
-//         }
-
-//         // TODO: Consider adding a hook_field_info() for this we can fetch.
-//         $instance = array(
-//           'id' => $id,
-//           'label' => check_plain($properties['title']),
-//           'settings' => array(),
-//           'entity_type' => $child_entityType,
-//           'bundle' => $child_entityType,
-//           'deleted' => 0,
-//           // TODO: Need to set this for inline_entity_form_get_controller().
-//           // Consider defining a dynamic hook_field_info() that would set a
-//           // name for each field in the schema.
-//           'field_name' => 'rescued_dummy_field',
-//           'required' => isset($properties['required']) ? $properties['required'] : FALSE,
-//           'rescued' => array(
-//             'entity_type' => $child_entityType,
-//             'column' => $child_entityInfo['entity keys']['id'],
-//           ),
-//           'widget' => array(
-//             'active' => 1,
-//             'module' => 'inline_entity_form',
-//             'settings' => array(
-//               // TODO: Do we need to set fields here?
-//               'fields' => array(),
-//               'type_settings' => array(
-//                 'allow_existing' => $allow_existing,
-//                 'match_operator' => 'CONTAINS',
-//                 // TODO: Might want to allow this, but not on isNested only resources.
-//                 'delete_references' => 0,
-//               ),
-//             ),
-//             'type' => 'inline_entity_form',
-//             'weight' => 0,
-//           ),
-//         );
-
-//         $element = array(
-//           '#entity' => $entity,
-//           '#entity_type' => $entity->entityType(),
-//           '#bundle' => $entity->entityType(),
-//           '#field_name' => $key,
-//           '#language' => LANGUAGE_NONE,
-//           '#field_parents' => $parents,
-//           '#columns' => array_keys($relation_schema),
-//           '#title' => check_plain($properties['title']),
-//           '#description' => field_filter_xss(isset($properties['description']) ? $properties['description'] : ''),
-//           '#weight' => $weight,
-//           // Only the first widget should be required.
-//           // TODO: $properties['required'] is not normally set on this type of relation.
-//           // Do we need to set this for Inline Entity Forms?
-//           '#required' => $delta == 0 && isset($properties['required']) ? $properties['required'] : FALSE,
-//           '#delta' => $delta,
-//         );
-
-//         // TODO: At some point it would be nice to link non-editable relation
-//         // children to their full resource. e.g. ContactRelation is not editable.
-//         // However, if there was an "Open" button instead of "Edit", it could
-//         // send the user to the Contact, which they could edit.
-
-//         // TODO: This is using a customized inline_entity_form_field_widget_form() that adds a 'true' parameter to the call.
-//         // That allows us to send the entities in $items so they do not need to be loaded.
-//         if ($element = inline_entity_form_field_widget_form($form, $form_state, $field, $instance, LANGUAGE_NONE, $items, $delta, $element, $nested)) {
-//           // TODO: Consider allowing the alter below.
-//           // Allow modules to alter the field widget form element.
-//           // $context = array(
-//           //   'form' => $form,
-//           //   'field' => $field,
-//           //   'instance' => $instance,
-//           //   'langcode' => LANGUAGE_NONE,
-//           //   'items' => $items,
-//           //   'delta' => $delta,
-//           // );
-//           // drupal_alter(array('field_widget_form', 'field_widget_' . $instance['widget']['type'] . '_form'), $element, $form_state, $context);
-
-//           // If we're processing a specific delta value for a field where the
-//           // field module handles multiples, set the delta in the result.
-//           // For fields that handle their own processing, we can't make
-//           // assumptions about how the field is structured, just merge in the
-//           // returned element.
-//           if (field_behaviors_widget('multiple values', $instance) == FIELD_BEHAVIOR_DEFAULT) {
-//             $elements[$delta] = $element;
-//           }
-//           else {
-//             $elements = $element;
-//           }
-//         }
-
-//         $form[$key] = $elements;
+        // Handle toOne and toMany nested relations.
       }
       elseif (isset($properties['$ref']) && strpos($properties['$ref'], '/') !== FALSE) {
         // Handle toOne key relations.
@@ -278,15 +108,12 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
         $relation_key = $relation_resource[1];
         $relation_entityType = strtolower($relation_resource[0]);
         $child_entityType = $entityInfo['discovery-client'] . '_' . $relation_entityType;
-        $child_entityInfo = entity_get_info($child_entityType);
-        $relation_schema = $child_entityInfo['json-schema'][$relation_resource[0]]['properties'];
 
         // Get select list options for the resource list.
         $resources = entity_load($child_entityType, FALSE);
 
         $options = array();
         foreach ($resources as $child_data) {
-          //$options[$child_data[$relation_key]] = t($child_data[$relation_key]);
           $options[$child_data->{$relation_key}] = t($child_data->{$relation_key});
         }
 
@@ -417,6 +244,12 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
    * Form validation handler for this operation.
    *
    * Receives the same parameters as the form builder as a convenience.
+   *
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
    */
   function formValidate($form, &$form_state, $entity_type, $entity, $operation_path) {
     // Notify field widgets to validate their data.
@@ -427,6 +260,12 @@ class RescuedEntityOperationsOperationEditGeneric extends EntityOperationsOperat
    * Form submit handler for this operation.
    *
    * Receives the same parameters as the form builder as a convenience.
+   *
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
    */
   function formSubmit($form, &$form_state, $entity_type, $entity, $operation_path) {
     $entity_info = entity_get_info($entity_type);
@@ -469,14 +308,20 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
       'tab title' => 'Add',
       'label' => 'Add',
       'description' => 'Create a new entity, with a bundle selection page if required.',
-      // Note: this is ignored when on the entity form for entities with more
-      // than one bundle type.
+      // Note: this is ignored when on the entity form for entities with more than one bundle type.
       'page title' => t('Add %entity-type'),
     ) + parent::operationStrings();
   }
 
   /**
    * Override getOperationStringSubstitutions().
+   *
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+   * @param $parameters
+   *
+   * @return array
    */
   function getOperationStringSubstitutions($entity_type, $entity, $operation_path, $parameters) {
     $substitutions = parent::getOperationStringSubstitutions($entity_type, $entity, $operation_path, $parameters);
@@ -491,6 +336,12 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
 
   /**
    * Properties for the menu item specific to this handler.
+   *
+   * @param $operation_path
+   * @param $operation_definition
+   * @param $loader_position
+   *
+   * @return array
    */
   function menu_item($operation_path, $operation_definition, $loader_position) {
     $item = array(
@@ -515,8 +366,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
       ),
     );
 
-    // If the Entity API's admin UI is using our controller class, put this
-    // menu item as a local task on the admin page.
+    // If the Entity API admin UI is using our controller class, put this menu item as a local task on the admin page.
     // @see EntityOperationsDefaultAdminUIController::menu_item_make_task()
     $ui_controller = entity_ui_controller($this->entityType);
     if (is_a($ui_controller, 'EntityOperationsDefaultAdminUIController')) {
@@ -534,18 +384,21 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
    *
    * To get different parameters, override menu_item().
    *
+   * @param $form
+   * @param $form_state
    * @param $entity_type
    *  The entity type.
-   * @param $entity
+   * @param \Xtuple\Rescued\Controller\Entity $entity
    *  The bundle name to add. May be NULL if the entity has no bundles or only
    *  one bundle.
    * @param $operation_path
    *  The operation path of the current operation. This is the key of the
    *  definition array in hook_entity_info().
+   *
+   * @return array
    */
   function form($form, &$form_state, $entity_type, $entity, $operation_path) {
-    // TODO: consider instead of abusing $entity, look in form state
-    // build info for an extra bundle parameter?
+    // TODO: consider instead of abusing $entity, look in form state build info for an extra bundle parameter?
 
     // Kill the cancel button.
     unset($form_state['entity_operation_form_elements']['cancel link']);
@@ -598,6 +451,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     }
     else {
       // In this case, $entity is the bundle name from the URL, not a full entity.
+      /** @var string $bundle_name */
       $bundle_name = $entity;
     }
     $values[$bundle_key] = $bundle_name;
@@ -623,6 +477,14 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
    * This is not really a form, just a collection of add links. But we can't
    * handle this as a page type handler because that would require returning
    * multiple menu items from a single operation handler; so we fake it.
+   *
+   * @param $form
+   * @param $form_state
+   * @param $entity_type
+   * @param $entity
+   * @param $operation_path
+   *
+   * @return
    */
   function bundleSelectionForm($form, &$form_state, $entity_type, $entity, $operation_path) {
     $entity_info = entity_get_info($this->entityType);
@@ -630,7 +492,7 @@ class RescuedEntityOperationsOperationAddGeneric extends RescuedEntityOperations
     // Kill the action button.
     unset($form_state['entity_operation_form_elements']['action button']);
 
-    // Get the base path. We will probably be on ENTITYBASE/add, though of
+    // Get the base path. We will probably be on ENTITY_BASE/add, though of
     // course the declaration for this operation could have set a different
     // operation path. We create links with the bundle name appended to that,
     // which will also be handled by this operation.

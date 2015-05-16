@@ -33,8 +33,7 @@ function hook_rescued_resources() {
  *   The modified $handled_properties array with your additions/changes.
  */
 function hook_rescued_handle_create_child_fields_alter(&$handled_properties) {
-  // TODO: Modify $handled_properties here by changing the
-  // resource => array('properties') or adding more.
+  // TODO: Modify $handled_properties here by changing the resource => array('properties') or adding more.
   return $handled_properties;
 }
 

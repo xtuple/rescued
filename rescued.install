@@ -1,65 +1,6 @@
 <?php
 
 /**
- * Implements hook_requirements().
- */
-function rescued_requirements($phase) {
-  // TODO: Install doesn't seem to work right.  Drupal isn't fully loaded, so we can't do much.
-  // It shouldn't matter for install, but the libraries do need to be there to run.
-  // https://api.drupal.org/api/drupal/modules!system!system.api.php/function/hook_requirements/7
-  if ($phase == 'install') {
-    $t = get_t();
-    $google_url = l('here', 'http://code.google.com/p/google-api-php-client/downloads/detail?name=google-api-php-client-0.6.2.tar.gz&can=2&q=');
-    $google_message = $t('Make sure to install this version of the Google API PHP Client library code (from !url) in a libraries directory such as "sites/all/libraries"', array('!url' => $google_url));
-
-    $requirements['google-api-php-client']['title'] = 'Google API PHP Client Library';
-    $requirements['google-api-php-client']['value'] = '0.6.2';
-    $requirements['google-api-php-client']['severity'] = REQUIREMENT_WARNING;
-    $requirements['google-api-php-client']['description'] = $google_message;
-
-    return $requirements;
-  }
-
-  // Get required libraries info.
-  $info = rescued_libraries_info();
-
-  // Set Google vars.
-  $google_info = $info['google-api-php-client'];
-  $google_keys = array_keys($google_info['versions']);
-  $google_version = reset($google_keys);
-  $google_url = l('here', $google_info['download url']);
-  $google_message = t('Install version @version of the Google API PHP Client library code (from !url) in a libraries directory such as "sites/all/libraries".', array(
-    '@version' => $google_version,
-    '!url' => $google_url
-  ));
-  // Detect actually installed version of Google library.
-  $google_info = libraries_detect('google-api-php-client');
-
-  $requirements = array();
-  // Set Google lib $requirements.
-  $requirements['google-api-php-client'] = array(
-    'title' => 'Google API PHP Client Library',
-    'value' => $google_info['version'],
-  );
-
-  if ($phase == 'update') {
-    if ($google_info === FALSE || empty($google_info['version']) || !version_compare($google_info['version'], $google_version, '=')) {
-      $requirements['google-api-php-client']['description'] = $google_message;
-      $requirements['google-api-php-client']['severity'] = REQUIREMENT_ERROR;
-    }
-  }
-
-  if ($phase == 'runtime') {
-    if ($google_info === FALSE || empty($google_info['version']) || !version_compare($google_info['version'], $google_version, '=')) {
-      $requirements['google-api-php-client']['description'] = $google_message;
-      $requirements['google-api-php-client']['severity'] = REQUIREMENT_ERROR;
-    }
-  }
-
-  return $requirements;
-}
-
-/**
  * Implements hook_enable().
  */
 function rescued_enable() {
@@ -83,7 +24,7 @@ function rescued_update_7001() {
     "wsclient",
     "rescued_wsclient",
   ));
-  return t("WSClient disabled"); 
+  return t("WSClient disabled");
 }
 
 /**

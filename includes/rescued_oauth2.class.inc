@@ -17,7 +17,7 @@
 
 /**
  * Extend Google's OAuth 2 class to allow settings our own custom URI's.
- * Google hardcodes their URI's as PHP consts, which means they cannot be
+ * Google hardcodes their URI's as PHP constants, which means they cannot be
  * changed to our URI's.  This class changes them to private variables
  * and provides a setUris() function to change them.
  */
@@ -200,8 +200,8 @@ class Rescued_OAuth2 extends Google_OAuth2 {
     $this->approvalPrompt = $approvalPrompt;
   }
 
-  public function setAssertionCredentials(Google_AssertionCredentials $creds) {
-    $this->assertionCredentials = $creds;
+  public function setAssertionCredentials(Google_AssertionCredentials $credentials) {
+    $this->assertionCredentials = $credentials;
   }
 
   /**
@@ -226,7 +226,7 @@ class Rescued_OAuth2 extends Google_OAuth2 {
    * @throws Google_AuthException
    */
   public function sign(Google_HttpRequest $request) {
-    // add the developer key to the request before signing it
+    // Add the developer key to the request before signing it
     if ($this->developerKey) {
       $requestUrl = $request->getUrl();
       $requestUrl .= (strpos($request->getUrl(), '?') === FALSE) ? '?' : '&';
@@ -239,8 +239,7 @@ class Rescued_OAuth2 extends Google_OAuth2 {
       return $request;
     }
 
-    // Check if the token is set to expire in the next 30 seconds
-    // (or has already expired).
+    // Check if the token is set to expire in the next 30 seconds (or has already expired).
     if ($this->isAccessTokenExpired()) {
       if ($this->assertionCredentials) {
         $this->refreshTokenWithAssertion();
@@ -366,9 +365,10 @@ class Rescued_OAuth2 extends Google_OAuth2 {
     return $expired;
   }
 
-  // Gets federated sign-on certificates to use for verifying identity tokens.
-  // Returns certs as array structure, where keys are key ids, and values
-  // are PEM encoded certificates.
+  /**
+   * Gets federated sign-on certificates to use for verifying identity tokens.
+   * Returns certs as array structure, where keys are key ids, and values are PEM encoded certificates.
+   */
   private function getFederatedSignOnCerts() {
     // This relies on makeRequest caching certificate responses.
     $request = Google_Client::$io->makeRequest(new Google_HttpRequest(
@@ -409,8 +409,17 @@ class Rescued_OAuth2 extends Google_OAuth2 {
     return $this->verifySignedJwtWithCerts($id_token, $certs, $audience);
   }
 
-  // Verifies the id token, returns the verified token contents.
-  // Visible for testing.
+  /**
+   * Verifies the id token, returns the verified token contents.
+   * Visible for testing.
+   *
+   * @param $jwt
+   * @param $certs
+   * @param $required_audience
+   *
+   * @return \Google_LoginTicket
+   * @throws \Google_AuthException
+   */
   function verifySignedJwtWithCerts($jwt, $certs, $required_audience) {
     $segments = explode(".", $jwt);
     if (count($segments) != 3) {
@@ -480,7 +489,7 @@ class Rescued_OAuth2 extends Google_OAuth2 {
         "Token used too late, $now > $latest: $json_body");
     }
 
-    // TODO(beaton): check issuer field?
+    // TODO (beaton): check issuer field?
 
     // Check audience
     $aud = $payload["aud"];
