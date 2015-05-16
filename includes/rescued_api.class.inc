@@ -43,12 +43,9 @@ class Rescued_ApiService extends Google_Service {
     if (!empty($discovery['resources'])) {
       // Add each service resource and it's methods.
       foreach ($discovery['resources'] as $key => $value) {
-        // TODO: Make the class we use here configurable from WSClient settings
-        // so you could use something like Google's Calendar class in their library.
-        // The Rescued_ServiceResource class is currently specific to xTuple since
-        // it uses isKey in our custom JSON-Schema.
-        // Consider looking for resource method parameters where 'location' === 'path'
-        // to make that more generic.
+        // TODO: Make the class we use here configurable from WSClient settings so you could use something like Google's Calendar class in their library.
+        // The Rescued_ServiceResource class is currently specific to xTuple since it uses isKey in our custom JSON-Schema.
+        // Consider looking for resource method parameters where 'location' === 'path' to make that more generic.
         $this->$key = new Rescued_ServiceResource($this, $this->serviceName, $key, $discovery['resources'][$key]);
       }
     }
@@ -265,8 +262,7 @@ class Rescued_ServiceResource extends Google_ServiceResource {
    * @return \Rescued_Service Resource object
    */
   public function patch($id, $resource_key, Rescued_Service $postBody, $optParams = array()) {
-    // $postBody needs to be an array or the parent::__call will strip the null
-    // properties off of our JSON-Patches and screw everything up.
+    // $postBody needs to be an array or the parent::__call will strip the null properties off of our JSON-Patches and screw everything up.
     // Shuffle patches off, convert to clean array and put the patches back.
     $patches = $postBody->patches;
     unset($postBody->patches);

@@ -135,10 +135,8 @@ function rescued_entity_info() {
 
                 // Entity Operations API.
                 $return[$resource_code]['operations ui'] = array(
-                  // The base path for your entities. This is the same as your entity's URI
-                  // but without the ID suffix. (In fact, you can set
-                  // entity_operations_entity_uri() as your URI callback, which will use the
-                  // value here).
+                  // The base path for your entities. This is the same as your entity's URI but without the ID suffix.
+                  // (In fact, you can set entity_operations_entity_uri() as your URI callback, which will use the value here).
                   'path' => $name . '/' . strtolower($resource),
                   'operations' => array(
                     'add' => array(
@@ -160,10 +158,8 @@ function rescued_entity_info() {
               else {
                 // Entity Operations API.
                 $return[$resource_code]['operations ui'] = array(
-                  // The base path for your entities. This is the same as your entity's URI
-                  // but without the ID suffix. (In fact, you can set
-                  // entity_operations_entity_uri() as your URI callback, which will use the
-                  // value here).
+                  // The base path for your entities. This is the same as your entity's URI but without the ID suffix.
+                  // (In fact, you can set entity_operations_entity_uri() as your URI callback, which will use the value here).
                   'path' => $name . '/' . strtolower($resource),
                   'operations' => array(
                     'view' => array(
@@ -175,16 +171,13 @@ function rescued_entity_info() {
               }
             }
             else {
-              // The 'is_nested_only' resources are not exposed by the REST API
-              // and must be accessed by through their parent.
+              // The 'is_nested_only' resources are not exposed by the REST API and must be accessed by through their parent.
               $return[$resource_code]['is_nested_only'] = TRUE;
 
               // Entity Operations API.
               $return[$resource_code]['operations ui'] = array(
-                // The base path for your entities. This is the same as your entity's URI
-                // but without the ID suffix. (In fact, you can set
-                // entity_operations_entity_uri() as your URI callback, which will use the
-                // value here).
+                // The base path for your entities. This is the same as your entity's URI but without the ID suffix.
+                // (In fact, you can set entity_operations_entity_uri() as your URI callback, which will use the value here).
                 'path' => $name . '/' . strtolower($resource),
                 'operations' => array(
                   'add' => array(
@@ -374,8 +367,8 @@ function rescued_reset_session($account) {
   unset($_SESSION['oauth_user']);
   $session->removeRescued('user');
 
-  // Check if the rescued resources exist yet. This function can be called
-  // before all entities are setup. Just return account if it's not ready.
+  // Check if the rescued resources exist yet. This function can be called before all entities are setup.
+  //  Just return account if it's not ready.
   $resources = array(
     'XdUserContact',
     'Account',
@@ -403,8 +396,7 @@ function rescued_reset_session($account) {
   $user2contact = rescued_api_resource_list('xtuple', 'XdUserContact', $queryParams);
 
   if ($user2contact && count($user2contact) === 1) {
-    // TODO: This will break if this incident gets resolved:
-    // www.xtuple.org/xtincident/view/features/17846
+    // TODO: This will break if this incident gets resolved: www.xtuple.org/xtincident/view/features/17846
     // We will have to handle multiple accounts on one contact.
     $session->set('rescued', $user2contact[0]);
     $session->setRescued('expires', time() + 3600); // One hour from now, this will be reloaded.
@@ -422,7 +414,6 @@ function rescued_reset_session($account) {
       // TODO: Should get this key 'number' from discovery doc.
 
       // TODO: We need a role to support a basic public user that does not have an xTuple user yet.
-      //$session->setRescued('user', strtolower('public'));
       $session->setRescued('user_type', 'rescued_contact');
     }
     else {
@@ -431,8 +422,7 @@ function rescued_reset_session($account) {
       // Get this CRM Account and figure out what type of user it is.
       $crmAccount = rescued_api_resource_load('xtuple', 'Account', $user2account['data']['account'], 'number');
 
-      // CRM Accounts with a parent Account are limited users unless they are
-      // a Customer, Rep or Employee.
+      // CRM Accounts with a parent Account are limited users unless they are a Customer, Rep or Employee.
       if ($user2account['data']['accountParent'] &&
         empty($crmAccount['data']['customer']) &&
         empty($crmAccount['data']['employee']) &&
@@ -536,19 +526,16 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
     return FALSE;
   }
   elseif ($session->getRescued('user')) {
-    // For non-white_list entities, we check if the user's rescued role gives
-    // then access to this entity through it's relations.
+    // For non-white_list entities, we check if the user's rescued role gives then access to this entity through it's relations.
 
     // Figure out what role we're dealing with.
     if (user_access('view personal rescued entities', $account)) {
       // TODO: Need a whitelist for 'rescued_personal'.
       return TRUE;
-      //return false;
     }
     elseif (user_access('view limited rescued entities', $account)) {
       // TODO: Need a whitelist for 'rescued_limited'.
       return TRUE;
-      //return false;
     }
     elseif (user_access('view contact rescued entities', $account)) {
       // TODO: Add support for basic contacts that will be accessing the API as a public user.
@@ -603,7 +590,6 @@ function rescued_entity_property_info() {
             // @See: contrib/entity/includes/entity.property.inc, line 410
             // Currently this doesn't seem to be needed because our forms use 'Y-m-d'.
             // The getter is needed so views can use a date widget.
-            //$info[$name . '_' . strtolower($resource)]['properties'][$key]['setter callback'] = 'entity_property_verbatim_set';
           }
         }
       }
@@ -768,8 +754,7 @@ function rescued_field_extra_fields() {
 function rescued_create_child_fields($name, $resource, $property, $child, $title, $cardinality, $weight, $handled_properties) {
   $field_name = NULL;
 
-  // Check $resource and $property to see if it's registered to be handled by
-  // another module.
+  // Check $resource and $property to see if it's registered to be handled by another module.
   if (isset($handled_properties[$name], $handled_properties[$name][$resource]) &&
     in_array($property, $handled_properties[$name][$resource])
   ) {
@@ -881,9 +866,6 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
       }
       if (count($queryParam['column']) > 1) {
         // TODO: Should we query on each column?
-//         foreach ($queryParam['column'] as $column => $col_name) {
-//           $queryParams[$column] = $queryParam['value'];
-//         }
         $queryParams['q'] = $queryParam['value'];
       }
       else {
@@ -891,8 +873,6 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
           $queryParams['q'] = $queryParam['value'];
         }
         else {
-          //$queryParams[$queryParam['column']] = $queryParam['value'];
-
           // Convert query types to xTuple format.
           $type = rescued_json_schema_get_property_type($entityInfo['json-schema'][$entityInfo['resource']], $queryParam['column']);
 
@@ -1011,8 +991,7 @@ function rescued_field_group_info() {
         if (isset($properties['schemas'][$resource]['properties'])) {
           foreach ($properties['schemas'][$resource]['properties'] as $key => $value) {
             if (isset($value['items']) && isset($value['items']['$ref'])
-              // TODO: This would remove toMany key relations from htabs:
-              // && strpos($value['items']['$ref'], '/') === false
+              // TODO: This would remove toMany key relations from htabs
             ) {
               $field_group_tab->data['children'][] = 'group_' . $key;
               $field_group = new stdClass;
@@ -1035,7 +1014,6 @@ function rescued_field_group_info() {
                   'instance_settings' => array(
                     'description' => '', // TODO: Do we need this?
                     'classes' => 'group-' . $key . ' field-group-fieldset ',
-                    //'required_fields' => 1,
                   ),
                 ),
               );
@@ -1149,9 +1127,8 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
         if (isset($property['isKey']) && $property['isKey'] &&
           (!isset($property['required']) || isset($entity->$key))
         ) {
-          // This is a resource key field, but it's not required. That means
-          // it will be auto assigned like a UUID. Set to null. Let API handle it.
-
+          // This is a resource key field, but it's not required.
+          // That means it will be auto assigned like a UUID. Set to null. Let API handle it.
           // Forms have the Key as read only, so it doesn't get set on $entity_values[$key].
           // Check if it's already set on the entity before we set it to null.
           $entity->$key = isset($entity->$key) ? $entity->$key : NULL;
@@ -1203,7 +1180,6 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
           $entity->$key = $entity_values[$key];
         }
         else {
-          // $entity->$key === 0 indicates an empty select list value.
           $entity->$key = NULL;
         }
       }
@@ -1227,7 +1203,6 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
   foreach ($child_keys as $instance_name => $instance) {
     if (isset($form[$instance], $form[$instance]['#ief_id'])) {
       $field_name = $instance;
-      $langcode = $form[$field_name]['#language'];
       $ief_id = $form[$field_name]['#ief_id'];
 
       // Skip if the field is not on the form or there is no IEF data for it.
@@ -1236,7 +1211,6 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
       }
 
       $values = $form_state['inline_entity_form'][$ief_id];
-      $entity_type = $values['settings']['entity_type'];
 
       if (isset($schema[$field_name]['items'])) {
         // Default toMany to an empty array.
@@ -1299,8 +1273,7 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
  * @see      taxonomy_field_widget_info()
  */
 function rescued_autocomplete($discovery_client, $resource, $key_column) {
-  // If the request has a '/' in the search text, then the menu system will have
-  // split it into multiple arguments, recover the intended $tags_typed.
+  // If the request has a '/' in the search text, then the menu system will have split it into multiple arguments, recover the intended $tags_typed.
   $args = func_get_args();
   // Shift off the $discovery_client argument.
   array_shift($args);
@@ -1525,8 +1498,7 @@ function rescued_discovery_parse_operations(array $operations) {
     foreach ($properties['methods'] as $method => $attr) {
       $wsclient_operations[$resource . '_' . $method] = array(
         'label' => $resource . ' - ' . $method,
-        // TODO: Not sure about this part. Need to do some tests with Rules module.
-        // Having Rules integration would we nice.
+        // TODO: Not sure about this part. Need to do some tests with Rules module. Having Rules integration would we nice.
         'result' => array(
           'type' => 'text',
           'label' => $resource . ' - ' . $method,
@@ -1991,47 +1963,29 @@ function rescued_get_query_operator($operator) {
   switch ($operator) {
     case '=':
       return 'EQUALS';
-      break;
     case '<>':
       return 'NOT_EQUALS';
-      break;
     case '<':
       return 'LESS_THAN';
-      break;
     case '<=':
       return 'AT_MOST';
-      break;
     case '>':
       return 'GREATER_THAN';
-      break;
     case '>=':
       return 'AT_LEAST';
-      break;
     case 'CONTAINS':
       return 'MATCHES';
-      break;
     case 'STARTS_WITH':
       return 'BEGINS_WITH';
-      break;
-    // TODO: xTuple doesn't support this yet.
     case 'IN':
-      //return 'ANY';
-      return 'EQUALS';
-      break;
-    // TODO: xTuple doesn't support this yet.
+      return 'EQUALS'; // TODO: support return "ANY"
     case 'NOT IN':
-      //return 'NOT ANY';
-      return 'EQUALS';
-      break;
-    // TODO: xTuple doesn't support this yet.
+      return 'EQUALS'; // TODO: support return "NOT ANY"
     case 'BETWEEN':
-      //return 'BETWEEN';
-      return 'EQUALS';
-      break;
+      return 'EQUALS'; // TODO: support return "BETWEEN"
+    default:
+      return $operator;
   }
-
-  // Otherwise return the operator as is.
-  return $operator;
 }
 
 /**
