@@ -215,7 +215,7 @@ function rescued_entity_info() {
  *   True if all resources in the array exist.
  */
 function rescued_resources_exist($resources) {
-  $client = rescued_api_get_client("xtuple");
+  $client = rescued_api_get_client();
   foreach ($resources as $resource) {
     $entityName = 'xtuple_' . strtolower($resource);
 
@@ -1636,7 +1636,7 @@ function rescued_api_get_client() {
  * @return
  */
 function rescued_api_resource_delete($discovery_client, $resource, $id, $resource_key) {
-  $client = rescued_api_get_client($discovery_client);
+  $client = rescued_api_get_client();
 
   // Delete the resource.
   $result = $client->$resource->delete($id, $resource_key);
@@ -1655,7 +1655,7 @@ function rescued_api_resource_delete($discovery_client, $resource, $id, $resourc
  * @return
  */
 function rescued_api_resource_load($discovery_client, $resource, $id, $resource_key) {
-  $client = rescued_api_get_client($discovery_client);
+  $client = rescued_api_get_client();
 
   // Get the resource.
   $result = $client->$resource->get($id, $resource_key);
@@ -1681,7 +1681,7 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
     $result = rescued_api_resource_post_query($discovery_client, $resource, $optParams, FALSE);
   }
   else {
-    $client = rescued_api_get_client($discovery_client);
+    $client = rescued_api_get_client();
 
     // Get a list of resources.
     $result = $client->$resource->resourceList($optParams);
@@ -1711,7 +1711,7 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
  * @return array The query result response.
  */
 function rescued_api_resource_post_query($discovery_client, $resource, $optParams = array(), $data_only = TRUE) {
-  $client = rescued_api_get_client($discovery_client);
+  $client = rescued_api_get_client();
 
   // Build restQuery structure for the POST body.
   $postBody['attributes'] = array(
@@ -1747,7 +1747,7 @@ function rescued_api_resource_post_query($discovery_client, $resource, $optParam
  * @return
  */
 function rescued_api_resource_patch($discovery_client, $resource, $id, $resource_key, $postBody, $optParams) {
-  $client = rescued_api_get_client($discovery_client);
+  $client = rescued_api_get_client();
 
   // PATCH the resource.
   $result = $client->$resource->patch($id, $resource_key, $postBody, $optParams);
@@ -1766,7 +1766,7 @@ function rescued_api_resource_patch($discovery_client, $resource, $id, $resource
  * @return
  */
 function rescued_api_resource_insert($discovery_client, $resource, $postBody, $optParams) {
-  $client = rescued_api_get_client($discovery_client);
+  $client = rescued_api_get_client();
 
   // POST the resource.
   $result = $client->$resource->insert($postBody, $optParams);
