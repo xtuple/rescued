@@ -1561,7 +1561,7 @@ function rescued_discovery_type_mapper($type) {
 /**
  * Initialize a WSClient and static cache the Client for all future requests.
  *
- * @return \Rescued_ApiService
+ * @return \Xtuple\Rescued\RescuedApiService
  * @throws \Exception
  */
 function rescued_api_get_client() {
@@ -1572,7 +1572,7 @@ function rescued_api_get_client() {
     $rescued["xtuple"]["client"] = $client->service();
     $rescued["xtuple"]['prn'] = $client->config()->prn();
   }
-  /** @var \Rescued_ApiService $client */
+  /** @var \Xtuple\Rescued\RescuedApiService $client */
   $client = $rescued["xtuple"]['client'];
 
   // Reset $oauth-prn because drupal_static's client may be stale.
@@ -1733,7 +1733,7 @@ function rescued_api_resource_post_query($resource, $optParams = array(), $data_
  * @param $postBody
  * @param $optParams
  *
- * @return array|\Rescued_Service
+ * @return array|\Xtuple\Rescued\RescuedService
  */
 function rescued_api_resource_patch($resource_name, $id, $resource_key, $postBody, $optParams) {
   $result = [];
@@ -1751,7 +1751,7 @@ function rescued_api_resource_patch($resource_name, $id, $resource_key, $postBod
  * @param $postBody
  * @param $optParams
  *
- * @return array|\Rescued_Service
+ * @return array|\Xtuple\Rescued\RescuedService
  */
 function rescued_api_resource_insert($resource_name, $postBody, $optParams) {
   $result = [];
