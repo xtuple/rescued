@@ -212,19 +212,16 @@ function rescued_entity_info() {
  */
 function rescued_resources_exist($resources) {
   $client = rescued_api_get_client();
-  foreach ($resources as $resource) {
-    $entityName = 'xtuple_' . strtolower($resource);
-
+  foreach ($resources as $resource_name) {
+    $entityName = 'xtuple_' . strtolower($resource_name);
     $entityInfo = entity_get_info($entityName);
     if (empty($entityInfo)) {
       return FALSE;
     }
-
-    if (!is_object($client->$resource)) {
+    if ($client->resource($resource_name) === NULL) {
       return FALSE;
     }
   }
-
   return TRUE;
 }
 
@@ -1624,60 +1621,61 @@ function rescued_api_get_client() {
 /**
  * DELETE a REST resource.
  *
- * @param $resource
+ * @param $resource_name
  * @param $id
  * @param $resource_key
  *
  * @return
  */
-function rescued_api_resource_delete($resource, $id, $resource_key) {
+function rescued_api_resource_delete($resource_name, $id, $resource_key) {
+  $result = [];
   $client = rescued_api_get_client();
-
-  // Delete the resource.
-  $result = $client->$resource->delete($id, $resource_key);
-
+  if ($resource_name = $client->resource($resource_name)) {
+    $result = $resource_name->delete($id, $resource_key);
+  }
   return $result['data'];
 }
 
 /**
  * GET a REST resource.
  *
- * @param $resource
+ * @param $resource_name
  * @param $id
  * @param $resource_key
  *
- * @return
+ * @return array
  */
-function rescued_api_resource_load($resource, $id, $resource_key) {
+function rescued_api_resource_load($resource_name, $id, $resource_key) {
+  $result = [];
   $client = rescued_api_get_client();
-
-  // Get the resource.
-  $result = $client->$resource->get($id, $resource_key);
-
+  if ($resource = $client->resource($resource_name)) {
+    $result = $resource->get($id, $resource_key);
+  }
   return $result;
 }
 
 /**
  * GET list of REST resources.
  *
- * @param       $resource
- * @param array $optParams
- * @param bool  $data_only
+ * @param string $resource_name
+ * @param array  $opt_params
+ * @param bool   $data_only
  *
  * @return array
  */
-function rescued_api_resource_list($resource, $optParams = array(), $data_only = TRUE) {
+function rescued_api_resource_list($resource_name, $opt_params = array(), $data_only = TRUE) {
   // If this is a large query and would result in a long URL, query over POST instead.
   // This will get around the "414 Request URI Too Large" error.
   // TODO: Is 500 characters too long?
-  if (strlen(json_encode($optParams)) > 500) {
-    $result = rescued_api_resource_post_query($resource, $optParams, FALSE);
+  if (strlen(json_encode($opt_params)) > 500) {
+    $result = rescued_api_resource_post_query($resource_name, $opt_params, FALSE);
   }
   else {
     $client = rescued_api_get_client();
-
-    // Get a list of resources.
-    $result = $client->$resource->resourceList($optParams);
+    $result = [];
+    if ($resource = $client->resource($resource_name)) {
+      $result = $resource->resourceList($opt_params);
+    }
   }
 
   if ($data_only) {
@@ -1729,38 +1727,38 @@ function rescued_api_resource_post_query($resource, $optParams = array(), $data_
 /**
  * PATCH a REST resource.
  *
- * @param $resource
+ * @param $resource_name
  * @param $id
  * @param $resource_key
  * @param $postBody
  * @param $optParams
  *
- * @return
+ * @return array|\Rescued_Service
  */
-function rescued_api_resource_patch($resource, $id, $resource_key, $postBody, $optParams) {
+function rescued_api_resource_patch($resource_name, $id, $resource_key, $postBody, $optParams) {
+  $result = [];
   $client = rescued_api_get_client();
-
-  // PATCH the resource.
-  $result = $client->$resource->patch($id, $resource_key, $postBody, $optParams);
-
+  if ($resource = $client->resource($resource_name)) {
+    $result = $resource->patch($id, $resource_key, $postBody, $optParams);
+  }
   return $result;
 }
 
 /**
  * POST a REST resource.
  *
- * @param $resource
+ * @param $resource_name
  * @param $postBody
  * @param $optParams
  *
- * @return
+ * @return array|\Rescued_Service
  */
-function rescued_api_resource_insert($resource, $postBody, $optParams) {
+function rescued_api_resource_insert($resource_name, $postBody, $optParams) {
+  $result = [];
   $client = rescued_api_get_client();
-
-  // POST the resource.
-  $result = $client->$resource->insert($postBody, $optParams);
-
+  if ($resource_name = $client->resource($resource_name)) {
+    $result = $resource_name->insert($postBody, $optParams);
+  }
   return $result;
 }
 
