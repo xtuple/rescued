@@ -13,8 +13,11 @@
  * </p>
  */
 class Rescued_ApiService extends Google_Service {
-  // Debug mode to disabling SSL cert verification for local dev testing on self signed cert.
+  /** @var bool */
   protected $debug = FALSE;
+
+  /** @var \Xtuple\DataStructure\Map\Map */
+  private $resources;
 
   /**
    * Constructs the internal representation of REST resource services.
@@ -40,13 +43,10 @@ class Rescued_ApiService extends Google_Service {
     $apiConfig['basePath'] = rtrim($discovery['rootUrl'], "/"); // Remove last slash from rootUrl.
     $this->servicePath = $discovery['servicePath'];
 
+    $this->resources = new \Xtuple\DataStructure\Map\Map();
     if (!empty($discovery['resources'])) {
-      // Add each service resource and it's methods.
       foreach ($discovery['resources'] as $key => $value) {
-        // TODO: Make the class we use here configurable from WSClient settings so you could use something like Google Calendar class in their library.
-        // The Rescued_ServiceResource class is currently specific to xTuple since it uses isKey in our custom JSON-Schema.
-        // Consider looking for resource method parameters where 'location' === 'path' to make that more generic.
-        $this->$key = new Rescued_ServiceResource($this, $this->serviceName, $key, $discovery['resources'][$key]);
+        $this->resources->put($key, new Rescued_ServiceResource($this, $this->serviceName, $key, $discovery['resources'][$key]));
       }
     }
   }
@@ -58,19 +58,14 @@ class Rescued_ApiService extends Google_Service {
    *
    * @return array API Discovery Document.
    * @throws \Google_IOException
-   * @internal param string $resource Optional API resource name to return a single resource.
-   *
    */
   public function getDiscovery($url) {
-    // Use drupal_static because this gets calls a lot repeatedly.
     $discovery = &drupal_static(__FUNCTION__);
 
     if (!isset($discovery)) {
-      // Get REST API Discovery Document.
       $io = new Google_CurlIO();
 
       if ($this->debug) {
-        // Disabling SSL cert verification for local dev testing on self signed cert.
         $io->setOptions(array(CURLOPT_SSL_VERIFYPEER => FALSE));
       }
 
@@ -82,6 +77,15 @@ class Rescued_ApiService extends Google_Service {
     }
 
     return $discovery;
+  }
+
+  /**
+   * @param string $name
+   *
+   * @return \Rescued_ServiceResource
+   */
+  public function resource($name) {
+    return $this->resources->get($name);
   }
 }
 
