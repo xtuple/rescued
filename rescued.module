@@ -76,11 +76,7 @@ function rescued_entity_info() {
               'discovery-client' => $name,
               'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
               'controller class' => '\Xtuple\Rescued\Controller\EntityController',
-              'api-delete-callback' => 'rescued_api_resource_delete',
-              'api-insert-callback' => 'rescued_api_resource_insert',
-              'api-list-callback' => 'rescued_api_resource_list',
-              'api-load-callback' => 'rescued_api_resource_load',
-              'api-patch-callback' => 'rescued_api_resource_patch',
+              'api-list-callback' => 'rescued_api_resource_list', // @todo: call rescued_api_resource_list statically in code
               'field cache' => FALSE, // TODO: For development only
               'fieldable' => TRUE,
               'entity keys' => array(
@@ -393,7 +389,7 @@ function rescued_reset_session($account) {
   );
 
   // TODO: Get WSClient name.
-  $user2contact = rescued_api_resource_list('xtuple', 'XdUserContact', $queryParams);
+  $user2contact = rescued_api_resource_list('XdUserContact', $queryParams);
 
   if ($user2contact && count($user2contact) === 1) {
     // TODO: This will break if this incident gets resolved: www.xtuple.org/xtincident/view/features/17846
@@ -407,7 +403,7 @@ function rescued_reset_session($account) {
     // XdUserContact doesn't have the account parameter because end users fill out the contact for at User Reg.
     // We need to get a Contact resource that have account and accountParent params.
     // TODO: Consider loading the full account resource to check for employee, owner roles.
-    $user2account = rescued_api_resource_load('xtuple', 'ContactRelation', $user2contact[0]['contact']['number'], 'number');
+    $user2account = rescued_api_resource_load('ContactRelation', $user2contact[0]['contact']['number'], 'number');
 
     if (!isset($user2account, $user2account['data']['account'])) {
       // This is a basic user2contact and not yet a customer.
@@ -420,7 +416,7 @@ function rescued_reset_session($account) {
       $session->setRescued('user', strtolower($user2account['data']['account']));
 
       // Get this CRM Account and figure out what type of user it is.
-      $crmAccount = rescued_api_resource_load('xtuple', 'Account', $user2account['data']['account'], 'number');
+      $crmAccount = rescued_api_resource_load('Account', $user2account['data']['account'], 'number');
 
       // CRM Accounts with a parent Account are limited users unless they are a Customer, Rep or Employee.
       if ($user2account['data']['accountParent'] &&
@@ -451,7 +447,7 @@ function rescued_reset_session($account) {
           ),
         ),
       );
-      $customer = rescued_api_resource_list('xtuple', 'XdCustomer', $queryParams);
+      $customer = rescued_api_resource_list('XdCustomer', $queryParams);
       if (!empty($customer) && count($customer) === 1) {
         $id = $customer[0]['number'];
         $customer = $customer[0];
@@ -908,8 +904,8 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     // Call the REST API and get a count quicker than a full load request.
     $queryParams['count'] = TRUE;
     $entityInfo = entity_get_info($entityType);
-    $api_callback = $entityInfo['api-list-callback'];
-    $count = $api_callback($entityInfo['discovery-client'], $entityInfo['resource'], $queryParams);
+    $api_callback = $entityInfo['api-list-callback']; // @todo: call rescued_api_resource_list statically
+    $count = $api_callback($entityInfo['resource'], $queryParams);
 
     return isset($count[0]['count']) ? $count[0]['count'] : 0;
   }
@@ -1292,7 +1288,7 @@ function rescued_autocomplete($discovery_client, $resource, $key_column) {
 
     // TODO: This should go through entity_load() so user_access is performed.
     // TODO: Add search query parameters to this request.
-    $results = rescued_api_resource_list($discovery_client, $resource, array('q' => $tag_last));
+    $results = rescued_api_resource_list($resource, array('q' => $tag_last));
 
     $prefix = count($tags_typed) ? drupal_implode_tags($tags_typed) . ', ' : '';
     foreach ($results as $result) {
@@ -1628,14 +1624,13 @@ function rescued_api_get_client() {
 /**
  * DELETE a REST resource.
  *
- * @param $discovery_client
  * @param $resource
  * @param $id
  * @param $resource_key
  *
  * @return
  */
-function rescued_api_resource_delete($discovery_client, $resource, $id, $resource_key) {
+function rescued_api_resource_delete($resource, $id, $resource_key) {
   $client = rescued_api_get_client();
 
   // Delete the resource.
@@ -1647,14 +1642,13 @@ function rescued_api_resource_delete($discovery_client, $resource, $id, $resourc
 /**
  * GET a REST resource.
  *
- * @param $discovery_client
  * @param $resource
  * @param $id
  * @param $resource_key
  *
  * @return
  */
-function rescued_api_resource_load($discovery_client, $resource, $id, $resource_key) {
+function rescued_api_resource_load($resource, $id, $resource_key) {
   $client = rescued_api_get_client();
 
   // Get the resource.
@@ -1666,19 +1660,18 @@ function rescued_api_resource_load($discovery_client, $resource, $id, $resource_
 /**
  * GET list of REST resources.
  *
- * @param       $discovery_client
  * @param       $resource
  * @param array $optParams
  * @param bool  $data_only
  *
  * @return array
  */
-function rescued_api_resource_list($discovery_client, $resource, $optParams = array(), $data_only = TRUE) {
+function rescued_api_resource_list($resource, $optParams = array(), $data_only = TRUE) {
   // If this is a large query and would result in a long URL, query over POST instead.
   // This will get around the "414 Request URI Too Large" error.
   // TODO: Is 500 characters too long?
   if (strlen(json_encode($optParams)) > 500) {
-    $result = rescued_api_resource_post_query($discovery_client, $resource, $optParams, FALSE);
+    $result = rescued_api_resource_post_query($resource, $optParams, FALSE);
   }
   else {
     $client = rescued_api_get_client();
@@ -1702,7 +1695,6 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
  * constructing a really long URL that may fail with an error:
  * "414 Request URI Too Large".
  *
- * @param string  $discovery_client The API client name. e.g. 'xtuple'
  * @param string  $resource         The API resource name. e.g. 'ClassCode'
  * @param array   $optParams        The structured query to perform.
  * @param boolean $data_only        Return just the data. Set to fails to get the
@@ -1710,7 +1702,7 @@ function rescued_api_resource_list($discovery_client, $resource, $optParams = ar
  *
  * @return array The query result response.
  */
-function rescued_api_resource_post_query($discovery_client, $resource, $optParams = array(), $data_only = TRUE) {
+function rescued_api_resource_post_query($resource, $optParams = array(), $data_only = TRUE) {
   $client = rescued_api_get_client();
 
   // Build restQuery structure for the POST body.
@@ -1737,7 +1729,6 @@ function rescued_api_resource_post_query($discovery_client, $resource, $optParam
 /**
  * PATCH a REST resource.
  *
- * @param $discovery_client
  * @param $resource
  * @param $id
  * @param $resource_key
@@ -1746,7 +1737,7 @@ function rescued_api_resource_post_query($discovery_client, $resource, $optParam
  *
  * @return
  */
-function rescued_api_resource_patch($discovery_client, $resource, $id, $resource_key, $postBody, $optParams) {
+function rescued_api_resource_patch($resource, $id, $resource_key, $postBody, $optParams) {
   $client = rescued_api_get_client();
 
   // PATCH the resource.
@@ -1758,14 +1749,13 @@ function rescued_api_resource_patch($discovery_client, $resource, $id, $resource
 /**
  * POST a REST resource.
  *
- * @param $discovery_client
  * @param $resource
  * @param $postBody
  * @param $optParams
  *
  * @return
  */
-function rescued_api_resource_insert($discovery_client, $resource, $postBody, $optParams) {
+function rescued_api_resource_insert($resource, $postBody, $optParams) {
   $client = rescued_api_get_client();
 
   // POST the resource.
