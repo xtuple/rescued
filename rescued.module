@@ -76,8 +76,10 @@ function rescued_entity_info() {
               'discovery-client' => $name,
               'json-schema' => rescued_get_single_json_schema($resource, $properties['schemas']),
               'controller class' => '\Xtuple\Rescued\Controller\EntityController',
-              'api-list-callback' => 'rescued_api_resource_list', // @todo: call rescued_api_resource_list statically in code
-              'field cache' => FALSE, // TODO: For development only
+              'api-list-callback' => 'rescued_api_resource_list',
+              // @todo: call rescued_api_resource_list statically in code
+              'field cache' => FALSE,
+              // TODO: For development only
               'fieldable' => TRUE,
               'entity keys' => array(
                 'id' => $resource_key,
@@ -116,78 +118,11 @@ function rescued_entity_info() {
             // These are the main entities that have a UI.
             if (isset($properties['resources'][$resource])) {
               // Generic callback: one less callback to define.
-              $return[$resource_code]['uri callback'] = 'entity_operations_entity_uri';
               $return[$resource_code]['resource-methods'] = $properties['resources'][$resource]['methods'];
-
-              // If there's a delete method, the entity gets a full UI because it's not just a list type resource.
-              if (isset($properties['resources'][$resource]['methods']['delete'])) {
-                $return[$resource_code]['bundles'][$name . '_' . strtolower($resource)]['admin'] = array(
-                  'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
-                );
-                $return[$resource_code]['admin ui'] = array(
-                  'path' => 'admin/structure/' . $name . '/' . strtolower($resource),
-                  'controller class' => 'EntityOperationsDefaultAdminUIController',
-                );
-
-                // Entity Operations API.
-                $return[$resource_code]['operations ui'] = array(
-                  // The base path for your entities. This is the same as your entity's URI but without the ID suffix.
-                  // (In fact, you can set entity_operations_entity_uri() as your URI callback, which will use the value here).
-                  'path' => $name . '/' . strtolower($resource),
-                  'operations' => array(
-                    'add' => array(
-                      'handler' => 'RescuedEntityOperationsOperationAddGeneric',
-                    ),
-                    'view' => array(
-                      'handler' => 'EntityOperationsOperationEntityView',
-                      'default' => TRUE,
-                    ),
-                    'edit' => array(
-                      'handler' => 'RescuedEntityOperationsOperationEditGeneric',
-                    ),
-                    'delete' => array(
-                      'handler' => 'EntityOperationsOperationDelete',
-                    ),
-                  ),
-                );
-              }
-              else {
-                // Entity Operations API.
-                $return[$resource_code]['operations ui'] = array(
-                  // The base path for your entities. This is the same as your entity's URI but without the ID suffix.
-                  // (In fact, you can set entity_operations_entity_uri() as your URI callback, which will use the value here).
-                  'path' => $name . '/' . strtolower($resource),
-                  'operations' => array(
-                    'view' => array(
-                      'handler' => 'EntityOperationsOperationEntityView',
-                      'default' => TRUE,
-                    ),
-                  ),
-                );
-              }
             }
             else {
               // The 'is_nested_only' resources are not exposed by the REST API and must be accessed by through their parent.
               $return[$resource_code]['is_nested_only'] = TRUE;
-
-              // Entity Operations API.
-              $return[$resource_code]['operations ui'] = array(
-                // The base path for your entities. This is the same as your entity's URI but without the ID suffix.
-                // (In fact, you can set entity_operations_entity_uri() as your URI callback, which will use the value here).
-                'path' => $name . '/' . strtolower($resource),
-                'operations' => array(
-                  'add' => array(
-                    'handler' => 'RescuedEntityOperationsOperationAddGeneric',
-                  ),
-                  'edit' => array(
-                    'handler' => 'RescuedEntityOperationsOperationEditGeneric',
-                  ),
-                  // TODO: Some of these isNestedOnly resources can't be deleted like comments.
-                  'delete' => array(
-                    'handler' => 'EntityOperationsOperationDelete',
-                  ),
-                ),
-              );
             }
           }
         }
@@ -255,91 +190,71 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
 
   switch ($op) {
     case 'create':
-      if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['add'])) {
-        return FALSE;
+      if (!$is_admin && isset($entityInfo) && (
+          user_access('create personal rescued entities', $account)
+          || user_access('create limited rescued entities', $account)
+          || user_access('create contact rescued entities', $account)
+          || user_access('create employee rescued entities', $account)
+        )
+      ) {
+        // TODO: What should these users be allowed to create?
+        return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+      }
+      elseif ($is_admin || user_access('create any rescued entities', $account)) {
+        return TRUE;
       }
       else {
-        if (!$is_admin && isset($entityInfo) && (
-            user_access('create personal rescued entities', $account)
-            || user_access('create limited rescued entities', $account)
-            || user_access('create contact rescued entities', $account)
-            || user_access('create employee rescued entities', $account)
-          )
-        ) {
-          // TODO: What should these users be allowed to create?
-          return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        }
-        elseif ($is_admin || user_access('create any rescued entities', $account)) {
-          return TRUE;
-        }
-        else {
-          return FALSE;
-        }
+        return FALSE;
       }
     case 'delete':
-      if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['delete'])) {
-        return FALSE;
+      if (!$is_admin && isset($entityInfo) && (
+          user_access('delete personal rescued entities', $account)
+          || user_access('delete limited rescued entities', $account)
+          || user_access('delete contact rescued entities', $account)
+          || user_access('delete employee rescued entities', $account)
+        )
+      ) {
+        return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+      }
+      elseif ($is_admin || user_access('delete any rescued entities', $account)) {
+        return TRUE;
       }
       else {
-        if (!$is_admin && isset($entityInfo) && (
-            user_access('delete personal rescued entities', $account)
-            || user_access('delete limited rescued entities', $account)
-            || user_access('delete contact rescued entities', $account)
-            || user_access('delete employee rescued entities', $account)
-          )
-        ) {
-          return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        }
-        elseif ($is_admin || user_access('delete any rescued entities', $account)) {
-          return TRUE;
-        }
-        else {
-          return FALSE;
-        }
+        return FALSE;
       }
     case 'edit':
     case 'update':
-      if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['edit'])) {
-        return FALSE;
+      if (!$is_admin && isset($entityInfo) && (
+          user_access('edit personal rescued entities', $account)
+          || user_access('edit limited rescued entities', $account)
+          || user_access('edit contact rescued entities', $account)
+          || user_access('edit employee rescued entities', $account)
+        )
+      ) {
+        return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+      }
+      elseif ($is_admin || user_access('edit any rescued entities', $account)) {
+        return TRUE;
       }
       else {
-        if (!$is_admin && isset($entityInfo) && (
-            user_access('edit personal rescued entities', $account)
-            || user_access('edit limited rescued entities', $account)
-            || user_access('edit contact rescued entities', $account)
-            || user_access('edit employee rescued entities', $account)
-          )
-        ) {
-          return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        }
-        elseif ($is_admin || user_access('edit any rescued entities', $account)) {
-          return TRUE;
-        }
-        else {
-          return FALSE;
-        }
+        return FALSE;
       }
     case 'view':
-      if (isset($entityInfo) && !isset($entityInfo['operations ui']['operations']['view'])) {
-        return FALSE;
+      if (!$is_admin && isset($entityInfo) && (
+          user_access('view public rescued entities', $account)
+          || user_access('view personal rescued entities', $account)
+          || user_access('view limited rescued entities', $account)
+          || user_access('view contact rescued entities', $account)
+          || user_access('view employee rescued entities', $account)
+        )
+      ) {
+        return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
+      }
+      elseif ($is_admin || user_access('view any rescued entities', $account)) {
+        return TRUE;
       }
       else {
-        if (!$is_admin && isset($entityInfo) && (
-            user_access('view public rescued entities', $account)
-            || user_access('view personal rescued entities', $account)
-            || user_access('view limited rescued entities', $account)
-            || user_access('view contact rescued entities', $account)
-            || user_access('view employee rescued entities', $account)
-          )
-        ) {
-          return rescued_xtuple_entity_access_role_check($op, $account, $entity_type);
-        }
-        elseif ($is_admin || user_access('view any rescued entities', $account)) {
-          return TRUE;
-        }
-        else {
-          return FALSE;
-        }
+        return FALSE;
       }
   }
 }
@@ -760,60 +675,6 @@ function rescued_create_child_fields($name, $resource, $property, $child, $title
   }
 
   return $field_name;
-}
-
-/**
- * Implements hook_entity_operation_info().
- */
-function rescued_entity_operation_info() {
-  // @See: EntityOperationsDefaultUIController which uses this. However, Entity
-  // Operations dev version has half implemented this vs. entity_info properties.
-
-  $discovery = rescued_get_discovery_client_docs();
-
-  $info = array();
-
-  // Build up entity operations array.
-  if (isset($discovery)) {
-    foreach ($discovery as $name => $properties) {
-      foreach ($properties['schemas'] as $resource => $methods) {
-        // TODO: Make some of these views only. Relation and ListItem.
-        // See rescued_entity_info() logic above to recreate that here.
-        $info[$name . '_' . strtolower($resource)] = array(
-          'add' => array(
-            'handler' => 'RescuedEntityOperationsOperationAddGeneric',
-            'provision' => array(
-              'menu' => TRUE,
-            ),
-          ),
-          'view' => array(
-            'handler' => 'EntityOperationsOperationEntityView',
-            'provision' => array(
-              'menu' => array(
-                'default' => TRUE,
-              ),
-              'views field' => TRUE,
-            ),
-          ),
-          'edit' => array(
-            'handler' => 'RescuedEntityOperationsOperationEditGeneric',
-            'provision' => array(
-              'menu' => TRUE,
-              'views field' => TRUE,
-            ),
-          ),
-          'delete' => array(
-            'handler' => 'EntityOperationsOperationDelete',
-            'provision' => array(
-              'menu' => TRUE,
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  return $info;
 }
 
 /**
