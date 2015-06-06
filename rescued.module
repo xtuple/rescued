@@ -65,9 +65,9 @@ function rescued_entity_info() {
           }
           else {
             $resource_code = $name . '_' . strtolower($resource);
-            $persistent_cache_type = \Xtuple\Rescued\Controller\AbstractController::CACHE_PER_USER;
+            $persistent_cache_type = \Xtuple\Rescued\Controller\EntityController::CACHE_PER_USER;
             if (in_array($resource_code, xdruple_cache_entity_system_wide())) {
-              $persistent_cache_type = \Xtuple\Rescued\Controller\AbstractController::CACHE_PER_SYSTEM;
+              $persistent_cache_type = \Xtuple\Rescued\Controller\EntityController::CACHE_PER_SYSTEM;
             }
             $entity['persistent cache'] = $persistent_cache_type;
             $return[$resource_code] = array(
