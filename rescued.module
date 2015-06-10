@@ -278,11 +278,10 @@ function rescued_reset_session($account) {
   // Check if the rescued resources exist yet. This function can be called before all entities are setup.
   //  Just return account if it's not ready.
   $resources = array(
-    'XdUserContact',
     'Account',
     'ContactRelation',
     'XdCustomer',
-    'XdShipto',
+    'XdShipTo',
   );
   if (!rescued_resources_exist($resources)) {
     return $account;
