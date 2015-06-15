@@ -19,11 +19,11 @@ function rescued_enable() {
  * Disable WSClient
  */
 function rescued_update_7001() {
-  module_disable(array(
+  module_disable([
     "wsclient_ui",
     "wsclient",
     "rescued_wsclient",
-  ));
+  ]);
   return t("WSClient disabled");
 }
 

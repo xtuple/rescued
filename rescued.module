@@ -4,22 +4,22 @@
  * Implements hook_menu().
  */
 function rescued_menu() {
-  $items = array();
+  $items = [];
 
-  $items['admin/structure/xtuple'] = array(
+  $items['admin/structure/xtuple'] = [
     'title' => "xTuple",
     'menu_name' => 'management',
     'access callback' => TRUE,
     'type' => MENU_NORMAL_ITEM,
     'weight' => -100,
-  );
+  ];
 
-  $items['xtuple/autocomplete'] = array(
+  $items['xtuple/autocomplete'] = [
     'title' => 'Autocomplete xTuple',
     'page callback' => 'rescued_autocomplete',
-    'access arguments' => array('access content'),
+    'access arguments' => ['access content'],
     'type' => MENU_CALLBACK,
-  );
+  ];
 
   return $items;
 }
@@ -28,14 +28,14 @@ function rescued_menu() {
  * Implements hook_hook_info().
  */
 function rescued_hook_info() {
-  $hooks = array(
-    'rescued_operation_entityform_alter' => array(
+  $hooks = [
+    'rescued_operation_entityform_alter' => [
       'group' => 'rescued',
-    ),
-    'rescued_entity_build_content_view' => array(
+    ],
+    'rescued_entity_build_content_view' => [
       'group' => 'rescued',
-    ),
-  );
+    ],
+  ];
 
   return $hooks;
 }
@@ -51,7 +51,7 @@ function rescued_entity_info() {
   }
   else {
     $discovery = rescued_get_discovery_client_docs();
-    $return = array();
+    $return = [];
     // Build up entity info array.
     if (isset($discovery)) {
       foreach ($discovery as $name => $properties) {
@@ -59,9 +59,9 @@ function rescued_entity_info() {
           // Add an entity for all JSON-Schema properties.
           $resource_key = rescued_json_schema_get_resource_key($schemas['properties']);
           if (empty($resource_key)) {
-            watchdog("rescued", "!resource doesn't have a key, so it's a service; skipping entity declaration", array(
+            watchdog("rescued", "!resource doesn't have a key, so it's a service; skipping entity declaration", [
               '!resource' => $resource,
-            ));
+            ]);
           }
           else {
             $resource_code = $name . '_' . strtolower($resource);
@@ -70,7 +70,7 @@ function rescued_entity_info() {
               $persistent_cache_type = \Xtuple\Rescued\Controller\EntityController::CACHE_PER_SYSTEM;
             }
             $entity['persistent cache'] = $persistent_cache_type;
-            $return[$resource_code] = array(
+            $return[$resource_code] = [
               'label' => t($resource),
               'resource' => $resource,
               'discovery-client' => $name,
@@ -81,33 +81,33 @@ function rescued_entity_info() {
               'field cache' => FALSE,
               // TODO: For development only
               'fieldable' => TRUE,
-              'entity keys' => array(
+              'entity keys' => [
                 'id' => $resource_key,
                 'label' => $resource_key,
-              ),
+              ],
               'label callback' => 'entity_class_label',
-              'bundle keys' => array(),
+              'bundle keys' => [],
               'base table' => NULL,
-              'bundles' => array(
-                $resource_code => array(
+              'bundles' => [
+                $resource_code => [
                   'label' => t($resource),
-                ),
-              ),
-              'view modes' => array(
-                'full' => array(
+                ],
+              ],
+              'view modes' => [
+                'full' => [
                   'label' => t('Full content'),
                   'custom settings' => FALSE,
-                ),
-              ),
+                ],
+              ],
               // Entity API properties.
               'module' => 'rescued',
               'entity class' => '\Xtuple\Rescued\Controller\Entity',
-              'permission labels' => array(
+              'permission labels' => [
                 'singular' => $resource,
                 'plural' => $resource,
-              ),
+              ],
               'access callback' => 'rescued_access',
-            );
+            ];
 
             if ($properties['schemas'][$resource]['properties'][$resource_key]['type'] === 'string') {
               $return[$resource_code]['uuid'] = TRUE;
@@ -277,27 +277,27 @@ function rescued_reset_session($account) {
 
   // Check if the rescued resources exist yet. This function can be called before all entities are setup.
   //  Just return account if it's not ready.
-  $resources = array(
+  $resources = [
     'Account',
     'ContactRelation',
     'XdCustomer',
     'XdShipTo',
-  );
+  ];
   if (!rescued_resources_exist($resources)) {
     return $account;
   }
 
   $app_name = rescued_application_name();
-  $queryParams = array(
-    'query' => array(
-      'drupalUserUuid' => array(
+  $queryParams = [
+    'query' => [
+      'drupalUserUuid' => [
         'EQUALS' => $account->uuid,
-      ),
-      'xdruple_site' => array(
+      ],
+      'xdruple_site' => [
         'EQUALS' => $app_name,
-      ),
-    ),
-  );
+      ],
+    ],
+  ];
 
   // TODO: Get WSClient name.
   $user2contact = rescued_api_resource_list('XdUserContact', $queryParams);
@@ -351,13 +351,13 @@ function rescued_reset_session($account) {
 
       // There is a chance that a CRM Account is not a Customer, so we do a list query.
       // Save the customer data this user is associated with to the $_SESSION.
-      $queryParams = array(
-        'query' => array(
-          'number' => array(
+      $queryParams = [
+        'query' => [
+          'number' => [
             'EQUALS' => $cust_number,
-          ),
-        ),
-      );
+          ],
+        ],
+      ];
       $customer = rescued_api_resource_list('XdCustomer', $queryParams);
       if (!empty($customer) && count($customer) === 1) {
         $id = $customer[0]['number'];
@@ -416,10 +416,10 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
 
   // White list of resource types what are viewable by all.
   // TODO: Expose this through an admin setting.
-  $white_list = array(
+  $white_list = [
     // TODO: Create white list.
     'State' => TRUE,
-  );
+  ];
 
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   $session = extensions_get_session();
@@ -468,7 +468,7 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
 function rescued_entity_property_info() {
   $discovery = rescued_get_discovery_client_docs();
 
-  $info = array();
+  $info = [];
 
   // Build up info properties array for each resource entity.
   if (isset($discovery)) {
@@ -482,12 +482,12 @@ function rescued_entity_property_info() {
           else {
             $type = 'text';
           }
-          $info[$name . '_' . strtolower($resource)]['properties'][$key] = array(
+          $info[$name . '_' . strtolower($resource)]['properties'][$key] = [
             'description' => t(isset($value['comment']) ? $value['comment'] : ""),
             'label' => t($value['title']),
             'required' => isset($value['required']) ? $value['required'] : FALSE,
             'type' => $type,
-          );
+          ];
 
           // Our dates come in as JavaScript dates. Need to define getter and setter callbacks that will convert them to timestamps.
           if ($type === 'date') {
@@ -511,16 +511,16 @@ function rescued_entity_property_info() {
 function rescued_field_extra_fields() {
   $discovery = rescued_get_discovery_client_docs();
 
-  $extra = array();
-  $handled_properties = array();
+  $extra = [];
+  $handled_properties = [];
 
   // Build up entity fields array.
   if (isset($discovery)) {
-    $created_fields = array();
-    $erp_fields = array();
+    $created_fields = [];
+    $erp_fields = [];
 
     // Get all of the default 'erp_xxx' fields so we can delete invalid ones below.
-    $xd_ref_fields = field_read_fields(array('type' => 'xdruple_entityreference'));
+    $xd_ref_fields = field_read_fields(['type' => 'xdruple_entityreference']);
 
     // Loop over and find 'erp_xxx' fields.
     foreach ($xd_ref_fields as $field_key => $field) {
@@ -530,7 +530,7 @@ function rescued_field_extra_fields() {
     }
 
     foreach ($discovery as $name => $resources) {
-      $handled_properties[$name] = array();
+      $handled_properties[$name] = [];
 
       // Allow modules to register as a create_child_fields handler for a $resource[$property].
       drupal_alter('rescued_handle_create_child_fields', $handled_properties);
@@ -562,16 +562,16 @@ function rescued_field_extra_fields() {
               $created_fields[] = $new_field;
             }
 
-            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
+            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = [
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
               'label' => t($value['title']),
               'weight' => $weight,
-            );
-            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['form'][$key] = array(
+            ];
+            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['form'][$key] = [
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
               'label' => t($value['title']),
               'weight' => $weight,
-            );
+            ];
           }
           elseif (isset($value['items']) && isset($value['items']['$ref']) &&
             strpos($value['items']['$ref'], '/') !== FALSE
@@ -586,30 +586,30 @@ function rescued_field_extra_fields() {
               $created_fields[] = $new_field;
             }
 
-            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
+            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = [
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
               'label' => t($value['title']),
               'weight' => $weight,
-            );
-            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['form'][$key] = array(
+            ];
+            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['form'][$key] = [
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
               'label' => t($value['title']),
               'weight' => $weight,
-            );
+            ];
           }
           else {
             $weight = -40;
 
-            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = array(
+            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['display'][$key] = [
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
               'label' => t($value['title']),
               'weight' => $weight,
-            );
-            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['form'][$key] = array(
+            ];
+            $extra[$name . '_' . strtolower($resource)][$name . '_' . strtolower($resource)]['form'][$key] = [
               'description' => t(isset($value['comment']) ? $value['comment'] : ""),
               'label' => t($value['title']),
               'weight' => $weight,
-            );
+            ];
           }
         }
       }
@@ -707,7 +707,7 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
   $entityType = $query->entityConditions['entity_type']['value'];
   $entityInfo = entity_get_info($entityType);
 
-  $queryParams = array();
+  $queryParams = [];
   if (isset($propertyConditions)) {
     foreach ($propertyConditions as $queryParam) {
       if (isset($queryParam['operator']) && $queryParam['operator'] === 'IN') {
@@ -732,16 +732,16 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
             $queryParam['value'] = empty($queryParam['value']) ? FALSE : TRUE;
           }
 
-          $queryParams['query'][$queryParam['column']] = array(
+          $queryParams['query'][$queryParam['column']] = [
             isset($queryParam['operator']) ? rescued_get_query_operator($queryParam['operator']) : 'EQUALS' => $queryParam['value'],
-          );
+          ];
         }
       }
     }
   }
 
   if (count($order) > 0) {
-    $queryParams['orderby'] = array();
+    $queryParams['orderby'] = [];
 
     foreach ($order as $orderby) {
       if (strtolower($orderby['direction']) === 'asc') {
@@ -767,21 +767,21 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
     return isset($count[0]['count']) ? $count[0]['count'] : 0;
   }
 
-  $pager_range = array();
+  $pager_range = [];
   if (isset($query->range, $query->range['length'], $query->range['start'])) {
-    $pager_range = array(
+    $pager_range = [
       'maxResults' => $query->range['length'],
       'pageToken' => $query->range['start'] / $query->range['length']
-    );
+    ];
   }
 
   $conditions = array_merge($queryParams, $pager_range);
 
   $entities = entity_load($entityType, FALSE, $conditions);
 
-  $result = array(
+  $result = [
     $entityType => $entities,
-  );
+  ];
 
   return $result;
 }
@@ -800,7 +800,7 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
  */
 function rescued_ctools_plugin_api($module, $api) {
   if ($module == 'field_group' && $api == 'field_group') {
-    return array('version' => 1);
+    return ['version' => 1];
   }
 }
 
@@ -814,7 +814,7 @@ function rescued_field_group_info() {
   // Loop over discovery clients and add all $ref objects as field groups.
   $discovery = rescued_get_discovery_client_docs();
 
-  $field_groups = array();
+  $field_groups = [];
 
   if (isset($discovery)) {
     foreach ($discovery as $name => $properties) {
@@ -827,18 +827,18 @@ function rescued_field_group_info() {
         $field_group_tab->bundle = $name . '_' . strtolower($resource);
         $field_group_tab->mode = 'default';
         $field_group_tab->parent_name = '';
-        $field_group_tab->data = array(
+        $field_group_tab->data = [
           'label' => 'tabs',
           'weight' => '90',
-          'children' => array(),
+          'children' => [],
           'format_type' => 'htabs',
-          'format_settings' => array(
+          'format_settings' => [
             'formatter' => '',
-            'instance_settings' => array(
+            'instance_settings' => [
               'classes' => 'group-tabs field-group-fieldset ',
-            ),
-          ),
-        );
+            ],
+          ],
+        ];
 
         if (isset($properties['schemas'][$resource]['properties'])) {
           foreach ($properties['schemas'][$resource]['properties'] as $key => $value) {
@@ -854,21 +854,21 @@ function rescued_field_group_info() {
               $field_group->bundle = $name . '_' . strtolower($resource);
               $field_group->mode = 'default';
               $field_group->parent_name = 'group_tabs';
-              $field_group->data = array(
+              $field_group->data = [
                 'label' => $value['title'],
                 'weight' => '80',
-                'children' => array(
+                'children' => [
                   0 => 'xd_' . strtolower($resource . $key),
-                ),
+                ],
                 'format_type' => 'htab',
-                'format_settings' => array(
+                'format_settings' => [
                   'formatter' => 'closed',
-                  'instance_settings' => array(
+                  'instance_settings' => [
                     'description' => '', // TODO: Do we need this?
                     'classes' => 'group-' . $key . ' field-group-fieldset ',
-                  ),
-                ),
-              );
+                  ],
+                ],
+              ];
 
               $field_groups['group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default'] = $field_group;
             }
@@ -882,22 +882,22 @@ function rescued_field_group_info() {
               $field_group->bundle = $name . '_' . strtolower($resource);
               $field_group->mode = 'default';
               $field_group->parent_name = '';
-              $field_group->data = array(
+              $field_group->data = [
                 'label' => $value['title'],
                 'weight' => '70',
-                'children' => array(
+                'children' => [
                   0 => 'xd_' . strtolower($resource . $key),
-                ),
+                ],
                 'format_type' => 'fieldset',
-                'format_settings' => array(
+                'format_settings' => [
                   'formatter' => 'collapsible',
-                  'instance_settings' => array(
+                  'instance_settings' => [
                     'description' => '', // TODO: Do we need this?
                     'classes' => 'group-' . $key . ' field-group-fieldset ',
                     'required_fields' => 1,
-                  ),
-                ),
-              );
+                  ],
+                ],
+              ];
 
               $field_groups['group_' . $key . '|' . $name . '_' . strtolower($resource) . '|' . $name . '_' . strtolower($resource) . '|' . 'default'] = $field_group;
             }
@@ -927,7 +927,7 @@ function rescued_type_get_name($type = NULL) {
   // Loop over discovery clients and add all $ref objects as field groups.
   $discovery = rescued_get_discovery_client_docs();
 
-  $rescued_types = array();
+  $rescued_types = [];
 
   if (isset($discovery)) {
     foreach ($discovery as $name => $properties) {
@@ -969,7 +969,7 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
   $resource = $entityInfo['resource'];
   $schema = $entityInfo['json-schema'][$resource]['properties'];
   $entity_values = drupal_array_get_nested_value($form_state['values'], $form['#parents']);
-  $child_keys = array();
+  $child_keys = [];
 
   // Build up the entity for non-Inline Entity Form properties and set null defaults.
   foreach ($schema as $key => $property) {
@@ -1040,7 +1040,7 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
       // Handle toMany key relations.
       $langcode = $form[$key]['#language'];
       if (empty($entity_values[$key][$langcode])) {
-        $entity->$key = array();
+        $entity->$key = [];
       }
       else {
         $entity->$key = explode(', ', $entity_values[$key][$langcode]);
@@ -1066,11 +1066,11 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
 
       if (isset($schema[$field_name]['items'])) {
         // Default toMany to an empty array.
-        $entity->{$field_name} = array();
+        $entity->{$field_name} = [];
       }
       else {
         // Default toOne to null.
-        $entity->{$field_name} = array();
+        $entity->{$field_name} = [];
       }
       foreach ($values['entities'] as $item) {
         $child_properties = entity_get_property_info($item['entity']->entityType());
@@ -1084,7 +1084,7 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
         }
         elseif (isset($schema[$field_name]['items'])) {
           // Handle toMany key relations
-          $child_data = array();
+          $child_data = [];
           foreach ($child_fields as $field_key) {
             $child_data[$field_key] = $item['entity']->$field_key;
           }
@@ -1140,12 +1140,12 @@ function rescued_autocomplete($discovery_client, $resource, $key_column) {
   $tags_typed = drupal_explode_tags($tags_typed);
   $tag_last = drupal_strtolower(array_pop($tags_typed));
 
-  $term_matches = array();
+  $term_matches = [];
   if ($tag_last != '') {
 
     // TODO: This should go through entity_load() so user_access is performed.
     // TODO: Add search query parameters to this request.
-    $results = rescued_api_resource_list($resource, array('q' => $tag_last));
+    $results = rescued_api_resource_list($resource, ['q' => $tag_last]);
 
     $prefix = count($tags_typed) ? drupal_implode_tags($tags_typed) . ', ' : '';
     foreach ($results as $result) {
@@ -1215,13 +1215,13 @@ function rescued_get_xtuple_rest_service() {
  * Implements hook_rescued_resources().
  */
 function rescued_rescued_resources() {
-  return array(
+  return [
     "Model",
     "XdUserContact",
     "Account",
     "ContactRelation",
     "XdCustomer",
-  );
+  ];
 }
 
 /**
@@ -1310,7 +1310,7 @@ function rescued_flush_caches() {
  *   A data type array with $form_state keys that are part of the Discover Service settings.
  */
 function rescued_get_discovery_form_fields($form) {
-  $keys = array();
+  $keys = [];
   foreach ($form as $key => $item) {
     // Skip form API setting keys.
     if (strpos($key, '#') !== FALSE) {
@@ -1338,16 +1338,16 @@ function rescued_get_discovery_form_fields($form) {
  *  A data type array with property information.
  */
 function rescued_discovery_parse_types(array $types) {
-  $wsclient_types = array();
+  $wsclient_types = [];
 
   foreach ($types as $resource => $properties) {
-    $wsclient_types[$resource] = array('label' => $resource);
-    $wsclient_types[$resource]['property info'] = array();
+    $wsclient_types[$resource] = ['label' => $resource];
+    $wsclient_types[$resource]['property info'] = [];
 
     foreach ($properties['properties'] as $key => $value) {
-      $wsclient_types[$resource]['property info'][$key] = array(
+      $wsclient_types[$resource]['property info'][$key] = [
         'type' => rescued_json_schema_to_data_type($value['type'], (isset($value['format']) ? $value['format'] : NULL)),
-      );
+      ];
     }
   }
 
@@ -1365,23 +1365,23 @@ function rescued_discovery_parse_types(array $types) {
  *   An operations array with parameter information.
  */
 function rescued_discovery_parse_operations(array $operations) {
-  $wsclient_operations = array();
+  $wsclient_operations = [];
   foreach ($operations as $resource => $properties) {
     foreach ($properties['methods'] as $method => $attr) {
-      $wsclient_operations[$resource . '_' . $method] = array(
+      $wsclient_operations[$resource . '_' . $method] = [
         'label' => $resource . ' - ' . $method,
         // TODO: Not sure about this part. Need to do some tests with Rules module. Having Rules integration would we nice.
-        'result' => array(
+        'result' => [
           'type' => 'text',
           'label' => $resource . ' - ' . $method,
-        ),
-      );
+        ],
+      ];
 
       if (isset($attr['parameters'])) {
         foreach ($attr['parameters'] as $key => $value) {
-          $wsclient_operations[$resource . '_' . $method]['parameter'][$key] = array(
+          $wsclient_operations[$resource . '_' . $method]['parameter'][$key] = [
             'type' => rescued_discovery_type_mapper($value['type']),
-          );
+          ];
         }
       }
     }
@@ -1398,7 +1398,7 @@ function rescued_discovery_parse_operations(array $operations) {
  * @return string
  */
 function rescued_discovery_type_mapper($type) {
-  $primitive_types = array(
+  $primitive_types = [
     'string',
     'int',
     'long',
@@ -1407,7 +1407,7 @@ function rescued_discovery_type_mapper($type) {
     'double',
     'short',
     'decimal',
-  );
+  ];
 
   if (in_array($type, $primitive_types)) {
     switch ($type) {
@@ -1543,7 +1543,7 @@ function rescued_api_resource_load($resource_name, $id, $resource_key) {
  *
  * @return array
  */
-function rescued_api_resource_list($resource_name, $opt_params = array(), $data_only = TRUE) {
+function rescued_api_resource_list($resource_name, $opt_params = [], $data_only = TRUE) {
   // If this is a large query and would result in a long URL, query over POST instead.
   // This will get around the "414 Request URI Too Large" error.
   // TODO: Is 500 characters too long?
@@ -1559,10 +1559,10 @@ function rescued_api_resource_list($resource_name, $opt_params = array(), $data_
   }
 
   if ($data_only) {
-    return isset($result['data']) ? $result['data'] : array();
+    return isset($result['data']) ? $result['data'] : [];
   }
   else {
-    return isset($result) ? $result : array();
+    return isset($result) ? $result : [];
   }
 }
 
@@ -1580,26 +1580,26 @@ function rescued_api_resource_list($resource_name, $opt_params = array(), $data_
  *
  * @return array The query result response.
  */
-function rescued_api_resource_post_query($resource, $optParams = array(), $data_only = TRUE) {
+function rescued_api_resource_post_query($resource, $optParams = [], $data_only = TRUE) {
   $client = rescued_api_get_client();
 
   // Build restQuery structure for the POST body.
-  $postBody['attributes'] = array(
+  $postBody['attributes'] = [
     $resource,
     rescued_format_post_query_options($optParams),
-  );
+  ];
 
   // Put all of this into the postBody where the Google lib expects it.
-  $params = array('postBody' => $postBody);
+  $params = ['postBody' => $postBody];
 
   // Get the query results.
   $result = $client->Model->restQuery($params);
 
   if ($data_only) {
-    return isset($result['data']) ? $result['data'] : array();
+    return isset($result['data']) ? $result['data'] : [];
   }
   else {
-    return isset($result) ? $result : array();
+    return isset($result) ? $result : [];
   }
 }
 
@@ -1649,15 +1649,15 @@ function rescued_api_resource_insert($resource_name, $postBody, $optParams) {
  *
  * @return array The formatted query $options.
  */
-function rescued_format_post_query_options($optParams = array()) {
+function rescued_format_post_query_options($optParams = []) {
 
   // Build restQuery structure for the POST body.
-  $options = array();
+  $options = [];
 
   // Format the query.
   if (isset($optParams['query'])) {
     foreach ($optParams['query'] as $key => $value) {
-      $options['query'][] = array($key => $value);
+      $options['query'][] = [$key => $value];
     }
     unset($optParams['query']);
   }
@@ -1665,7 +1665,7 @@ function rescued_format_post_query_options($optParams = array()) {
   // Format the orderby.
   if (isset($optParams['orderby'])) {
     foreach ($optParams['orderby'] as $key => $value) {
-      $options['orderby'][] = array($key => $value);
+      $options['orderby'][] = [$key => $value];
     }
     unset($optParams['orderby']);
   }
@@ -1689,7 +1689,7 @@ function rescued_format_post_query_options($optParams = array()) {
  */
 function rescued_get_single_json_schema($resource, $json_schema = NULL, $discovery_client = NULL) {
   // Find the resource in the JSON-Schema.
-  $schema = array();
+  $schema = [];
 
   // Load the schema from the discovery doc when not passed in.
   if (is_null($json_schema) && !is_null($discovery_client)) {
@@ -1713,7 +1713,7 @@ function rescued_get_single_json_schema($resource, $json_schema = NULL, $discove
  */
 function rescued_get_recursive_json_schema($resource, $json_schema) {
   // Find the resource in the JSON-Schema.
-  $schema = array();
+  $schema = [];
 
   // Add the resource's properties to the schema.
   $schema[$resource] = $json_schema[$resource];
@@ -1892,9 +1892,9 @@ function rescued_json_schema_get_property_type($schema, $property) {
  * Implements hook_features_exclude()
  */
 function rescued_features_exclude() {
-  return array(
-    'variable' => array(
+  return [
+    'variable' => [
       'rescued_debug_mode',
-    ),
-  );
+    ],
+  ];
 }

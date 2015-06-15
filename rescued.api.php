@@ -9,11 +9,11 @@
  * Gets list of resources that a module needs.
  */
 function hook_rescued_resources() {
-  return array(
+  return [
     "Account",
     "Contact",
     "Address",
-  );
+  ];
 }
 
 /**
@@ -68,34 +68,34 @@ function hook_rescued_create_child_fields($name, $resource, $property, $child, $
   if ($name === 'my_rescued_client' && $resource === 'FooResource' && $property === 'some-property') {
     $field_name = 'foo_' . strtolower($resource . $property);
     if (!field_info_field($field_name)) {
-      $field = array(
+      $field = [
         'field_name' => $field_name,
         'type' => 'text',
         'cardinality' => $cardinality,
         'module' => 'field',
-        'storage' => array(
+        'storage' => [
           'type' => 'field_sql_storage',
-          'settings' => array(),
+          'settings' => [],
           'module' => 'field_sql_storage',
           'active' => 1,
-        ),
-      );
+        ],
+      ];
 
       field_create_field($field);
     }
 
     $entity_type = $name . '_' . strtolower($resource);
-    $instance = field_read_instance($entity_type, $field_name, $entity_type, array(
+    $instance = field_read_instance($entity_type, $field_name, $entity_type, [
       'include_inactive' => TRUE,
       'include_deleted' => TRUE
-    ));
+    ]);
     if (empty($instance)) {
-      $instance = array(
+      $instance = [
         'field_name' => $field_name,
         'entity_type' => $name . '_' . strtolower($resource),
         'bundle' => $name . '_' . strtolower($resource),
         'label' => $title,
-      );
+      ];
       $instance['widget']['weight'] = $weight;
       $instance['display']['default']['weight'] = $weight;
       field_create_instance($instance);
