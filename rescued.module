@@ -174,7 +174,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
   /** @var \stdClass $user */
   global $user;
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  $session = extensions_get_session();
+  global $session;
 
   // TODO: Add caching to this function.
   if (!isset($account)) {
@@ -268,7 +268,7 @@ function rescued_access($op, $entity, $account = NULL, $entity_type = NULL) {
  */
 function rescued_reset_session($account) {
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  $session = extensions_get_session();
+  global $session;
 
   // Unset OAuth session values so they get rebuilt below.
   unset($_SESSION['access_token']);
@@ -422,7 +422,7 @@ function rescued_xtuple_entity_access_role_check($op, $account, $entity_type) {
   ];
 
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  $session = extensions_get_session();
+  global $session;
 
   if ($op === 'view' && isset($white_list[$entityInfo['resource']])) {
     return TRUE;
@@ -1206,7 +1206,7 @@ function rescued_get_xtuple_rest_service() {
   variable_set('rescued_debug_mode', $configuration->debug());
   $resources = rescued_resources_list();
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
+  global $session;
   $client = new \Xtuple\REST\Client\Client($configuration, $resources, $session);
   return $client;
 }
@@ -1465,7 +1465,7 @@ function rescued_api_get_client() {
   }
 
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  $session = extensions_get_session('Xtuple\Xdruple\Session\RescuedSession');
+  global $session;
   $oauth_user = NULL;
 
   // Set OAuth 2.0 JWT Delegated user.
