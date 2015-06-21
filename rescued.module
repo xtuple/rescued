@@ -29,9 +29,6 @@ function rescued_menu() {
  */
 function rescued_hook_info() {
   $hooks = [
-    'rescued_operation_entityform_alter' => [
-      'group' => 'rescued',
-    ],
     'rescued_entity_build_content_view' => [
       'group' => 'rescued',
     ],
