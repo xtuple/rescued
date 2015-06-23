@@ -15,7 +15,6 @@ dependencies[] = entity_token
 dependencies[] = entityreference
 dependencies[] = entityreference_efq_views
 dependencies[] = field_group
-dependencies[] = inline_entity_form
 dependencies[] = libraries
 dependencies[] = rules
 dependencies[] = token

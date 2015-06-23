@@ -34,3 +34,13 @@ function rescued_update_7002() {
   variable_del("rescued_docs_loaded");
   return t("rescued_docs_loaded deleted");
 }
+
+/**
+ * Disable Inline Entity Form module
+ */
+function rescued_update_7003() {
+  module_disable([
+    "inline_entity_form",
+  ]);
+  return t("Inline Entity Form disabled");
+}
