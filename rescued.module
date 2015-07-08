@@ -287,7 +287,6 @@ function rescued_reset_session($account) {
     ],
   ];
 
-  // TODO: Get WSClient name.
   $user2contact = rescued_api_resource_list('XdUserContact', $queryParams);
 
   if ($user2contact && count($user2contact) === 1) {
@@ -1141,10 +1140,10 @@ function rescued_rescued_resources() {
 }
 
 /**
- * Get Discovery Docs for all 'discovery' WSClients.
+ * Get Discovery Docs
  *
  * @return
- *   An multidimensional array of discovery docs keyed on the WSClient name.
+ *   An multidimensional array of discovery docs
  */
 function rescued_get_discovery_client_docs() {
   $docs = &drupal_static(__FUNCTION__);
@@ -1198,145 +1197,7 @@ function rescued_flush_caches() {
 }
 
 /**
- * Helper function to get all Discovery Service fields from the form.
- *
- * @param array $form
- *   The array containing the WSClient $form.
- *
- * @return array
- *   A data type array with $form_state keys that are part of the Discover Service settings.
- */
-function rescued_get_discovery_form_fields($form) {
-  $keys = [];
-  foreach ($form as $key => $item) {
-    // Skip form API setting keys.
-    if (strpos($key, '#') !== FALSE) {
-      continue;
-    }
-    // Recurse into any fieldsets and get the keys there.
-    if (isset($item['#type']) && $item['#type'] === 'fieldset') {
-      $keys = array_merge($keys, rescued_get_discovery_form_fields($item));
-      continue;
-    }
-    $keys[] = $key;
-  }
-
-  return $keys;
-}
-
-/**
- * Convert metadata about data types provided by a Discovery Doc JSON-Schema
- * into a wsclient compatible data type array.
- *
- * @param array $types
- *   The array containing the struct strings.
- *
- * @return array
- *  A data type array with property information.
- */
-function rescued_discovery_parse_types(array $types) {
-  $wsclient_types = [];
-
-  foreach ($types as $resource => $properties) {
-    $wsclient_types[$resource] = ['label' => $resource];
-    $wsclient_types[$resource]['property info'] = [];
-
-    foreach ($properties['properties'] as $key => $value) {
-      $wsclient_types[$resource]['property info'][$key] = [
-        'type' => rescued_json_schema_to_data_type($value['type'], (isset($value['format']) ? $value['format'] : NULL)),
-      ];
-    }
-  }
-
-  return $wsclient_types;
-}
-
-/**
- * Convert metadata about operations provided by a Discovery Document into a
- * wsclient compatible operations array.
- *
- * @param array $operations
- *   The array containing the operation signature strings.
- *
- * @return array
- *   An operations array with parameter information.
- */
-function rescued_discovery_parse_operations(array $operations) {
-  $wsclient_operations = [];
-  foreach ($operations as $resource => $properties) {
-    foreach ($properties['methods'] as $method => $attr) {
-      $wsclient_operations[$resource . '_' . $method] = [
-        'label' => $resource . ' - ' . $method,
-        // TODO: Not sure about this part. Need to do some tests with Rules module. Having Rules integration would we nice.
-        'result' => [
-          'type' => 'text',
-          'label' => $resource . ' - ' . $method,
-        ],
-      ];
-
-      if (isset($attr['parameters'])) {
-        foreach ($attr['parameters'] as $key => $value) {
-          $wsclient_operations[$resource . '_' . $method]['parameter'][$key] = [
-            'type' => rescued_discovery_type_mapper($value['type']),
-          ];
-        }
-      }
-    }
-  }
-
-  return $wsclient_operations;
-}
-
-/**
- * Maps data type names from a Discovery Document to wsclient/rules internals.
- *
- * @param $type
- *
- * @return string
- */
-function rescued_discovery_type_mapper($type) {
-  $primitive_types = [
-    'string',
-    'int',
-    'long',
-    'float',
-    'boolean',
-    'double',
-    'short',
-    'decimal',
-  ];
-
-  if (in_array($type, $primitive_types)) {
-    switch ($type) {
-      case 'double':
-      case 'float':
-        return 'decimal';
-      case 'int':
-      case 'long':
-      case 'short':
-        return 'integer';
-      case 'string':
-        return 'text';
-    }
-  }
-
-  // Check for list types.
-  if (strpos($type, 'ArrayOf') === 0) {
-    $type = substr($type, 7);
-    $primitive = strtolower($type);
-    if (in_array($primitive, $primitive_types)) {
-      return 'list<' . $primitive . '>';
-    }
-
-    return 'list<' . $type . '>';
-  }
-
-  // Otherwise return the type as is.
-  return $type;
-}
-
-/**
- * Initialize a WSClient and static cache the Client for all future requests.
+ * Initialize a Rescued Client
  *
  * @return \Xtuple\Rescued\RescuedApiService
  * @throws \Exception
