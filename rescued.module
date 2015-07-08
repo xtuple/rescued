@@ -5,7 +5,6 @@
  */
 function rescued_menu() {
   $items = [];
-
   $items['admin/structure/xtuple'] = [
     'title' => "xTuple",
     'menu_name' => 'management',
@@ -13,14 +12,6 @@ function rescued_menu() {
     'type' => MENU_NORMAL_ITEM,
     'weight' => -100,
   ];
-
-  $items['xtuple/autocomplete'] = [
-    'title' => 'Autocomplete xTuple',
-    'page callback' => 'rescued_autocomplete',
-    'access arguments' => ['access content'],
-    'type' => MENU_CALLBACK,
-  ];
-
   return $items;
 }
 
@@ -1090,78 +1081,6 @@ function rescued_form_submit_build_entity($entity_type, $entity, $form, &$form_s
       }
     }
   }
-}
-
-/**
- * Page callback: Outputs JSON for relation autocomplete suggestions.
- *
- * Path: {discovery-client}/autocomplete
- *
- * This callback outputs resource key name suggestions in response to Ajax requests
- * made by the resource autocomplete widget for ResourceRelation fields.
- * The output is a JSON object of plain-text term suggestions, keyed by
- * the user-entered value with the completed term name appended.  Relation key names
- * containing commas are wrapped in quotes.
- *
- * For example, suppose the user has entered the string 'red fish, blue' in the
- * field, and there are two taxonomy terms, 'blue fish' and 'blue moon'. The
- * JSON output would have the following structure:
- *
- * @code
- *      {
- *      "red fish, blue fish": "blue fish",
- *      "red fish, blue moon": "blue moon",
- *      };
- * @endcode
- *
- * @param $discovery_client
- * @param $resource
- * @param $key_column
- *
- * @see      taxonomy_menu()
- * @see      taxonomy_field_widget_info()
- */
-function rescued_autocomplete($discovery_client, $resource, $key_column) {
-  // If the request has a '/' in the search text, then the menu system will have split it into multiple arguments, recover the intended $tags_typed.
-  $args = func_get_args();
-  // Shift off the $discovery_client argument.
-  array_shift($args);
-  // Shift off the $resource argument.
-  array_shift($args);
-  // Shift off the $key_column argument.
-  array_shift($args);
-
-  $tags_typed = implode('/', $args);
-
-  // The user enters a comma-separated list of tags. We only autocomplete the last tag.
-  $tags_typed = drupal_explode_tags($tags_typed);
-  $tag_last = drupal_strtolower(array_pop($tags_typed));
-
-  $term_matches = [];
-  if ($tag_last != '') {
-
-    // TODO: This should go through entity_load() so user_access is performed.
-    // TODO: Add search query parameters to this request.
-    $results = rescued_api_resource_list($resource, ['q' => $tag_last]);
-
-    $prefix = count($tags_typed) ? drupal_implode_tags($tags_typed) . ', ' : '';
-    foreach ($results as $result) {
-      if (isset($result[$key_column])) {
-        // Only add matching tags that aren't already typed in.
-        if (!in_array($result[$key_column], $tags_typed)) {
-          $n = $result[$key_column];
-          // Key names containing commas or quotes must be wrapped in quotes.
-          if (strpos($result[$key_column], ',') !== FALSE || strpos($result[$key_column], '"') !== FALSE) {
-            $n = '"' . str_replace('"', '""', $result[$key_column]) . '"';
-          }
-          // This is tax term ref style.
-          $term_matches[$prefix . $n] = check_plain($result[$key_column]);
-        }
-      }
-    }
-  }
-
-  drupal_json_output($term_matches);
 }
 
 /**
