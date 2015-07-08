@@ -1178,25 +1178,6 @@ function rescued_get_discovery_client_docs() {
 }
 
 /**
- * Implements hook_module_implements_alter().
- *
- * Look for calls to 'hook_menu' and flush the rescued cache when that happens.
- * 'hook_menu' will call entity_hook_menu() which will call our
- * rescued_entity_info(). Since we are loading entities dynamically and
- * 'hook_menu' is only called when flushing caches, we want to regenerate the
- * rescued entities returned by rescued_entity_info(). To do that, we have to
- * reset the rescued variables and cache.
- *
- * @param $implementations
- * @param $hook
- */
-function rescued_module_implements_alter(&$implementations, $hook) {
-  if ($hook === 'menu') {
-    rescued_flush_caches();
-  }
-}
-
-/**
  * Implements hook_flush_caches().
  *
  * Remove the folder at: /tmp/Google_Client and reset our entities loaded
