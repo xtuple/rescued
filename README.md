@@ -27,18 +27,13 @@ entities.
    - Rules https://drupal.org/project/rules
    - Token https://drupal.org/project/token
    - Views https://drupal.org/project/views
-   - Web service client https://drupal.org/project/wsclient
  * RESCUED module uses the following libraries. Download and install then from:
    - Google API PHP Client Library http://code.google.com/p/google-api-php-client/
    - JSON-Patch PHP Library https://github.com/bendiy/json-patch-php/tree/rfc
  * Copy the whole rescued directory to your modules directory
    (e.g. DRUPAL_ROOT/sites/all/modules) and activate the RESCUED module
- * Setup your discover service connection information at:
-   admin/config/services/wsclient
  * Refresh Drupal's cache and you should see your client listed here:
    admin/structure
- * All of your remote entities can then be accessed here:
-   admin/structure/{wsclient-name-here}
 
 ## TODO
 
