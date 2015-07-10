@@ -57,7 +57,6 @@ function rescued_entity_info() {
             if (in_array($resource_code, xdruple_cache_entity_system_wide())) {
               $persistent_cache_type = \Xtuple\Rescued\Controller\EntityController::CACHE_PER_SYSTEM;
             }
-            $entity['persistent cache'] = $persistent_cache_type;
             $return[$resource_code] = [
               'label' => t($resource),
               'resource' => $resource,
@@ -69,6 +68,7 @@ function rescued_entity_info() {
               'field cache' => FALSE,
               // TODO: For development only
               'fieldable' => TRUE,
+              "persistent cache" => $persistent_cache_type,
               'entity keys' => [
                 'id' => $resource_key,
                 'label' => $resource_key,
