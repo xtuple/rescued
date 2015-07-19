@@ -46,12 +46,7 @@ function rescued_entity_info() {
         foreach ($properties['schemas'] as $resource => $schemas) {
           // Add an entity for all JSON-Schema properties.
           $resource_key = rescued_json_schema_get_resource_key($schemas['properties']);
-          if (empty($resource_key)) {
-            watchdog("rescued", "!resource doesn't have a key, so it's a service; skipping entity declaration", [
-              '!resource' => $resource,
-            ]);
-          }
-          else {
+          if (!empty($resource_key)) {
             $resource_code = $name . '_' . strtolower($resource);
             $persistent_cache_type = \Xtuple\Rescued\Controller\EntityController::CACHE_PER_USER;
             if (in_array($resource_code, xdruple_cache_entity_system_wide())) {
