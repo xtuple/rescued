@@ -714,8 +714,10 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
             $queryParam['value'] = empty($queryParam['value']) ? FALSE : TRUE;
           }
 
-          $queryParams['query'][$queryParam['column']] = [
-            isset($queryParam['operator']) ? rescued_get_query_operator($queryParam['operator']) : 'EQUALS' => $queryParam['value'],
+          $queryParams['query'][] = [
+            "column" => $queryParam['column'],
+            "operator" => isset($queryParam['operator']) ? rescued_get_query_operator($queryParam['operator']) : 'EQUALS',
+            "value" => $queryParam['value'],
           ];
         }
       }
