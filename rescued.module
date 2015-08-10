@@ -273,11 +273,15 @@ function rescued_reset_session($account) {
   $app_name = rescued_application_name();
   $queryParams = [
     'query' => [
-      'drupalUserUuid' => [
-        'EQUALS' => $account->uuid,
+      [
+        "columns" => 'drupalUserUuid',
+        "operator" => "EQUALS",
+        "value" => $account->uuid,
       ],
-      'xdruple_site' => [
-        'EQUALS' => $app_name,
+      [
+        "columns" => 'xdruple_site',
+        "value" => $app_name,
+        "operator" => 'EQUALS',
       ],
     ],
   ];
@@ -335,8 +339,10 @@ function rescued_reset_session($account) {
       // Save the customer data this user is associated with to the $_SESSION.
       $queryParams = [
         'query' => [
-          'number' => [
-            'EQUALS' => $cust_number,
+          [
+            "column" => 'number',
+            "value" => $cust_number,
+            "operator" => 'EQUALS',
           ],
         ],
       ];
@@ -755,7 +761,7 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
   if (isset($query->range, $query->range['length'], $query->range['start'])) {
     $pager_range = [
       'maxResults' => $query->range['length'],
-      'pageToken' => $query->range['start'] / $query->range['length']
+      'pageToken' => $query->range['start'] / $query->range['length'],
     ];
   }
 
