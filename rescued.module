@@ -274,12 +274,12 @@ function rescued_reset_session($account) {
   $queryParams = [
     'query' => [
       [
-        "columns" => 'drupalUserUuid',
+        "column" => 'drupalUserUuid',
         "operator" => "EQUALS",
         "value" => $account->uuid,
       ],
       [
-        "columns" => 'xdruple_site',
+        "column" => 'xdruple_site',
         "value" => $app_name,
         "operator" => 'EQUALS',
       ],
