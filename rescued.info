@@ -9,11 +9,9 @@ dependencies[] = xdruple
 
 dependencies[] = ctools
 dependencies[] = date
-dependencies[] = efq_views
 dependencies[] = entity
 dependencies[] = entity_token
 dependencies[] = entityreference
-dependencies[] = entityreference_efq_views
 dependencies[] = field_group
 dependencies[] = libraries
 dependencies[] = rules
