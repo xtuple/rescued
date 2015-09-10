@@ -1,4 +1,5 @@
 <?php
+use Xtuple\Drupal7\Proxy\User\CommerceUserProxy;
 
 /**
  * Implements hook_menu().
@@ -146,141 +147,74 @@ function rescued_resources_exist($resources) {
 /**
  * Determine this user's xTuple Contact association and what role they belong to.
  *
- * @param $account
+ * @param CommerceUserProxy $account
  *
- * @return
+ * @return CommerceUserProxy
  */
-function rescued_reset_session($account) {
+function rescued_reset_session(CommerceUserProxy $account) {
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   global $session;
-
-  // Unset OAuth session values so they get rebuilt below.
-  unset($_SESSION['access_token']);
-  unset($_SESSION['oauth_user']);
-  $session->removeRescued('user');
-
-  // Check if the rescued resources exist yet. This function can be called before all entities are setup.
-  //  Just return account if it's not ready.
-  $resources = [
-    'Account',
-    'ContactRelation',
-    'XdCustomer',
-    'XdShipTo',
-  ];
-  if (!rescued_resources_exist($resources)) {
+  unset($_SESSION["access_token"]);
+  unset($_SESSION["oauth_user"]);
+  $session->removeRescued("user");
+  if (!rescued_resources_exist(["XdUserAssociation"])
+    || empty($account->xdUserAssociation())
+  ) {
     return $account;
   }
-
-  $app_name = rescued_application_name();
-  $queryParams = [
-    'query' => [
-      [
-        "column" => 'drupalUserUuid',
-        "operator" => "EQUALS",
-        "value" => $account->uuid,
-      ],
-      [
-        "column" => 'xdruple_site',
-        "value" => $app_name,
-        "operator" => 'EQUALS',
-      ],
-    ],
-  ];
-
-  $user2contact = rescued_api_resource_list('XdUserContact', $queryParams);
-
-  if ($user2contact && count($user2contact) === 1) {
-    // TODO: This will break if this incident gets resolved: www.xtuple.org/xtincident/view/features/17846
-    // We will have to handle multiple accounts on one contact.
-    $session->set('rescued', $user2contact[0]);
-    $session->setRescued('expires', time() + 3600); // One hour from now, this will be reloaded.
-
-    // Remove 'account' from the $_SESSION, we'll set roles below from the account.
-    $session->removeRescued('account');
-
-    // XdUserContact doesn't have the account parameter because end users fill out the contact for at User Reg.
-    // We need to get a Contact resource that have account and accountParent params.
-    // TODO: Consider loading the full account resource to check for employee, owner roles.
-    $user2account = rescued_api_resource_load('ContactRelation', $user2contact[0]['contact']['number'], 'number');
-
-    if (!isset($user2account, $user2account['data']['account'])) {
-      // This is a basic user2contact and not yet a customer.
-      // TODO: Should get this key 'number' from discovery doc.
-
-      // TODO: We need a role to support a basic public user that does not have an xTuple user yet.
-      $session->setRescued('user_type', 'rescued_contact');
-    }
-    else {
-      $session->setRescued('user', strtolower($user2account['data']['account']));
-
-      // Get this CRM Account and figure out what type of user it is.
-      $crmAccount = rescued_api_resource_load('Account', $user2account['data']['account'], 'number');
-
-      // CRM Accounts with a parent Account are limited users unless they are a Customer, Rep or Employee.
-      if ($user2account['data']['accountParent'] &&
-        empty($crmAccount['data']['customer']) &&
-        empty($crmAccount['data']['employee']) &&
-        empty($crmAccount['data']['salesRep'])
+  try {
+    $xdUserAssociation = $account->xdUserAssociation()->xdUserAssociation()->value();
+    $session->set("rescued", [
+      "uuid" => "",
+      "xdruple_site" => $xdUserAssociation->appName(),
+      "drupalUserUuid" => $xdUserAssociation->userUuid(),
+      "contact" => $xdUserAssociation->contact()->number(),
+    ]);
+    $session->setRescued("expires", time() + 3600);
+    $session->removeRescued("account");
+    if ($xdAccount = $xdUserAssociation->account()) {
+      $session->setRescued("account", $xdAccount->number());
+      if (!empty($xdAccount->parent())
+        && !$xdUserAssociation->isCustomer()
+        && !$xdUserAssociation->isEmployee()
+        && !$xdUserAssociation->isSalesRep()
       ) {
-
-        $cust_number = $user2account['data']['accountParent'];
-        $session->setRescued('user_type', 'rescued_limited');
+        $session->setRescued("user_type", "rescued_limit");
       }
-      elseif (isset($crmAccount['data']['employee'])) {
-        // An Employee has more access. This could also be a Customer or Sales Rep.
-        $cust_number = $user2account['data']['account'];
-        $session->setRescued('user_type', 'rescued_employee');
+      elseif ($xdUserAssociation->isEmployee()) {
+        $session->setRescued("user_type", "rescued_employee");
       }
       else {
-        $cust_number = $user2account['data']['account'];
-        $session->setRescued('user_type', 'rescued_personal');
+        $session->setRescued("user_type", "rescued_personal");
       }
-
-      // There is a chance that a CRM Account is not a Customer, so we do a list query.
-      // Save the customer data this user is associated with to the $_SESSION.
-      $queryParams = [
-        'query' => [
-          [
-            "column" => 'number',
-            "value" => $cust_number,
-            "operator" => 'EQUALS',
-          ],
-        ],
-      ];
-      $customer = rescued_api_resource_list('XdCustomer', $queryParams);
-      if (!empty($customer) && count($customer) === 1) {
-        $id = $customer[0]['number'];
-        $customer = $customer[0];
-
-        // Set $_SESSION['rescued']['customer'] default.
-        $session->setRescued('customer', $id);
-        $session->setRescued('customer_terms', $customer['terms']);
-        $session->setRescued('customer_credit', $customer['creditStatus']);
-
-        // Figure out if the user can only access one ship to and set it to the $_SESSION['rescued']['ship_to'] default.
-        $ship_tos = xdruple_fields_get_ship_to_list($id);
-        if (!empty($ship_tos) && count($ship_tos) === 1) {
-          $session->setRescued('ship_to', array_shift(array_keys($ship_tos)));
+      $session->setRescued("custom_ship_to", TRUE);
+      $session->setRescued("site", variable_get("xdruple_commerce_default_warehouse", NULL));
+      if ($customer = $xdAccount->customer()) {
+        $session->setRescued("customer", $customer->number());
+        $session->setRescued("customer_terms", $customer->terms());
+        $session->setRescued("customer_credit", $customer->creditStatus()->code());
+        if ($shipToList = $customer->shipTos()) {
+          if ($defaultShipTo = $shipToList->defaultShipTo()) {
+            $session->setRescued("ship_to", $defaultShipTo->uuid());
+          }
+          elseif ($shipToList->size() == 1) {
+            $session->setRescued("ship_to", $shipToList->current());
+          }
+          $session->setRescued("custom_ship_to", FALSE);
         }
-        else {
-          // Or set $_SESSION['rescued']['ship_to'] default to the Customer's default Ship To.
-          $session->setRescued('ship_to', xdruple_fields_get_ship_to_default($id));
+        if ($customer->preferredSite()) {
+          $session->setRescued("site", $customer->preferredSite());
         }
-        $session->setRescued('custom_ship_to', FALSE);
-
-        // Set $_SESSION['rescued']['site'] default to the Customer's preferred site.
-        if (!empty($customer['preferredSite'])) {
-          $session->setRescued('site', $customer['preferredSite']);
-        }
-        else {
-          $session->setRescued('site', variable_get('xdruple_commerce_default_warehouse', NULL));
-        }
-
-        xdruple_rescued_scheduled_date('tomorrow');
       }
+      xdruple_rescued_scheduled_date("tomorrow");
     }
+    else {
+      $session->setRescued("user_type", "rescued_contact");
+    }
+  } catch (\Exception $e) {
+    watchdog_exception("xdruple", $e);
+    drupal_set_message($e->getMessage(), "error");
   }
-
   return $account;
 }
 
@@ -969,7 +903,6 @@ function rescued_get_xtuple_rest_service() {
 function rescued_rescued_resources() {
   return [
     "Model",
-    "XdUserContact",
     "Account",
     "ContactRelation",
     "XdCustomer",
