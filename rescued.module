@@ -1,21 +1,6 @@
 <?php
 
 /**
- * Implements hook_menu().
- */
-function rescued_menu() {
-  $items = [];
-  $items['admin/structure/xtuple'] = [
-    'title' => "xTuple",
-    'menu_name' => 'management',
-    'access callback' => TRUE,
-    'type' => MENU_NORMAL_ITEM,
-    'weight' => -100,
-  ];
-  return $items;
-}
-
-/**
  * Implements hook_hook_info().
  */
 function rescued_hook_info() {
