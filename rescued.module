@@ -1,5 +1,4 @@
 <?php
-use Xtuple\Drupal7\Proxy\User\CommerceUserProxy;
 
 /**
  * Implements hook_menu().
@@ -142,80 +141,6 @@ function rescued_resources_exist($resources) {
     }
   }
   return TRUE;
-}
-
-/**
- * Determine this user's xTuple Contact association and what role they belong to.
- *
- * @param CommerceUserProxy $account
- *
- * @return CommerceUserProxy
- */
-function rescued_reset_session(CommerceUserProxy $account) {
-  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  global $session;
-  unset($_SESSION["access_token"]);
-  unset($_SESSION["oauth_user"]);
-  $session->removeRescued("user");
-  if (!rescued_resources_exist(["XdUserAssociation"])
-    || empty($account->xdUserAssociation())
-  ) {
-    return $account;
-  }
-  try {
-    $xdUserAssociation = $account->xdUserAssociation()->xdUserAssociation()->value();
-    $session->set("rescued", [
-      "uuid" => "",
-      "xdruple_site" => $xdUserAssociation->appName(),
-      "drupalUserUuid" => $xdUserAssociation->userUuid(),
-      "contact" => $xdUserAssociation->contact()->number(),
-    ]);
-    $session->setRescued("expires", time() + 3600);
-    $session->removeRescued("account");
-    if ($xdAccount = $xdUserAssociation->account()) {
-      $session->setRescued("account", $xdAccount->number());
-      if (!empty($xdAccount->parent())
-        && !$xdUserAssociation->isCustomer()
-        && !$xdUserAssociation->isEmployee()
-        && !$xdUserAssociation->isSalesRep()
-      ) {
-        $session->setRescued("user_type", "rescued_limit");
-      }
-      elseif ($xdUserAssociation->isEmployee()) {
-        $session->setRescued("user_type", "rescued_employee");
-      }
-      else {
-        $session->setRescued("user_type", "rescued_personal");
-      }
-      $session->setRescued("custom_ship_to", TRUE);
-      $session->setRescued("site", variable_get("xdruple_commerce_default_warehouse", NULL));
-      if ($customer = $xdAccount->customer()) {
-        $session->setRescued("customer", $customer->number());
-        $session->setRescued("customer_terms", $customer->terms());
-        $session->setRescued("customer_credit", $customer->creditStatus()->code());
-        if ($shipToList = $customer->shipTos()) {
-          if ($defaultShipTo = $shipToList->defaultShipTo()) {
-            $session->setRescued("ship_to", $defaultShipTo->uuid());
-          }
-          elseif ($shipToList->size() == 1) {
-            $session->setRescued("ship_to", $shipToList->current());
-          }
-          $session->setRescued("custom_ship_to", FALSE);
-        }
-        if ($customer->preferredSite()) {
-          $session->setRescued("site", $customer->preferredSite());
-        }
-      }
-      xdruple_rescued_scheduled_date("tomorrow");
-    }
-    else {
-      $session->setRescued("user_type", "rescued_contact");
-    }
-  } catch (\Exception $e) {
-    watchdog_exception("xdruple", $e);
-    drupal_set_message($e->getMessage(), "error");
-  }
-  return $account;
 }
 
 /**
