@@ -1,19 +1,6 @@
 <?php
 
 /**
- * Implements hook_hook_info().
- */
-function rescued_hook_info() {
-  $hooks = [
-    'rescued_entity_build_content_view' => [
-      'group' => 'rescued',
-    ],
-  ];
-
-  return $hooks;
-}
-
-/**
  * Implements hook_entity_info().
  *
  * We are programmatically building entities here.
