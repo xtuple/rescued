@@ -436,49 +436,6 @@ function rescued_entity_field_query_builder(EntityFieldQuery $query) {
 }
 
 /**
- * Returns the human readable name of any or all xTuple entity types.
- *
- * @param $type
- *   Optional parameter specifying the type whose name to return.
- *
- * @return array|bool
- *   Either an array of all xTuple entity type names keyed by the machine name or a
- *   string containing the human readable name for the specified type. If a
- *   type is specified that does not exist, this function returns FALSE.
- */
-function rescued_type_get_name($type = NULL) {
-  // Loop over discovery clients and add all $ref objects as field groups.
-  $discovery = rescued_get_discovery_client_docs();
-
-  $rescued_types = [];
-
-  if (isset($discovery)) {
-    foreach ($discovery as $name => $properties) {
-      foreach ($properties['resources'] as $resource => $methods) {
-        $rescued_types[$name . '_' . strtolower($resource)] = t($resource);
-      }
-    }
-
-    if (!empty($type)) {
-      if (isset($rescued_types[$type])) {
-        return $rescued_types[$type];
-      }
-      else {
-        // Return FALSE if it does not exist.
-        return FALSE;
-      }
-    }
-    else {
-      // Return all types.
-      return $rescued_types;
-    }
-  }
-  else {
-    return FALSE;
-  }
-}
-
-/**
  * @return \Xtuple\REST\Client\Configuration
  * @throws \Exception
  */
