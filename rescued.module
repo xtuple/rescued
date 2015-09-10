@@ -102,11 +102,6 @@ function rescued_entity_info() {
 function rescued_resources_exist($resources) {
   $client = rescued_api_get_client();
   foreach ($resources as $resource_name) {
-    $entityName = 'xtuple_' . strtolower($resource_name);
-    $entityInfo = entity_get_info($entityName);
-    if (empty($entityInfo)) {
-      return FALSE;
-    }
     if ($client->resource($resource_name) === NULL) {
       return FALSE;
     }
