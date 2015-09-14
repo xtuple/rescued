@@ -3,8 +3,6 @@ description = RESTful Entity Storage Controller Unveiling Entities Dynamically.
 core = 7.x
 package = xDruple
 
-dependencies[] = xdruple_entityreference
-dependencies[] = xdfields_rest_storage
 dependencies[] = xdruple
 
 dependencies[] = ctools
