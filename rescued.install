@@ -4,15 +4,6 @@
  * Implements hook_enable().
  */
 function rescued_enable() {
-  // Drupal doesn't reset static variables when cache is being cleared
-  // We need explicitly "clear" the information about field types.
-  _field_info_collate_types(TRUE);
-
-  // Need to call this to add the $rescued_clients from settings.php.
-  entity_defaults_rebuild();
-
-  // Call rescued_field_extra_fields() so all erp fields get created.
-  rescued_field_extra_fields();
 }
 
 /**
