@@ -1,17 +1,4 @@
 name = RESCUED
-description = RESTful Entity Storage Controller Unveiling Entities Dynamically.
+description = ERP connection handling
 core = 7.x
 package = xDruple
-
-dependencies[] = xdruple
-
-dependencies[] = ctools
-dependencies[] = date
-dependencies[] = entity
-dependencies[] = entity_token
-dependencies[] = entityreference
-dependencies[] = field_group
-dependencies[] = libraries
-dependencies[] = rules
-dependencies[] = token
-dependencies[] = views
