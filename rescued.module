@@ -42,39 +42,16 @@ function rescued_application_name() {
 }
 
 /**
- * @return array
- */
-function rescued_resources_list() {
-  $resources = module_invoke_all("rescued_resources");
-  $resources = array_unique($resources);
-  sort($resources);
-  return $resources;
-}
-
-/**
  * @return \Xtuple\REST\Client\Client
  * @throws \Exception
  */
 function rescued_get_xtuple_rest_service() {
   $configuration = rescued_get_configuration();
   variable_set('rescued_debug_mode', $configuration->debug());
-  $resources = rescued_resources_list();
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   global $session;
-  $client = new \Xtuple\REST\Client\Client($configuration, $resources, $session);
+  $client = new \Xtuple\REST\Client\Client($configuration, $session);
   return $client;
-}
-
-/**
- * Implements hook_rescued_resources().
- */
-function rescued_rescued_resources() {
-  return [
-    "Model",
-    "Account",
-    "ContactRelation",
-    "XdCustomer",
-  ];
 }
 
 /**
@@ -122,10 +99,6 @@ function rescued_get_discovery_client_docs() {
  * in rescued_module_implements_alter() and when all caches are flushed.
  */
 function rescued_flush_caches() {
-  // Clear the rescued_entity_info cache.
-  cache_clear_all('rescued_entity_info', 'cache');
-
-  // Delete Google IO cache folder from system's /tmp.
   if (variable_get('rescued_clear_google_cache', 1)) {
     global $apiConfig;
     if (file_exists($apiConfig['ioFileCache_directory'])) {
