@@ -21,18 +21,6 @@ function rescued_application_name() {
 }
 
 /**
- * @return \Xtuple\REST\Client\Client
- * @throws \Exception
- */
-function rescued_get_xtuple_rest_service() {
-  $configuration = rescued_get_configuration();
-  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  global $session;
-  $client = new \Xtuple\REST\Client\Client($configuration, $session);
-  return $client;
-}
-
-/**
  * Get Discovery Docs
  *
  * @return
@@ -42,7 +30,7 @@ function rescued_get_discovery_client_docs() {
   $docs = &drupal_static(__FUNCTION__);
 
   if (!isset($docs)) {
-    $client = rescued_get_xtuple_rest_service();
+    $client = rescued_api_get_client();
     $docs["xtuple"] = $client->discovery();
     try {
       $dir = "public://schemas";
@@ -70,61 +58,16 @@ function rescued_get_discovery_client_docs() {
 }
 
 /**
- * Initialize a Rescued Client
- *
- * @return \Xtuple\Rescued\RescuedApiService
+ * @return \Xtuple\REST\Client\Client
  * @throws \Exception
  */
 function rescued_api_get_client() {
-  $rescued = &drupal_static(__FUNCTION__);
-
-  if (empty($rescued["xtuple"]["client"])) {
-    $client = rescued_get_xtuple_rest_service();
-    $rescued["xtuple"]["client"] = $client->service();
-    $rescued["xtuple"]['prn'] = $client->config()->prn();
+  static $client;
+  if (!isset($client)) {
+    $configuration = rescued_get_configuration();
+    /** @var Xtuple\Xdruple\Session\RescuedSession $session */
+    global $session;
+    $client = new \Xtuple\REST\Client\Client($configuration, $session);
   }
-  /** @var \Xtuple\Rescued\RescuedApiService $client */
-  $client = $rescued["xtuple"]['client'];
-
-  // Reset $oauth-prn because drupal_static's client may be stale.
-  /** @var \Google_OAuth2 $auth */
-  $auth = $client->client->getAuth();
-  $oauth = $auth->assertionCredentials;
-
-  if (isset($rescued["xtuple"]['prn'])) {
-    $prn = $rescued["xtuple"]['prn'];
-  }
-
-  /** @var Xtuple\Xdruple\Session\RescuedSession $session */
-  global $session;
-  $oauth_user = NULL;
-
-  // Set OAuth 2.0 JWT Delegated user.
-  if ($role_user = $session->getRescued('user')) {
-    if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $role_user) ||
-      $oauth->prn !== $role_user
-    ) {
-      $oauth->prn = $role_user;
-      $oauth_user = $role_user;
-    }
-  }
-  elseif (isset($prn)) {
-    if ((isset($_SESSION['oauth_user']) && $_SESSION['oauth_user'] !== $prn) ||
-      $oauth->prn !== $prn
-    ) {
-      $oauth->prn = $prn;
-      $oauth_user = $prn;
-    }
-  }
-
-  // Reset AssertionCredentials so cached client has correct prn username and access token.
-  if ($oauth_user !== NULL) {
-    unset($_SESSION['access_token']);
-    unset($_SESSION['oauth_user']);
-    $auth->token = NULL;
-    $_SESSION['oauth_user'] = $oauth_user;
-    $client->client->setAssertionCredentials($oauth);
-  }
-
   return $client;
 }
