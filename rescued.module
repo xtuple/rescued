@@ -168,24 +168,6 @@ function rescued_api_get_client() {
 }
 
 /**
- * DELETE a REST resource.
- *
- * @param $resource_name
- * @param $id
- * @param $resource_key
- *
- * @return
- */
-function rescued_api_resource_delete($resource_name, $id, $resource_key) {
-  $result = [];
-  $client = rescued_api_get_client();
-  if ($resource_name = $client->resource($resource_name)) {
-    $result = $resource_name->delete($id, $resource_key);
-  }
-  return $result['data'];
-}
-
-/**
  * GET list of REST resources.
  *
  * @param string $resource_name
