@@ -35,3 +35,11 @@ function rescued_update_7003() {
   ]);
   return t("Inline Entity Form disabled");
 }
+
+/**
+ * Remove rescued_debug_mode variable
+ */
+function rescued_update_7004() {
+  variable_del("rescued_debug_mode");
+  return t("rescued_debug_mode variable removed");
+}

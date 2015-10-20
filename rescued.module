@@ -1,27 +1,6 @@
 <?php
 
 /**
- * Check if the resources exist yet. This function can be called to ensure the
- * entities you need are loaded before preforming any action. It is useful to
- * prevent errors during install and cache refreshing.
- *
- * @param array $resources
- *   An array of resource names.
- *
- * @return boolean
- *   True if all resources in the array exist.
- */
-function rescued_resources_exist($resources) {
-  $client = rescued_api_get_client();
-  foreach ($resources as $resource_name) {
-    if ($client->resource($resource_name) === NULL) {
-      return FALSE;
-    }
-  }
-  return TRUE;
-}
-
-/**
  * @return \Xtuple\REST\Client\Configuration
  * @throws \Exception
  */
@@ -47,7 +26,6 @@ function rescued_application_name() {
  */
 function rescued_get_xtuple_rest_service() {
   $configuration = rescued_get_configuration();
-  variable_set('rescued_debug_mode', $configuration->debug());
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   global $session;
   $client = new \Xtuple\REST\Client\Client($configuration, $session);
@@ -89,22 +67,6 @@ function rescued_get_discovery_client_docs() {
     }
   }
   return $docs;
-}
-
-/**
- * Implements hook_flush_caches().
- *
- * Remove the folder at: /tmp/Google_Client and reset our entities loaded
- * variable and cache. This will be called when hook_menu() is called above
- * in rescued_module_implements_alter() and when all caches are flushed.
- */
-function rescued_flush_caches() {
-  if (variable_get('rescued_clear_google_cache', 1)) {
-    global $apiConfig;
-    if (file_exists($apiConfig['ioFileCache_directory'])) {
-      file_unmanaged_delete_recursive($apiConfig['ioFileCache_directory']);
-    }
-  }
 }
 
 /**
@@ -165,195 +127,4 @@ function rescued_api_get_client() {
   }
 
   return $client;
-}
-
-/**
- * DELETE a REST resource.
- *
- * @param $resource_name
- * @param $id
- * @param $resource_key
- *
- * @return
- */
-function rescued_api_resource_delete($resource_name, $id, $resource_key) {
-  $result = [];
-  $client = rescued_api_get_client();
-  if ($resource_name = $client->resource($resource_name)) {
-    $result = $resource_name->delete($id, $resource_key);
-  }
-  return $result['data'];
-}
-
-/**
- * GET a REST resource.
- *
- * @param $resource_name
- * @param $id
- * @param $resource_key
- *
- * @return array
- */
-function rescued_api_resource_load($resource_name, $id, $resource_key) {
-  $result = [];
-  $client = rescued_api_get_client();
-  if ($resource = $client->resource($resource_name)) {
-    $result = $resource->get($id, $resource_key);
-  }
-  return $result;
-}
-
-/**
- * GET list of REST resources.
- *
- * @param string $resource_name
- * @param array  $opt_params
- * @param bool   $data_only
- *
- * @return array
- */
-function rescued_api_resource_list($resource_name, $opt_params = [], $data_only = TRUE) {
-  // If this is a large query and would result in a long URL, query over POST instead.
-  // This will get around the "414 Request URI Too Large" error.
-  // TODO: Is 500 characters too long?
-  if (strlen(json_encode($opt_params)) > 500) {
-    $result = rescued_api_resource_post_query($resource_name, $opt_params, FALSE);
-  }
-  else {
-    $client = rescued_api_get_client();
-    $result = [];
-    if ($resource = $client->resource($resource_name)) {
-      $result = $resource->resourceList($opt_params);
-    }
-  }
-
-  if ($data_only) {
-    return isset($result['data']) ? $result['data'] : [];
-  }
-  else {
-    return isset($result) ? $result : [];
-  }
-}
-
-/**
- * POST query for a list of REST resources.
- *
- * This function can be used to send a large query over a POST body instead of
- * constructing a really long URL that may fail with an error:
- * "414 Request URI Too Large".
- *
- * @param string  $resource         The API resource name. e.g. 'ClassCode'
- * @param array   $optParams        The structured query to perform.
- * @param boolean $data_only        Return just the data. Set to fails to get the
- *                                  full result that will include etags.
- *
- * @return array The query result response.
- */
-function rescued_api_resource_post_query($resource, $optParams = [], $data_only = TRUE) {
-  $client = rescued_api_get_client();
-
-  // Build restQuery structure for the POST body.
-  $postBody['attributes'] = [
-    $resource,
-    rescued_format_post_query_options($optParams),
-  ];
-
-  // Put all of this into the postBody where the Google lib expects it.
-  $params = ['postBody' => $postBody];
-
-  // Get the query results.
-  $result = $client->Model->restQuery($params);
-
-  if ($data_only) {
-    return isset($result['data']) ? $result['data'] : [];
-  }
-  else {
-    return isset($result) ? $result : [];
-  }
-}
-
-
-/**
- * PATCH a REST resource.
- *
- * @param $resource_name
- * @param $id
- * @param $resource_key
- * @param $postBody
- * @param $optParams
- *
- * @return array|\Xtuple\Rescued\RescuedService
- */
-function rescued_api_resource_patch($resource_name, $id, $resource_key, $postBody, $optParams) {
-  $result = [];
-  $client = rescued_api_get_client();
-  if ($resource = $client->resource($resource_name)) {
-    $result = $resource->patch($id, $resource_key, $postBody, $optParams);
-  }
-  return $result;
-}
-
-/**
- * POST a REST resource.
- *
- * @param $resource_name
- * @param $postBody
- * @param $optParams
- *
- * @return array|\Xtuple\Rescued\RescuedService
- */
-function rescued_api_resource_insert($resource_name, $postBody, $optParams) {
-  $result = [];
-  $client = rescued_api_get_client();
-  if ($resource_name = $client->resource($resource_name)) {
-    $result = $resource_name->insert($postBody, $optParams);
-  }
-  return $result;
-}
-
-/**
- * Helper function to format a GET style query options for POST query requests.
- *
- * @param array $optParams The structured query to perform.
- *
- * @return array The formatted query $options.
- */
-function rescued_format_post_query_options($optParams = []) {
-
-  // Build restQuery structure for the POST body.
-  $options = [];
-
-  // Format the query.
-  if (isset($optParams['query'])) {
-    foreach ($optParams['query'] as $key => $value) {
-      $options['query'][] = [$key => $value];
-    }
-    unset($optParams['query']);
-  }
-
-  // Format the orderby.
-  if (isset($optParams['orderby'])) {
-    foreach ($optParams['orderby'] as $key => $value) {
-      $options['orderby'][] = [$key => $value];
-    }
-    unset($optParams['orderby']);
-  }
-
-  // Add any other query info. e.g. rowlimit, pagetoken, maxresults or count.
-  foreach ($optParams as $key => $value) {
-    $options[$key] = $value;
-  }
-
-  return $options;
-}
-
-/**
- * Implements hook_features_exclude()
- */
-function rescued_features_exclude() {
-  return [
-    'variable' => [
-      'rescued_debug_mode',
-    ],
-  ];
 }
