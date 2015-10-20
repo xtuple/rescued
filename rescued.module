@@ -26,7 +26,6 @@ function rescued_application_name() {
  */
 function rescued_get_xtuple_rest_service() {
   $configuration = rescued_get_configuration();
-  variable_set('rescued_debug_mode', $configuration->debug());
   /** @var Xtuple\Xdruple\Session\RescuedSession $session */
   global $session;
   $client = new \Xtuple\REST\Client\Client($configuration, $session);
@@ -128,15 +127,4 @@ function rescued_api_get_client() {
   }
 
   return $client;
-}
-
-/**
- * Implements hook_features_exclude()
- */
-function rescued_features_exclude() {
-  return [
-    'variable' => [
-      'rescued_debug_mode',
-    ],
-  ];
 }
