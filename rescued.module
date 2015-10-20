@@ -168,35 +168,6 @@ function rescued_api_get_client() {
 }
 
 /**
- * POST query for a list of REST resources.
- *
- * This function can be used to send a large query over a POST body instead of
- * constructing a really long URL that may fail with an error:
- * "414 Request URI Too Large".
- *
- * @param string  $resource         The API resource name. e.g. 'ClassCode'
- * @param array   $optParams        The structured query to perform.
- * @param boolean $data_only        Return just the data. Set to fails to get the
- *                                  full result that will include etags.
- *
- * @return array The query result response.
- */
-function rescued_api_resource_post_query($resource, $optParams = []) {
-  $result = [];
-  $client = rescued_api_get_client();
-  $postBody['attributes'] = [
-    $resource,
-    rescued_format_post_query_options($optParams),
-  ];
-  $params = ['postBody' => $postBody];
-  if ($resource_name = $client->resource("Model")) {
-    $arguments = [$params];
-    $result = $resource_name->__call("restQuery", $arguments);
-  }
-  return $result;
-}
-
-/**
  * Helper function to format a GET style query options for POST query requests.
  *
  * @param array $optParams The structured query to perform.
