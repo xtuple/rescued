@@ -168,32 +168,6 @@ function rescued_api_get_client() {
 }
 
 /**
- * GET list of REST resources.
- *
- * @param string $resource_name
- * @param array  $opt_params
- * @param bool   $data_only
- *
- * @return array
- */
-function rescued_api_resource_list($resource_name, $opt_params = []) {
-  // If this is a large query and would result in a long URL, query over POST instead.
-  // This will get around the "414 Request URI Too Large" error.
-  // TODO: Is 500 characters too long?
-  $result = [];
-  if (strlen(json_encode($opt_params)) > 500) {
-    $result = rescued_api_resource_post_query($resource_name, $opt_params);
-  }
-  else {
-    $client = rescued_api_get_client();
-    if ($resource = $client->resource($resource_name)) {
-      $result = $resource->resourceList($opt_params);
-    }
-  }
-  return $result;
-}
-
-/**
  * POST query for a list of REST resources.
  *
  * This function can be used to send a large query over a POST body instead of
