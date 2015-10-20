@@ -294,24 +294,6 @@ function rescued_api_resource_patch($resource_name, $id, $resource_key, $postBod
 }
 
 /**
- * POST a REST resource.
- *
- * @param $resource_name
- * @param $postBody
- * @param $optParams
- *
- * @return array|\Xtuple\Rescued\RescuedService
- */
-function rescued_api_resource_insert($resource_name, $postBody, $optParams) {
-  $result = [];
-  $client = rescued_api_get_client();
-  if ($resource_name = $client->resource($resource_name)) {
-    $result = $resource_name->insert($postBody, $optParams);
-  }
-  return $result;
-}
-
-/**
  * Helper function to format a GET style query options for POST query requests.
  *
  * @param array $optParams The structured query to perform.
