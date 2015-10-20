@@ -1,27 +1,6 @@
 <?php
 
 /**
- * Check if the resources exist yet. This function can be called to ensure the
- * entities you need are loaded before preforming any action. It is useful to
- * prevent errors during install and cache refreshing.
- *
- * @param array $resources
- *   An array of resource names.
- *
- * @return boolean
- *   True if all resources in the array exist.
- */
-function rescued_resources_exist($resources) {
-  $client = rescued_api_get_client();
-  foreach ($resources as $resource_name) {
-    if ($client->resource($resource_name) === NULL) {
-      return FALSE;
-    }
-  }
-  return TRUE;
-}
-
-/**
  * @return \Xtuple\REST\Client\Configuration
  * @throws \Exception
  */
