@@ -176,27 +176,21 @@ function rescued_api_get_client() {
  *
  * @return array
  */
-function rescued_api_resource_list($resource_name, $opt_params = [], $data_only = TRUE) {
+function rescued_api_resource_list($resource_name, $opt_params = []) {
   // If this is a large query and would result in a long URL, query over POST instead.
   // This will get around the "414 Request URI Too Large" error.
   // TODO: Is 500 characters too long?
+  $result = [];
   if (strlen(json_encode($opt_params)) > 500) {
-    $result = rescued_api_resource_post_query($resource_name, $opt_params, FALSE);
+    $result = rescued_api_resource_post_query($resource_name, $opt_params);
   }
   else {
     $client = rescued_api_get_client();
-    $result = [];
     if ($resource = $client->resource($resource_name)) {
       $result = $resource->resourceList($opt_params);
     }
   }
-
-  if ($data_only) {
-    return isset($result['data']) ? $result['data'] : [];
-  }
-  else {
-    return isset($result) ? $result : [];
-  }
+  return $result;
 }
 
 /**
@@ -213,27 +207,17 @@ function rescued_api_resource_list($resource_name, $opt_params = [], $data_only 
  *
  * @return array The query result response.
  */
-function rescued_api_resource_post_query($resource, $optParams = [], $data_only = TRUE) {
+function rescued_api_resource_post_query($resource, $optParams = []) {
   $client = rescued_api_get_client();
-
   // Build restQuery structure for the POST body.
   $postBody['attributes'] = [
     $resource,
     rescued_format_post_query_options($optParams),
   ];
-
   // Put all of this into the postBody where the Google lib expects it.
   $params = ['postBody' => $postBody];
-
   // Get the query results.
-  $result = $client->Model->restQuery($params);
-
-  if ($data_only) {
-    return isset($result['data']) ? $result['data'] : [];
-  }
-  else {
-    return isset($result) ? $result : [];
-  }
+  return $client->Model->restQuery($params);
 }
 
 /**
