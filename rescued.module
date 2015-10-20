@@ -208,16 +208,18 @@ function rescued_api_resource_list($resource_name, $opt_params = []) {
  * @return array The query result response.
  */
 function rescued_api_resource_post_query($resource, $optParams = []) {
+  $result = [];
   $client = rescued_api_get_client();
-  // Build restQuery structure for the POST body.
   $postBody['attributes'] = [
     $resource,
     rescued_format_post_query_options($optParams),
   ];
-  // Put all of this into the postBody where the Google lib expects it.
   $params = ['postBody' => $postBody];
-  // Get the query results.
-  return $client->Model->restQuery($params);
+  if ($resource_name = $client->resource("Model")) {
+    $arguments = [$params];
+    $result = $resource_name->__call("restQuery", $arguments);
+  }
+  return $result;
 }
 
 /**
