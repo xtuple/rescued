@@ -168,42 +168,6 @@ function rescued_api_get_client() {
 }
 
 /**
- * Helper function to format a GET style query options for POST query requests.
- *
- * @param array $optParams The structured query to perform.
- *
- * @return array The formatted query $options.
- */
-function rescued_format_post_query_options($optParams = []) {
-
-  // Build restQuery structure for the POST body.
-  $options = [];
-
-  // Format the query.
-  if (isset($optParams['query'])) {
-    foreach ($optParams['query'] as $key => $value) {
-      $options['query'][] = [$key => $value];
-    }
-    unset($optParams['query']);
-  }
-
-  // Format the orderby.
-  if (isset($optParams['orderby'])) {
-    foreach ($optParams['orderby'] as $key => $value) {
-      $options['orderby'][] = [$key => $value];
-    }
-    unset($optParams['orderby']);
-  }
-
-  // Add any other query info. e.g. rowlimit, pagetoken, maxresults or count.
-  foreach ($optParams as $key => $value) {
-    $options[$key] = $value;
-  }
-
-  return $options;
-}
-
-/**
  * Implements hook_features_exclude()
  */
 function rescued_features_exclude() {
