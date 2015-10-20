@@ -71,22 +71,6 @@ function rescued_get_discovery_client_docs() {
 }
 
 /**
- * Implements hook_flush_caches().
- *
- * Remove the folder at: /tmp/Google_Client and reset our entities loaded
- * variable and cache. This will be called when hook_menu() is called above
- * in rescued_module_implements_alter() and when all caches are flushed.
- */
-function rescued_flush_caches() {
-  if (variable_get('rescued_clear_google_cache', 1)) {
-    global $apiConfig;
-    if (file_exists($apiConfig['ioFileCache_directory'])) {
-      file_unmanaged_delete_recursive($apiConfig['ioFileCache_directory']);
-    }
-  }
-}
-
-/**
  * Initialize a Rescued Client
  *
  * @return \Xtuple\Rescued\RescuedApiService
