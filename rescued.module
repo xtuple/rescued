@@ -186,24 +186,6 @@ function rescued_api_resource_delete($resource_name, $id, $resource_key) {
 }
 
 /**
- * GET a REST resource.
- *
- * @param $resource_name
- * @param $id
- * @param $resource_key
- *
- * @return array
- */
-function rescued_api_resource_load($resource_name, $id, $resource_key) {
-  $result = [];
-  $client = rescued_api_get_client();
-  if ($resource = $client->resource($resource_name)) {
-    $result = $resource->get($id, $resource_key);
-  }
-  return $result;
-}
-
-/**
  * GET list of REST resources.
  *
  * @param string $resource_name
