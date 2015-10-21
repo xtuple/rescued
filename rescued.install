@@ -7,6 +7,14 @@ function rescued_enable() {
 }
 
 /**
+ * Implements hook_disable()
+ */
+function rescued_disable() {
+  variable_del("rescued_docs_loaded");
+  variable_del("rescued_debug_mode");
+}
+
+/**
  * Disable WSClient
  */
 function rescued_update_7001() {
