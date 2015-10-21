@@ -16,8 +16,7 @@ function rescued_get_configuration() {
  * Shortcut to get application name
  */
 function rescued_application_name() {
-  $config = rescued_get_configuration();
-  return $config->applicationName();
+  return rescued_api_get_client()->applicationName();
 }
 
 /**
