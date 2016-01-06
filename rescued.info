@@ -1,4 +1,0 @@
-name = RESCUED
-description = ERP connection handling
-core = 7.x
-package = xDruple
